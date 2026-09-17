@@ -43,8 +43,22 @@ faqat `.env` dagi `DATABASE_URL` manzilida PostgreSQL ishlab turishi kerak.
 - `/ertaga` — ertangi darslar
 - `/help` — buyruqlar ro'yxati
 
+## Avtomatik eslatma
+
+Bot har soatda vaqtni tekshiradi va mahalliy vaqt bilan **08:00–09:00** oralig'ida
+kuniga bir marta bog'langan har bir foydalanuvchiga eslatma yuboradi:
+
+- bugungi darslar (guruh jadvali bo'yicha),
+- bugun tugaydigan deadline'lar: topshiriqlar va testlar (`dueAt`).
+
+Eslatma bir kunda takroran yuborilmasligi uchun oxirgi yuborilgan sana
+`bot/data.json` dagi `lastReminderDate` maydonida saqlanadi. Xatolik yuz bersa
+(bitta foydalanuvchi yoki butun tekshiruv), bot ishlashda davom etadi.
+
 ## Eslatmalar
 
-- `bot/data.json` — chatId → email bog'lanishlari. Fayl gitga qo'shilmaydi (`.gitignore` da).
+- `bot/data.json` — `{ "links": { chatId: email }, "lastReminderDate": "YYYY-MM-DD" }`.
+  Eski (faqat chatId → email) fayl ham o'qiladi va keyingi saqlashda yangi formatga o'tadi.
+  Fayl gitga qo'shilmaydi (`.gitignore` da).
 - Token yo'q bo'lsa skript aniq xato xabari bilan chiqadi (crash emas).
 - Telegram xatolarida bot 5 sekund kutib qayta urinadi.

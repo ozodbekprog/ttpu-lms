@@ -59,6 +59,13 @@ model User {
   quizAttempts  QuizAttempt[]
   notifications Notification[]
 
+  announcements        Announcement[]
+  forumTopics          ForumTopic[]
+  forumReplies         ForumReply[]
+  certificatesIssued   Certificate[]      @relation("CertificateIssuedBy")
+  certificatesReceived Certificate[]      @relation("CertificateStudent")
+  attendanceSessions   AttendanceSession[]
+
   @@index([groupId])
 }
 
@@ -87,6 +94,11 @@ model Course {
   quizzes     Quiz[]
   enrollments Enrollment[]
   attendance  Attendance[]
+
+  announcements      Announcement[]
+  forumTopics        ForumTopic[]
+  certificates       Certificate[]
+  attendanceSessions AttendanceSession[]
 
   @@index([teacherId])
 }
@@ -176,6 +188,7 @@ model Quiz {
   courseId     String
   title        String
   description  String?
+  dueAt        DateTime?
   timeLimitMin Int?
   maxAttempts  Int      @default(1)
   isPublished  Boolean  @default(false)
@@ -239,4 +252,77 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  courseId  String
+  authorId  String
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, createdAt])
+}
+
+model ForumTopic {
+  id        String   @id @default(cuid())
+  courseId  String
+  authorId  String
+  title     String
+  body      String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  course  Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author  User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies ForumReply[]
+
+  @@index([courseId, createdAt])
+}
+
+model ForumReply {
+  id        String   @id @default(cuid())
+  topicId   String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  topic  ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  author User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([topicId, createdAt])
+}
+
+model Certificate {
+  id         String   @id @default(cuid())
+  courseId   String
+  studentId  String
+  issuedById String
+  grade      Int?
+  issuedAt   DateTime @default(now())
+
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student  User   @relation("CertificateStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  issuedBy User   @relation("CertificateIssuedBy", fields: [issuedById], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+}
+
+model AttendanceSession {
+  id          String   @id @default(cuid())
+  courseId    String
+  date        DateTime
+  code        String   @unique
+  expiresAt   DateTime
+  createdById String
+  createdAt   DateTime @default(now())
+
+  course    Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([courseId, date])
 }

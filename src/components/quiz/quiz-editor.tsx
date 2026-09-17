@@ -18,6 +18,7 @@ export type EditableQuiz = {
   title: string;
   description: string | null;
   courseId: string;
+  dueAt?: string | null;
   timeLimitMin: number | null;
   maxAttempts: number;
   isPublished: boolean;
@@ -26,6 +27,14 @@ export type EditableQuiz = {
 
 const NEW_QUESTION_ID = "__new__";
 
+function toDateTimeLocal(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: EditableQuiz }) {
   const router = useRouter();
   const tempCounter = useRef(0);
@@ -33,6 +42,7 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
   const [title, setTitle] = useState(quiz?.title ?? "");
   const [description, setDescription] = useState(quiz?.description ?? "");
   const [courseId, setCourseId] = useState(quiz?.courseId ?? courses[0]?.id ?? "");
+  const [dueAt, setDueAt] = useState(toDateTimeLocal(quiz?.dueAt));
   const [timeLimitMin, setTimeLimitMin] = useState(
     quiz?.timeLimitMin != null ? String(quiz.timeLimitMin) : "",
   );
@@ -46,7 +56,7 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
 
   function metaData() {
     const time = timeLimitMin.trim();
-    return {
+    const base = {
       title: title.trim(),
       description: description.trim() === "" ? null : description.trim(),
       courseId,
@@ -54,6 +64,8 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
       maxAttempts: Number(maxAttempts),
       isPublished,
     };
+    if (quiz && quiz.dueAt === undefined) return base;
+    return { ...base, dueAt: dueAt.trim() === "" ? null : dueAt.trim() };
   }
 
   function validateMeta(): string | null {
@@ -217,6 +229,14 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
                   </option>
                 ))}
               </Select>
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Muddat (deadline)</Label>
+              <Input
+                type="datetime-local"
+                value={dueAt}
+                onChange={(event) => setDueAt(event.target.value)}
+              />
             </div>
             <div>
               <Label>Vaqt (daqiqa)</Label>

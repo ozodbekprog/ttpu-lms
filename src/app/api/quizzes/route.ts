@@ -1,7 +1,19 @@
+import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { quizCreateSchema } from "@/components/quiz/schema";
 import { publicError } from "@/components/quiz/server";
+
+const dueAtSchema = z.string().trim().min(1).nullable().optional();
+
+const createSchema = quizCreateSchema.extend({ dueAt: dueAtSchema });
+
+function parseDueAt(value: string | null | undefined) {
+  if (!value) return { ok: true as const, date: null };
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { ok: false as const, date: null };
+  return { ok: true as const, date };
+}
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -57,12 +69,17 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = quizCreateSchema.safeParse(body);
+  const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json(
       { ok: false, error: parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri" },
       { status: 400 },
     );
+  }
+
+  const due = parseDueAt(parsed.data.dueAt);
+  if (!due.ok) {
+    return Response.json({ ok: false, error: "Muddat sanasi noto'g'ri" }, { status: 400 });
   }
 
   try {
@@ -78,6 +95,7 @@ export async function POST(request: Request) {
         courseId: meta.courseId,
         title: meta.title,
         description: meta.description,
+        dueAt: due.date,
         timeLimitMin: meta.timeLimitMin,
         maxAttempts: meta.maxAttempts,
         isPublished: meta.isPublished,

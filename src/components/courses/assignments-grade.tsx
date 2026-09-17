@@ -79,6 +79,7 @@ export function AssignmentsGrade({
                 <th className="py-2 pr-3 text-left font-medium">Talaba</th>
                 <th className="px-3 py-2 text-left font-medium">Sana</th>
                 <th className="px-3 py-2 text-left font-medium">Holat</th>
+                <th className="px-3 py-2 text-left font-medium">Fayl</th>
                 <th className="px-3 py-2 text-left font-medium">Ball</th>
                 <th className="px-3 py-2" />
               </tr>
@@ -97,6 +98,20 @@ export function AssignmentsGrade({
                   </td>
                   <td className="px-3 py-2">
                     <SubmissionBadge status={submission.status} />
+                  </td>
+                  <td className="px-3 py-2 text-sm">
+                    {submission.fileUrl ? (
+                      <a
+                        href={submission.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Yuklab olish
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-sm text-slate-700">
                     {submission.score != null ? `${submission.score}/${maxScore}` : "—"}

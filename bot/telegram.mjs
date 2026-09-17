@@ -96,6 +96,136 @@ export function formatEntries(entries) {
   return entries.map((entry) => formatLesson(entry)).join("\n");
 }
 
+const REMINDER_HOUR = 8;
+const REMINDER_CHECK_MS = 60 * 60 * 1000;
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function startOfDay(date) {
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function dateKey(date) {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+function timeText(date) {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+}
+
+async function collectReminder(user, dayStart) {
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+  const db = getPrisma();
+
+  const courses = await db.course.findMany({
+    where:
+      user.role === "STUDENT"
+        ? { enrollments: { some: { userId: user.id } } }
+        : user.role === "TEACHER"
+          ? { teacherId: user.id }
+          : {},
+    select: { id: true },
+  });
+  const courseIds = courses.map((course) => course.id);
+
+  const lessons = user.groupId
+    ? await db.scheduleEntry.findMany({
+        where: { groupId: user.groupId, dayOfWeek: dayStart.getDay() },
+        orderBy: { slot: "asc" },
+      })
+    : [];
+
+  if (courseIds.length === 0) return { lessons, deadlines: [] };
+
+  const [assignments, quizzes] = await Promise.all([
+    db.assignment.findMany({
+      where: { courseId: { in: courseIds }, dueAt: { gte: dayStart, lt: dayEnd } },
+      orderBy: { dueAt: "asc" },
+      include: { course: { select: { title: true } } },
+    }),
+    db.quiz.findMany({
+      where: {
+        courseId: { in: courseIds },
+        dueAt: { gte: dayStart, lt: dayEnd },
+        ...(user.role === "STUDENT" ? { isPublished: true } : {}),
+      },
+      orderBy: { dueAt: "asc" },
+      include: { course: { select: { title: true } } },
+    }),
+  ]);
+
+  const deadlines = [
+    ...assignments.map((assignment) => ({
+      dueAt: assignment.dueAt,
+      text: `Topshiriq: ${assignment.title} — ${assignment.course.title}`,
+    })),
+    ...quizzes.map((quiz) => ({
+      dueAt: quiz.dueAt,
+      text: `Test: ${quiz.title} — ${quiz.course.title}`,
+    })),
+  ]
+    .filter((item) => item.dueAt !== null)
+    .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime());
+
+  return { lessons, deadlines };
+}
+
+export function reminderText(user, day, lessons, deadlines) {
+  const lines = [`Eslatma — bugun, ${DAY_NAMES[day.getDay()]}, ${dateKey(day)}`];
+  if (user.group) lines.push(`Guruh: ${user.group.name}`);
+  lines.push("");
+  lines.push("Darslar:");
+  lines.push(lessons.length > 0 ? formatEntries(lessons) : "Bugun darslar yo'q.");
+  lines.push("");
+  lines.push("Bugungi muddatlar:");
+  if (deadlines.length === 0) {
+    lines.push("Bugun deadline yo'q.");
+  } else {
+    for (const item of deadlines) lines.push(`• ${item.text} (${timeText(item.dueAt)})`);
+  }
+  return lines.join("\n");
+}
+
+async function sendDailyReminders() {
+  const now = new Date();
+  if (now.getHours() !== REMINDER_HOUR) return;
+  const today = dateKey(now);
+  if (lastReminderDate === today) return;
+
+  const dayStart = startOfDay(now);
+  for (const [chatId, email] of Object.entries(links)) {
+    if (typeof email !== "string") continue;
+    try {
+      const user = await getPrisma().user.findUnique({
+        where: { email },
+        include: { group: true },
+      });
+      if (!user) continue;
+      const { lessons, deadlines } = await collectReminder(user, dayStart);
+      await sendMessage(chatId, reminderText(user, now, lessons, deadlines));
+    } catch (error) {
+      console.error(`Eslatma yuborilmadi (${chatId}):`, errorText(error));
+    }
+  }
+
+  lastReminderDate = today;
+  saveData();
+}
+
+function startReminderLoop() {
+  const run = () => {
+    void sendDailyReminders().catch((error) =>
+      console.error("Eslatma tekshiruvi xatosi:", errorText(error)),
+    );
+  };
+  run();
+  setInterval(run, REMINDER_CHECK_MS);
+}
+
 const HELP_TEXT = [
   "Buyruqlar:",
   "/start — boshlash va emailni bog'lash",
@@ -129,7 +259,7 @@ async function linkEmail(chatId, email) {
     return;
   }
   links[String(chatId)] = user.email;
-  saveLinks();
+  saveData();
   const groupLine = user.group
     ? `Guruh: ${user.group.name}.`
     : "Sizga guruh biriktirilmagan, /jadval ishlamaydi.";
@@ -148,7 +278,7 @@ async function sendSchedule(chatId, dayOffset) {
   const user = await getPrisma().user.findUnique({ where: { email }, include: { group: true } });
   if (!user) {
     delete links[String(chatId)];
-    saveLinks();
+    saveData();
     await sendMessage(chatId, "Bog'langan foydalanuvchi bazadan topilmadi. Emailni qayta yuboring.");
     return;
   }
@@ -252,11 +382,12 @@ async function main() {
     console.error("  TELEGRAM_BOT_TOKEN=<token> node bot/telegram.mjs");
     process.exit(1);
   }
+  loadData();
 
-  links = loadLinks();
   prisma = new PrismaClient();
   await prisma.$connect();
   console.log("Telegram bot ishga tushdi. To'xtatish: Ctrl+C");
+  startReminderLoop();
   await poll();
 }
 

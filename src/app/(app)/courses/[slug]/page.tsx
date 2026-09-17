@@ -55,6 +55,8 @@ export default async function CoursePage({
     { href: `/courses/${slug}`, label: "Materiallar", active: activeTab === "materials" },
     { href: `/courses/${slug}/assignments`, label: "Topshiriqlar", active: false },
     { href: `/courses/${slug}/attendance`, label: "Davomat", active: false },
+    { href: `/courses/${slug}/announcements`, label: "E'lonlar", active: false },
+    { href: `/courses/${slug}/forum`, label: "Forum", active: false },
     ...(canManage
       ? [{ href: `/courses/${slug}?tab=students`, label: "Talabalar", active: activeTab === "students" }]
       : []),

@@ -1,44 +1,41 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: To'lqin 2 + xavfsizlik tuzatishlari (Komp 1)
+Oxirgi yangilanish: To'lqin 3 (7 modul) — Komp 1
 
-## Kompyuterlar
+## To'lqin 3 da qo'shildi
 
-| Komp | Topshiriq | Holat |
-|---|---|---|
-| 1 | Orchestrator, integratsiya, review nazorati | 🟢 |
-| 2 | Kurslar, topshiriqlar, baholar, davomat | 🟢 |
-| 3 | Testlar, jadval, Telegram bot | 🟢 |
-| 4 | Admin panel, upload, bildirishnomalar, dizayn | 🟢 |
+- [x] **Talaba fayl topshirish** — upload API (10MB, magic bytes) + forma + o'qituvchi yuklab olish
+- [x] **Katalog + enrollment** — published kurslar katalogi, o'zi yozilish, staff boshqaruvi
+- [x] **E'lonlar + forum** — kurs e'lonlari (bildirishnoma bilan), forum mavzular/javoblar, pin
+- [x] **Hisobot + eksport** — /reports sahifasi, statistika, 3 xil CSV eksport (BOM bilan)
+- [x] **Kalendar + eslatma** — oylik deadline kalendari, quiz dueAt, botda kunlik eslatma (08:00)
+- [x] **Sertifikat** — berish/bekor qilish, A4 print-friendly sahifa (PDF chop etish)
+- [x] **QR davomat** — sessiya + kod, QR ko'rsatish, talaba check-in sahifasi
+- [x] Sidebar yangilandi (Katalog, Kalendar, Sertifikatlar, Hisobotlar)
 
-## To'lqin 2 da qo'shildi
+## DB migratsiyalar
 
-- [x] Telegram bot (`bot/telegram.mjs`) — `/start`, `/jadval`, `/ertaga`, email bog'lash
-- [x] Profil sahifasi + parol almashtirish
-- [x] Avtomatik bildirishnomalar (material, topshiriq, test publish, baho)
-- [x] Loading skeletonlar, error boundary, 404 sahifalar
-- [x] Seed boyitildi (idempotent): baholar, davomat tarixi, 2-test, bildirishnomalar
+- `wave3`: Announcement, ForumTopic, ForumReply, Certificate, AttendanceSession + Quiz.dueAt
 
-## Xavfsizlik tuzatishlari (review asosida)
+## Modul holati (jami)
 
-- [x] Server-side quiz timer (vaqt tugasa urinish yopiladi)
-- [x] Aralash testda avtomatik baholash (SINGLE/MULTIPLE)
-- [x] Kurs a'zolar PII faqat manager'larga
-- [x] Quiz ro'yxati IDOR yopildi (enrollment kesish)
-- [x] URL sxema validatsiyasi (http/https yoki /uploads/)
-- [x] Upload: hajm pre-check, magic bytes, staff-only
-- [x] Xavfsizlik headerlari (CSP, nosniff, XFO, HSTS)
-- [x] Jadval egaligi (teacher faqat o'z yozuvlari) + parity konflikti
-- [x] Admin lockout himoyasi (oxirgi admin/o'zini himoya)
-- [x] Login/register rate limit + timing tenglashtirish + parol min 8
-- [x] Seed production himoyasi
-- [x] Results API (`GET /api/quizzes/[id]/results`)
+| Modul | Holat |
+|---|---|
+| Auth, profil, rollar | ✅ |
+| Kurslar, materiallar, sectionlar | ✅ |
+| Topshiriqlar (fayl bilan), baholar, davomat | ✅ |
+| Testlar (timer, auto-baho, results API) | ✅ |
+| Jadval + Telegram bot (+eslatma) | ✅ |
+| Admin, upload, bildirishnomalar | ✅ |
+| Katalog, forum, hisobot, kalendar, sertifikat, QR | ✅ |
+| Xavfsizlik (review + tuzatishlar) | ✅ |
 
-## Ma'lum cheklovlar (keyingi bosqich)
+## Keyingi g'oyalar (P2)
 
-- [ ] Sessiyani bekor qilish (sessionEpoch) — schema o'zgarishi kerak
-- [ ] Testlar (Vitest) hali yo'q
-- [ ] Schedule UI: boshqa o'qituvchi tugmani bossa 403 xabar ko'radi (UI yashirish keyin)
-- [ ] Rate limit in-memory (restartda tozalanadi) — Redis keyin
+- [ ] Vitest testlar (regressiya himoyasi)
+- [ ] Sessiyani bekor qilish (sessionEpoch)
+- [ ] PWA (telefonga o'rnatish)
+- [ ] uz/ru/en til almashtirish
+- [ ] Video/BBB integratsiya
 
-## Holat: `main` yashil — build o'tadi, dev server ishlaydi
+## Holat: `main` yashil

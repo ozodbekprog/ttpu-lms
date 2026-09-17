@@ -13,8 +13,12 @@ export default async function AppLayout({
   const links = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/courses", label: "Kurslar" },
+    { href: "/catalog", label: "Katalog" },
     { href: "/schedule", label: "Jadval" },
+    { href: "/calendar", label: "Kalendar" },
     { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholarim" },
+    { href: "/certificates", label: "Sertifikatlar" },
+    ...(isStaff(user.role) ? [{ href: "/reports", label: "Hisobotlar" }] : []),
     ...(user.role === "ADMIN" ? [{ href: "/admin", label: "Admin panel" }] : []),
   ];
 

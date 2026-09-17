@@ -15,6 +15,7 @@ import {
 import { fmtDate } from "@/lib/utils";
 import { canManageCourse } from "@/components/courses/course-access";
 import { AttendanceBulk } from "@/components/courses/attendance-bulk";
+import { SessionPanel } from "@/components/attendance/SessionPanel";
 
 const STATUS_LABELS: Record<string, string> = {
   PRESENT: "Bor",
@@ -151,7 +152,8 @@ export default async function CourseAttendancePage({
         subtitle={`${course.title} · ${students.length} ta talaba`}
         action={back}
       />
-      <div className="grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
+      <SessionPanel courseId={course.id} studentCount={students.length} />
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
         <AttendanceBulk
           courseId={course.id}
           students={students}

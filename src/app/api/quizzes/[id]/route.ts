@@ -1,9 +1,21 @@
+import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { quizUpdateSchema } from "@/components/quiz/schema";
 import { publicError } from "@/components/quiz/server";
 import { toQuestionFull, toQuestionPublic } from "@/components/quiz/shared";
 import { notifyCourseStudents } from "@/server/notify";
+
+const dueAtSchema = z.string().trim().min(1).nullable().optional();
+
+const updateSchema = quizUpdateSchema.extend({ dueAt: dueAtSchema });
+
+function parseDueAt(value: string | null | undefined) {
+  if (!value) return { ok: true as const, date: null };
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { ok: false as const, date: null };
+  return { ok: true as const, date };
+}
 
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -56,12 +68,17 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
   const { id } = await ctx.params;
   const body = await request.json().catch(() => null);
-  const parsed = quizUpdateSchema.safeParse(body);
+  const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
     return Response.json(
       { ok: false, error: parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri" },
       { status: 400 },
     );
+  }
+
+  const due = parseDueAt(parsed.data.dueAt);
+  if (!due.ok) {
+    return Response.json({ ok: false, error: "Muddat sanasi noto'g'ri" }, { status: 400 });
   }
 
   try {
@@ -80,7 +97,14 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       }
     }
 
-    const updated = await prisma.quiz.update({ where: { id }, data });
+    const { dueAt: dueAtValue, ...rest } = data;
+    const updated = await prisma.quiz.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(dueAtValue !== undefined ? { dueAt: due.date } : {}),
+      },
+    });
     if (data.isPublished === true && !quiz.isPublished) {
       try {
         await notifyCourseStudents(updated.courseId, {
