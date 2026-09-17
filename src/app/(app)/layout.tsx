@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/auth";
 import { Avatar } from "@/components/ui";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default async function AppLayout({
   children,
@@ -20,10 +21,11 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen bg-slate-50">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
-        <div className="flex h-14 items-center border-b border-slate-100 px-5">
+        <div className="flex h-14 items-center justify-between border-b border-slate-100 px-5">
           <Link href="/dashboard" className="text-sm font-bold tracking-tight text-slate-900">
             TTPU <span className="text-blue-600">LMS</span>
           </Link>
+          <NotificationBell />
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {links.map((l) => (
@@ -61,17 +63,20 @@ export default async function AppLayout({
           <Link href="/dashboard" className="text-sm font-bold text-slate-900">
             TTPU <span className="text-blue-600">LMS</span>
           </Link>
-          <nav className="flex gap-1 overflow-x-auto">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
-              >
-                {l.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="flex items-center gap-2">
+            <nav className="flex gap-1 overflow-x-auto">
+              {links.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+            <NotificationBell />
+          </div>
         </header>
         <main className="flex-1 p-4 md:p-8">{children}</main>
       </div>
