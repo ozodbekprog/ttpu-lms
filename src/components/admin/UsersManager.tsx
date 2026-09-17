@@ -193,6 +193,7 @@ export default function UsersManager({
   }
 
   const editedUser = editId ? users.find((u) => u.id === editId) : undefined;
+  const isSelfEdit = Boolean(editedUser && editedUser.id === currentUserId);
 
   return (
     <div className="space-y-4">
@@ -295,7 +296,11 @@ export default function UsersManager({
                 ) : null}
                 <div>
                   <Label>Rol</Label>
-                  <Select value={form.role} onChange={(e) => update("role", e.target.value as Role)}>
+                  <Select
+                    value={form.role}
+                    disabled={isSelfEdit}
+                    onChange={(e) => update("role", e.target.value as Role)}
+                  >
                     <option value="STUDENT">Talaba</option>
                     <option value="TEACHER">O'qituvchi</option>
                     <option value="ADMIN">Administrator</option>
@@ -318,6 +323,7 @@ export default function UsersManager({
                       type="checkbox"
                       className="size-4 rounded border-slate-300"
                       checked={form.isActive}
+                      disabled={isSelfEdit}
                       onChange={(e) => update("isActive", e.target.checked)}
                     />
                     Faol

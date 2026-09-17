@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { canManageEntry } from "../_helpers";
 
 const updateSchema = z.object({
   dayOfWeek: z.number().int().min(1).max(6).optional(),
@@ -39,6 +40,10 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     return Response.json({ ok: false, error: "Jadval yozuvi topilmadi" }, { status: 404 });
   }
 
+  if (!canManageEntry(guard.user, entry)) {
+    return Response.json({ ok: false, error: "Bu jadval yozuvini o'zgartirish huquqingiz yo'q" }, { status: 403 });
+  }
+
   const nextDayOfWeek = data.dayOfWeek ?? entry.dayOfWeek;
   const nextSlot = data.slot ?? entry.slot;
   const nextParity = data.parity === undefined ? entry.parity : data.parity;
@@ -49,7 +54,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       groupId: entry.groupId,
       dayOfWeek: nextDayOfWeek,
       slot: nextSlot,
-      OR: [{ parity: null }, { parity: nextParity }],
+      ...(nextParity === null ? {} : { OR: [{ parity: null }, { parity: nextParity }] }),
     },
     select: { id: true },
   });
@@ -77,9 +82,13 @@ export async function DELETE(_request: Request, ctx: { params: Promise<{ id: str
   if (guard.error) return guard.error;
 
   const { id } = await ctx.params;
-  const entry = await prisma.scheduleEntry.findUnique({ where: { id }, select: { id: true } });
+  const entry = await prisma.scheduleEntry.findUnique({ where: { id }, select: { id: true, teacher: true } });
   if (!entry) {
     return Response.json({ ok: false, error: "Jadval yozuvi topilmadi" }, { status: 404 });
+  }
+
+  if (!canManageEntry(guard.user, entry)) {
+    return Response.json({ ok: false, error: "Bu jadval yozuvini o'zgartirish huquqingiz yo'q" }, { status: 403 });
   }
 
   await prisma.scheduleEntry.delete({ where: { id } });

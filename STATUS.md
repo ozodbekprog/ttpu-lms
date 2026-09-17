@@ -1,36 +1,44 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: To'lqin 1 tugadi (6 parallel agent, Komp 1)
+Oxirgi yangilanish: To'lqin 2 + xavfsizlik tuzatishlari (Komp 1)
 
 ## Kompyuterlar
 
-| Komp | Topshiriq | Branch | Holat |
-|---|---|---|---|
-| 1 | Orchestrator: integratsiya, merge, dashboard, profil | `main` | 🟢 To'lqin 1 merge qilindi |
-| 2 | Kurslar, topshiriqlar, baholar, davomat | `feat/comp2-courses` | 🟢 Bajarildi (lokal agent) |
-| 3 | Testlar, jadval, Telegram bot | `feat/comp3-quiz-schedule` | 🟡 Test+jadval bajarildi, bot qoldi |
-| 4 | Admin panel, upload, bildirishnomalar, dizayn | `feat/comp4-admin` | 🟢 Bajarildi (lokal agent) |
+| Komp | Topshiriq | Holat |
+|---|---|---|
+| 1 | Orchestrator, integratsiya, review nazorati | 🟢 |
+| 2 | Kurslar, topshiriqlar, baholar, davomat | 🟢 |
+| 3 | Testlar, jadval, Telegram bot | 🟢 |
+| 4 | Admin panel, upload, bildirishnomalar, dizayn | 🟢 |
 
-## Merge qilingan modullar (main)
+## To'lqin 2 da qo'shildi
 
-- [x] **Kurslar** — ro'yxat, yaratish/tahrir/o'chirish, section+material CRUD, talabalar tab
-- [x] **Topshiriqlar** — CRUD, topshirish (LATE), baholash + feedback
-- [x] **Baholar** — talaba jurnali, o'qituvchi jurnali
-- [x] **Davomat** — bulk belgilash, talaba statistikasi
-- [x] **Testlar** — 3 savol turi, timer, avtomatik baholash, qo'lda TEXT baholash, urinish limiti
-- [x] **Jadval** — haftalik setka, guruh tanlash, staff CRUD (AI2-26 seed bilan)
-- [x] **Admin panel** — statistika, users/groups/courses boshqaruvi
-- [x] **Upload** — /api/upload (≤20MB, sanitizatsiya)
-- [x] **Bildirishnomalar** — API, sahifa, NotificationBell (layoutga ulandi)
-- [x] **Landing** — yangi dizayn
+- [x] Telegram bot (`bot/telegram.mjs`) — `/start`, `/jadval`, `/ertaga`, email bog'lash
+- [x] Profil sahifasi + parol almashtirish
+- [x] Avtomatik bildirishnomalar (material, topshiriq, test publish, baho)
+- [x] Loading skeletonlar, error boundary, 404 sahifalar
+- [x] Seed boyitildi (idempotent): baholar, davomat tarixi, 2-test, bildirishnomalar
 
-## Bloklovchi muammolar
+## Xavfsizlik tuzatishlari (review asosida)
 
-_(yo'q — build yashil, tsc toza)_
+- [x] Server-side quiz timer (vaqt tugasa urinish yopiladi)
+- [x] Aralash testda avtomatik baholash (SINGLE/MULTIPLE)
+- [x] Kurs a'zolar PII faqat manager'larga
+- [x] Quiz ro'yxati IDOR yopildi (enrollment kesish)
+- [x] URL sxema validatsiyasi (http/https yoki /uploads/)
+- [x] Upload: hajm pre-check, magic bytes, staff-only
+- [x] Xavfsizlik headerlari (CSP, nosniff, XFO, HSTS)
+- [x] Jadval egaligi (teacher faqat o'z yozuvlari) + parity konflikti
+- [x] Admin lockout himoyasi (oxirgi admin/o'zini himoya)
+- [x] Login/register rate limit + timing tenglashtirish + parol min 8
+- [x] Seed production himoyasi
+- [x] Results API (`GET /api/quizzes/[id]/results`)
 
-## Keyingi ishlar (P1)
+## Ma'lum cheklovlar (keyingi bosqich)
 
-- [ ] Telegram bot (`bot/telegram.mjs`) — Komp 3
-- [ ] Material qo'shilganda talabalarga notification (ixtiyoriy)
-- [ ] Profil sahifasi + parol o'zgartirish — Komp 1
-- [ ] Seed'ga ko'proq demo kontent
+- [ ] Sessiyani bekor qilish (sessionEpoch) — schema o'zgarishi kerak
+- [ ] Testlar (Vitest) hali yo'q
+- [ ] Schedule UI: boshqa o'qituvchi tugmani bossa 403 xabar ko'radi (UI yashirish keyin)
+- [ ] Rate limit in-memory (restartda tozalanadi) — Redis keyin
+
+## Holat: `main` yashil — build o'tadi, dev server ishlaydi

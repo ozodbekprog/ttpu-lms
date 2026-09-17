@@ -1,12 +1,20 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { canManageCourse } from "@/components/courses/course-access";
+import { canManageCourse, isAllowedFileUrl } from "@/components/courses/course-access";
 
 const submitSchema = z
   .object({
     text: z.string().trim().max(10000).nullable().optional(),
-    fileUrl: z.string().trim().max(500).nullable().optional(),
+    fileUrl: z
+      .string()
+      .trim()
+      .max(500)
+      .nullable()
+      .optional()
+      .refine((value) => !value || isAllowedFileUrl(value), {
+        message: "Fayl havolasi http://, https:// yoki /uploads/ bilan boshlanishi kerak",
+      }),
   })
   .refine((value) => Boolean(value.text?.length || value.fileUrl?.length), {
     message: "Matn yoki fayl havolasini kiriting",
@@ -110,5 +118,5 @@ export async function POST(
     },
   });
 
-  return Response.json({ ok: true, data: submission });
+  return Response.json({ ok: true, data: submission }, { status: 201 });
 }

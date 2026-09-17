@@ -1,8 +1,13 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { attemptPatchSchema } from "@/components/quiz/schema";
-import { findManageableQuiz, publicError } from "@/components/quiz/server";
-import { autoScore, hasTextQuestions, toQuestionFull, totalPoints } from "@/components/quiz/shared";
+import {
+  closeExpiredAttempt,
+  expiredAttemptDeadline,
+  findManageableQuiz,
+  publicError,
+} from "@/components/quiz/server";
+import { autoScore, toQuestionFull, totalPoints } from "@/components/quiz/shared";
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -33,6 +38,9 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   if (!attempt) return Response.json({ ok: false, error: "Urinish topilmadi" }, { status: 404 });
 
   try {
+    const questions = attempt.quiz.questions.map(toQuestionFull);
+    const expiredDeadline = expiredAttemptDeadline(attempt.startedAt, attempt.quiz.timeLimitMin);
+
     if (hasAnswers) {
       if (user.role !== "STUDENT" || attempt.studentId !== user.id) {
         return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
@@ -40,9 +48,15 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       if (attempt.finishedAt) {
         return Response.json({ ok: false, error: "Urinish allaqachon topshirilgan" }, { status: 409 });
       }
-      const questions = attempt.quiz.questions.map(toQuestionFull);
+      if (expiredDeadline) {
+        await closeExpiredAttempt(prisma, id, attempt.answers, questions, expiredDeadline);
+        return Response.json(
+          { ok: false, error: "Vaqt tugagan — urinish yopildi" },
+          { status: 409 },
+        );
+      }
       const answers = parsed.data.answers ?? {};
-      const score = hasTextQuestions(questions) ? null : autoScore(questions, answers);
+      const score = autoScore(questions, answers);
       const updated = await prisma.quizAttempt.update({
         where: { id },
         data: { answers, score, finishedAt: new Date() },
@@ -58,11 +72,16 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     }
     const manageable = await findManageableQuiz(attempt.quizId, user);
     if (!manageable) return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
-    if (!attempt.finishedAt) {
+
+    let finishedAt = attempt.finishedAt;
+    if (!finishedAt && expiredDeadline) {
+      const closed = await closeExpiredAttempt(prisma, id, attempt.answers, questions, expiredDeadline);
+      finishedAt = closed.finishedAt;
+    }
+    if (!finishedAt) {
       return Response.json({ ok: false, error: "Urinish hali topshirilmagan" }, { status: 409 });
     }
 
-    const questions = attempt.quiz.questions.map(toQuestionFull);
     const maxScore = totalPoints(questions);
     const score = parsed.data.score ?? 0;
     if (score > maxScore) {

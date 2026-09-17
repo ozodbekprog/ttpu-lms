@@ -66,6 +66,12 @@ export async function GET(
     return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
   }
 
+  if (!canManageCourse(user, course)) {
+    const data: Partial<typeof course> = { ...course };
+    delete data.enrollments;
+    return Response.json({ ok: true, data });
+  }
+
   return Response.json({ ok: true, data: course });
 }
 

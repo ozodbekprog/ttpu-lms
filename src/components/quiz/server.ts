@@ -1,7 +1,33 @@
 import { prisma } from "@/lib/prisma";
-import type { Course, Question, Quiz, Role } from "@prisma/client";
+import type { Course, Prisma, Question, Quiz, Role } from "@prisma/client";
+import { asAnswers, autoScore, type QuestionFull } from "@/components/quiz/shared";
 
 export type StaffUser = { id: string; role: Role };
+
+export const ATTEMPT_GRACE_MS = 60_000;
+
+export function expiredAttemptDeadline(
+  startedAt: Date,
+  timeLimitMin: number | null,
+  now: Date = new Date(),
+): Date | null {
+  if (timeLimitMin === null) return null;
+  const deadline = new Date(startedAt.getTime() + timeLimitMin * 60_000);
+  return now.getTime() > deadline.getTime() + ATTEMPT_GRACE_MS ? deadline : null;
+}
+
+export async function closeExpiredAttempt(
+  db: Prisma.TransactionClient,
+  attemptId: string,
+  storedAnswers: unknown,
+  questions: QuestionFull[],
+  deadline: Date,
+) {
+  return db.quizAttempt.update({
+    where: { id: attemptId },
+    data: { score: autoScore(questions, asAnswers(storedAnswers)), finishedAt: deadline },
+  });
+}
 
 export async function findManageableQuiz(quizId: string, user: StaffUser): Promise<(Quiz & { course: Course }) | null> {
   const quiz = await prisma.quiz.findUnique({
@@ -41,6 +67,6 @@ export function isStaffRole(role: Role): boolean {
 }
 
 export function publicError(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
+  console.error(error);
   return "Xatolik yuz berdi";
 }

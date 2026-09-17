@@ -1,6 +1,11 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isEnrolled, publicError } from "@/components/quiz/server";
+import {
+  closeExpiredAttempt,
+  expiredAttemptDeadline,
+  isEnrolled,
+  publicError,
+} from "@/components/quiz/server";
 import { toQuestionFull, toQuestionPublic } from "@/components/quiz/shared";
 
 function attemptPayload(
@@ -45,28 +50,38 @@ export async function POST(_request: Request, ctx: { params: Promise<{ id: strin
       return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
 
-    const active = await prisma.quizAttempt.findFirst({
-      where: { quizId: id, studentId: user.id, finishedAt: null },
-      orderBy: { startedAt: "desc" },
-    });
-    if (active) {
-      return Response.json({ ok: true, data: attemptPayload(active, quiz) });
-    }
+    const questions = quiz.questions.map(toQuestionFull);
 
-    const finishedCount = await prisma.quizAttempt.count({
-      where: { quizId: id, studentId: user.id, finishedAt: { not: null } },
-    });
-    if (finishedCount >= quiz.maxAttempts) {
-      return Response.json(
-        { ok: false, error: "Urinishlar soni tugagan" },
-        { status: 409 },
-      );
-    }
+    const result = await prisma.$transaction(async (tx) => {
+      const active = await tx.quizAttempt.findFirst({
+        where: { quizId: id, studentId: user.id, finishedAt: null },
+        orderBy: { startedAt: "desc" },
+      });
 
-    const attempt = await prisma.quizAttempt.create({
-      data: { quizId: id, studentId: user.id },
+      if (active) {
+        const deadline = expiredAttemptDeadline(active.startedAt, quiz.timeLimitMin);
+        if (!deadline) return { kind: "active" as const, attempt: active };
+        await closeExpiredAttempt(tx, active.id, active.answers, questions, deadline);
+      }
+
+      const finishedCount = await tx.quizAttempt.count({
+        where: { quizId: id, studentId: user.id, finishedAt: { not: null } },
+      });
+      if (finishedCount >= quiz.maxAttempts) return { kind: "limit" as const };
+
+      const attempt = await tx.quizAttempt.create({
+        data: { quizId: id, studentId: user.id },
+      });
+      return { kind: "created" as const, attempt };
     });
-    return Response.json({ ok: true, data: attemptPayload(attempt, quiz) }, { status: 201 });
+
+    if (result.kind === "limit") {
+      return Response.json({ ok: false, error: "Urinishlar soni tugagan" }, { status: 409 });
+    }
+    if (result.kind === "active") {
+      return Response.json({ ok: true, data: attemptPayload(result.attempt, quiz) });
+    }
+    return Response.json({ ok: true, data: attemptPayload(result.attempt, quiz) }, { status: 201 });
   } catch (error) {
     return Response.json({ ok: false, error: publicError(error) }, { status: 500 });
   }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { canManageEntry } from "./_helpers";
 
 const createSchema = z.object({
   groupId: z.string().trim().min(1),
@@ -62,13 +63,17 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Guruh topilmadi" }, { status: 404 });
   }
 
+  if (!canManageEntry(user, { teacher: data.teacher ?? null })) {
+    return Response.json({ ok: false, error: "Bu jadval yozuvini o'zgartirish huquqingiz yo'q" }, { status: 403 });
+  }
+
   const parity = data.parity ?? null;
   const conflict = await prisma.scheduleEntry.findFirst({
     where: {
       groupId: data.groupId,
       dayOfWeek: data.dayOfWeek,
       slot: data.slot,
-      OR: [{ parity: null }, { parity }],
+      ...(parity === null ? {} : { OR: [{ parity: null }, { parity }] }),
     },
     select: { id: true },
   });

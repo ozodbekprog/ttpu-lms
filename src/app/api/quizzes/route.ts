@@ -12,14 +12,11 @@ export async function GET(request: Request) {
 
   try {
     if (user.role === "STUDENT") {
-      const enrollments = await prisma.enrollment.findMany({
-        where: { userId: user.id },
-        select: { courseId: true },
-      });
       const quizzes = await prisma.quiz.findMany({
         where: {
           isPublished: true,
-          courseId: courseId ?? { in: enrollments.map((item) => item.courseId) },
+          ...(courseId ? { courseId } : {}),
+          course: { enrollments: { some: { userId: user.id } } },
         },
         orderBy: { createdAt: "desc" },
         include: {

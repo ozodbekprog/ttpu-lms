@@ -1,6 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_SEED !== "1") {
+  console.error("Seed productionda taqiqlangan (ALLOW_SEED=1 bilan majburan ishga tushirish mumkin)");
+  process.exit(1);
+}
+
 const prisma = new PrismaClient();
 const PASSWORD = "ttpu1234";
 
