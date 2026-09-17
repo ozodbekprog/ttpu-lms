@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Input, Label, Textarea } from "@/components/ui";
 
 export function AssignmentsCreate({ courseId }: { courseId: string }) {
   const router = useRouter();
@@ -57,60 +57,61 @@ export function AssignmentsCreate({ courseId }: { courseId: string }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
-      <h3 className="font-semibold text-slate-900">Yangi topshiriq</h3>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <Label>Sarlavha</Label>
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            maxLength={200}
-            required
-            placeholder="Masalan: Amaliy topshiriq 2"
-          />
-        </div>
-        <div className="sm:col-span-2">
-          <Label>Tavsif</Label>
-          <Textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            rows={3}
-            placeholder="Topshiriq sharti..."
-          />
-        </div>
-        <div>
-          <Label>Muddat</Label>
-          <Input
-            type="datetime-local"
-            value={dueAt}
-            onChange={(event) => setDueAt(event.target.value)}
-          />
-        </div>
-        <div>
-          <Label>Maksimal ball</Label>
-          <Input
-            type="number"
-            min={1}
-            max={1000}
-            value={maxScore}
-            onChange={(event) => setMaxScore(event.target.value)}
-            required
-          />
-        </div>
-      </div>
-      {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
-      <div className="mt-4 flex justify-end gap-2">
-        <Button variant="secondary" onClick={() => setOpen(false)}>
-          Bekor qilish
-        </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saqlanmoqda..." : "Saqlash"}
-        </Button>
-      </div>
-    </form>
+    <Card className="mb-6 overflow-hidden">
+      <CardHeader title="Yangi topshiriq" subtitle="Shartlarni to'ldirib e'lon qiling" />
+      <CardBody>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Label>Sarlavha</Label>
+              <Input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                maxLength={200}
+                required
+                placeholder="Masalan: Amaliy topshiriq 2"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Tavsif</Label>
+              <Textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={3}
+                placeholder="Topshiriq sharti..."
+              />
+            </div>
+            <div>
+              <Label>Muddat</Label>
+              <Input
+                type="datetime-local"
+                value={dueAt}
+                onChange={(event) => setDueAt(event.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Maksimal ball</Label>
+              <Input
+                type="number"
+                min={1}
+                max={1000}
+                value={maxScore}
+                onChange={(event) => setMaxScore(event.target.value)}
+                required
+              />
+            </div>
+          </div>
+          {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
+          <div className="mt-5 flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setOpen(false)}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saqlanmoqda..." : "Saqlash"}
+            </Button>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
   );
 }

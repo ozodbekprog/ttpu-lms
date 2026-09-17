@@ -30,21 +30,23 @@ export function CourseTabs({
   ];
 
   return (
-    <div className="mb-6 flex gap-1 border-b border-slate-200">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.href}
-          href={tab.href}
-          className={cn(
-            "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition",
-            tab.id === active
-              ? "border-blue-600 text-blue-700"
-              : "border-transparent text-slate-500 hover:text-slate-800",
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
+    <div className="mb-6 overflow-x-auto rounded-2xl border border-slate-200/70 bg-white p-1.5 shadow-card">
+      <nav className="flex min-w-max gap-1">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.href}
+            href={tab.href}
+            className={cn(
+              "rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150",
+              tab.id === active
+                ? "bg-brand-900 text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-100 hover:text-brand-800",
+            )}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

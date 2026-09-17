@@ -128,7 +128,22 @@ export function AssignmentsSubmit({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {overdue ? (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+        <p className="flex items-start gap-2.5 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="mt-0.5 shrink-0"
+          >
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+          </svg>
           Muddat o&apos;tgan. Topshirilgan ish &quot;Kechikkan&quot; (LATE) holatida qayd etiladi.
         </p>
       ) : null}
@@ -149,11 +164,11 @@ export function AssignmentsSubmit({
           onChange={handleFileChange}
         />
         {file ? (
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1.5 text-xs font-medium text-brand-700">
             {file.name} · {formatSize(file.size)}
           </p>
         ) : (
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1.5 text-xs text-slate-400">
             Maks 10MB: {ALLOWED_EXTENSIONS.join(", ")}
           </p>
         )}
@@ -167,8 +182,12 @@ export function AssignmentsSubmit({
           placeholder="https://... yoki /uploads/fayl.pdf"
         />
       </div>
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-      {done ? <p className="text-sm text-emerald-600">Topshiriq yuborildi</p> : null}
+      {error ? <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-sm text-rose-700">{error}</p> : null}
+      {done ? (
+        <p className="rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
+          Topshiriq yuborildi
+        </p>
+      ) : null}
       <div className="flex justify-end">
         <Button type="submit" disabled={saving}>
           {uploading

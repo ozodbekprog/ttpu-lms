@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Card, CardBody, CardHeader, Textarea } from "@/components/ui";
+import { Button, Textarea } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { apiFetch } from "@/components/quiz/api";
 import {
   QUESTION_TYPE_LABEL,
@@ -17,14 +18,24 @@ function formatClock(seconds: number): string {
   return `${mm}:${ss}`;
 }
 
+function CheckIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
 export function AttemptForm({
   attemptId,
   quizId,
+  title,
   questions,
   endsAt,
 }: {
   attemptId: string;
   quizId: string;
+  title: string;
   questions: QuestionPublic[];
   endsAt: string | null;
 }) {
@@ -95,94 +106,136 @@ export function AttemptForm({
   }
 
   const answeredCount = questions.filter((question) => answers[question.id] !== undefined).length;
+  const unanswered = questions.length - answeredCount;
+  const progress = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
+  const timerTone =
+    remaining === null
+      ? "text-slate-400"
+      : remaining <= 60
+        ? "text-rose-600"
+        : remaining <= 300
+          ? "text-amber-600"
+          : "text-brand-900";
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardBody className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-500">Javob berildi:</span>
-            <Badge tone="blue">
-              {answeredCount}/{questions.length}
-            </Badge>
+    <div className="mx-auto max-w-3xl">
+      <header className="sticky top-16 z-30 mb-6 rounded-2xl border border-slate-200/70 bg-white/95 px-4 py-3 shadow-card backdrop-blur md:top-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold tracking-tight text-brand-900">{title}</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {answeredCount}/{questions.length} savol belgilandi
+            </p>
+            <div className="mt-2 h-1.5 w-full max-w-56 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-brand-700 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-          {remaining !== null ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">Qolgan vaqt:</span>
-              <span
-                className={
-                  remaining <= 60
-                    ? "font-mono text-lg font-semibold text-rose-600"
-                    : "font-mono text-lg font-semibold text-slate-900"
-                }
-              >
+          <div className="shrink-0 text-right">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+              Qolgan vaqt
+            </p>
+            {remaining !== null ? (
+              <p className={cn("font-mono text-2xl font-semibold tabular-nums", timerTone)}>
                 {formatClock(remaining)}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-400">Cheklovsiz</p>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="space-y-5">
+        {questions.map((question, index) => (
+          <section
+            key={question.id}
+            className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-card"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-800">
+                {index + 1}
+              </span>
+              <span className="text-xs text-slate-400">
+                {QUESTION_TYPE_LABEL[question.type]} · {question.points} ball
               </span>
             </div>
-          ) : (
-            <span className="text-sm text-slate-500">Vaqt chegarasi yo&apos;q</span>
-          )}
-        </CardBody>
-      </Card>
+            <p className="mt-3 text-base font-medium leading-relaxed text-slate-900">
+              {question.text}
+            </p>
 
-      {questions.map((question, index) => (
-        <Card key={question.id}>
-          <CardHeader
-            title={`${index + 1}. ${question.text}`}
-            subtitle={`${QUESTION_TYPE_LABEL[question.type]} · ${question.points} ball`}
-          />
-          <CardBody className="space-y-2">
-            {question.type === "SINGLE" ? (
-              question.options.map((option, optionIndex) => (
-                <label
-                  key={optionIndex}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
-                >
-                  <input
-                    type="radio"
-                    name={`question-${question.id}`}
-                    checked={answers[question.id] === optionIndex}
-                    onChange={() => setValue(question.id, optionIndex)}
-                    className="size-4 accent-blue-600"
-                  />
-                  <span className="text-slate-700">{option}</span>
-                </label>
-              ))
-            ) : null}
-
-            {question.type === "MULTIPLE" ? (
-              question.options.map((option, optionIndex) => (
-                <label
-                  key={optionIndex}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked(question.id, optionIndex)}
-                    onChange={() => toggleMultiple(question.id, optionIndex)}
-                    className="size-4 accent-blue-600"
-                  />
-                  <span className="text-slate-700">{option}</span>
-                </label>
-              ))
-            ) : null}
-
-            {question.type === "TEXT" ? (
+            {question.type === "SINGLE" || question.type === "MULTIPLE" ? (
+              <div className="mt-4 space-y-2">
+                {question.options.map((option, optionIndex) => {
+                  const selected =
+                    question.type === "SINGLE"
+                      ? answers[question.id] === optionIndex
+                      : isChecked(question.id, optionIndex);
+                  return (
+                    <label
+                      key={optionIndex}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-all duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500/30",
+                        selected
+                          ? "border-brand-500 bg-brand-50/70 font-medium text-brand-900"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                      )}
+                    >
+                      <input
+                        type={question.type === "SINGLE" ? "radio" : "checkbox"}
+                        name={`question-${question.id}`}
+                        checked={selected}
+                        onChange={() =>
+                          question.type === "SINGLE"
+                            ? setValue(question.id, optionIndex)
+                            : toggleMultiple(question.id, optionIndex)
+                        }
+                        className="sr-only"
+                      />
+                      <span
+                        className={cn(
+                          "inline-flex size-5 shrink-0 items-center justify-center border transition-colors duration-150",
+                          question.type === "SINGLE" ? "rounded-full" : "rounded-md",
+                          selected
+                            ? "border-brand-600 bg-brand-600 text-white"
+                            : "border-slate-300 bg-white",
+                        )}
+                      >
+                        {selected ? <CheckIcon /> : null}
+                      </span>
+                      <span>{option}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
               <Textarea
-                rows={4}
+                rows={5}
                 placeholder="Javobingizni yozing..."
                 value={textValue(question.id)}
                 onChange={(event) => setValue(question.id, event.target.value)}
+                className="mt-4"
               />
-            ) : null}
-          </CardBody>
-        </Card>
-      ))}
+            )}
+          </section>
+        ))}
+      </div>
 
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-
-      <div className="flex items-center justify-end gap-3">
-        <Button onClick={() => void submit()} disabled={submitting}>
+      <div className="sticky bottom-4 z-20 mt-6 rounded-2xl border border-slate-200/70 bg-white/95 p-3 shadow-lift backdrop-blur">
+        {error ? <p className="mb-2 px-1 text-sm text-rose-600">{error}</p> : null}
+        {unanswered > 0 ? (
+          <p className="mb-2 px-1 text-xs text-slate-500">
+            Javob berilmagan savollar: {unanswered} ta
+          </p>
+        ) : null}
+        <Button
+          size="lg"
+          className="w-full py-3 text-base!"
+          onClick={() => void submit()}
+          disabled={submitting}
+        >
           {submitting ? "Topshirilmoqda..." : "Topshirish"}
         </Button>
       </div>

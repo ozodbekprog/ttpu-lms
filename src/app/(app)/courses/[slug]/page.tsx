@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Badge, ButtonLink, PageHeader } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import { Avatar, Badge, ButtonLink } from "@/components/ui";
 import { CourseMaterials } from "@/components/courses/course-materials";
 import { CourseStudents } from "@/components/courses/course-students";
+import { CourseTabs } from "@/components/forum/course-tabs";
 
 export default async function CoursePage({
   params,
@@ -50,65 +49,87 @@ export default async function CoursePage({
   if (!canManage && !course.isPublished && !isEnrolled) notFound();
 
   const activeTab = tab === "students" && canManage ? "students" : "materials";
-
-  const tabs = [
-    { href: `/courses/${slug}`, label: "Materiallar", active: activeTab === "materials" },
-    { href: `/courses/${slug}/assignments`, label: "Topshiriqlar", active: false },
-    { href: `/courses/${slug}/attendance`, label: "Davomat", active: false },
-    { href: `/courses/${slug}/announcements`, label: "E'lonlar", active: false },
-    { href: `/courses/${slug}/forum`, label: "Forum", active: false },
-    ...(canManage
-      ? [{ href: `/courses/${slug}?tab=students`, label: "Talabalar", active: activeTab === "students" }]
-      : []),
-  ];
+  const materialsCount = course.sections.reduce((sum, section) => sum + section.materials.length, 0);
 
   return (
     <>
-      <PageHeader
-        title={
-          <span className="flex items-center gap-3">
-            <span
-              className="inline-block size-4 shrink-0 rounded"
-              style={{ backgroundColor: course.coverColor }}
-            />
-            {course.title}
-          </span>
-        }
-        subtitle={
-          <span className="flex flex-wrap items-center gap-2">
-            <span>{course.teacher.name}</span>
-            {!course.isPublished ? <Badge tone="amber">Qoralama</Badge> : null}
-          </span>
-        }
-        action={
-          canManage ? (
-            <ButtonLink href={`/courses/${course.slug}/edit`} variant="secondary">
-              Tahrirlash
-            </ButtonLink>
-          ) : undefined
-        }
-      />
+      <section className="relative mb-6 overflow-hidden rounded-2xl border border-slate-200/70 shadow-card">
+        <div
+          className="relative px-6 py-7 text-white md:px-8 md:py-9"
+          style={{ background: `linear-gradient(115deg, ${course.coverColor}, #131f3c 92%)` }}
+        >
+          <span className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-white/10 blur-2xl" />
+          <span className="pointer-events-none absolute -bottom-32 left-1/4 size-72 rounded-full bg-gold-400/10 blur-3xl" />
+          <div className="relative flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Kurs</p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{course.title}</h1>
+                {!course.isPublished ? <Badge tone="gold">Qoralama</Badge> : null}
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/85">
+                <span className="inline-flex items-center gap-2">
+                  <Avatar name={course.teacher.name} className="size-7! text-[10px] ring-2 ring-white/20" />
+                  {course.teacher.name}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-white/70"
+                  >
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                  {materialsCount} ta material
+                </span>
+                {canManage ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-white/70"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                    </svg>
+                    {course.enrollments.length} ta talaba
+                  </span>
+                ) : null}
+              </div>
+              {course.description ? (
+                <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/80">
+                  {course.description}
+                </p>
+              ) : null}
+            </div>
+            {canManage ? (
+              <ButtonLink
+                href={`/courses/${course.slug}/edit`}
+                variant="gold"
+                size="sm"
+                className="shrink-0"
+              >
+                Tahrirlash
+              </ButtonLink>
+            ) : null}
+          </div>
+        </div>
+      </section>
 
-      {course.description ? (
-        <p className="mb-6 max-w-3xl text-sm text-slate-600">{course.description}</p>
-      ) : null}
-
-      <div className="mb-6 flex gap-1 border-b border-slate-200">
-        {tabs.map((t) => (
-          <Link
-            key={t.href}
-            href={t.href}
-            className={cn(
-              "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition",
-              t.active
-                ? "border-blue-600 text-blue-700"
-                : "border-transparent text-slate-500 hover:text-slate-800",
-            )}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </div>
+      <CourseTabs slug={course.slug} active={activeTab} canManage={canManage} />
 
       {activeTab === "students" ? (
         <CourseStudents enrollments={course.enrollments} />

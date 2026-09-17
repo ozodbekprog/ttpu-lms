@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PageHeader } from "@/components/ui";
 import { AttemptForm } from "@/components/quiz/attempt-form";
 import { toQuestionFull, toQuestionPublic } from "@/components/quiz/shared";
 
@@ -33,14 +32,12 @@ export default async function AttemptPage({
     : null;
 
   return (
-    <>
-      <PageHeader title={attempt.quiz.title} subtitle="Test topshirish" />
-      <AttemptForm
-        attemptId={attempt.id}
-        quizId={attempt.quiz.id}
-        questions={questions}
-        endsAt={endsAt}
-      />
-    </>
+    <AttemptForm
+      attemptId={attempt.id}
+      quizId={attempt.quiz.id}
+      title={attempt.quiz.title}
+      questions={questions}
+      endsAt={endsAt}
+    />
   );
 }

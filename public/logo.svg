@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="TTPU LMS">
+  <defs>
+    <path id="arcTop" d="M 32 100 A 68 68 0 0 1 168 100" fill="none"/>
+    <path id="arcBottom" d="M 36 100 A 64 64 0 0 0 164 100" fill="none"/>
+  </defs>
+  <circle cx="100" cy="100" r="97" fill="#ffffff" stroke="#1d3460" stroke-width="3"/>
+  <circle cx="100" cy="100" r="87" fill="none" stroke="#1d3460" stroke-width="1.1" stroke-dasharray="1.6 3.6" opacity="0.9"/>
+  <circle cx="100" cy="100" r="60" fill="none" stroke="#1d3460" stroke-width="2.4"/>
+  <text font-family="Georgia, 'Times New Roman', serif" font-size="11" fill="#1d3460" letter-spacing="1.1">
+    <textPath href="#arcTop" startOffset="50%" text-anchor="middle">TURIN POLYTECHNIC UNIVERSITY IN TASHKENT</textPath>
+  </text>
+  <text font-family="Georgia, 'Times New Roman', serif" font-size="8" fill="#1d3460" letter-spacing="1.5">
+    <textPath href="#arcBottom" startOffset="50%" text-anchor="middle">EDUCATION · SCIENCE · PRODUCTION</textPath>
+  </text>
+  <text x="100" y="95" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="bold" fill="#1d3460" letter-spacing="1">TTPU</text>
+  <text x="100" y="117" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="9" fill="#c9a227" letter-spacing="5">LMS</text>
+  <text x="100" y="187" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="13" fill="#1d3460" letter-spacing="2">2009</text>
+</svg>

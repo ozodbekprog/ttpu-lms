@@ -40,16 +40,47 @@ export default async function AssignmentDetailPage({
 
   const infoCard = (
     <Card>
-      <CardHeader
-        title="Topshiriq haqida"
-        subtitle={
-          assignment.dueAt ? `Muddat: ${fmtDateTime(assignment.dueAt)}` : "Muddat belgilanmagan"
-        }
-      />
-      <CardBody className="space-y-3 text-sm text-slate-600">
-        <p className="whitespace-pre-wrap">{assignment.description ?? "Tavsif kiritilmagan."}</p>
-        <p className="text-xs text-slate-400">
-          Maksimal ball: {assignment.maxScore} · Yaratilgan: {fmtDate(assignment.createdAt)}
+      <CardHeader title="Topshiriq haqida" subtitle={course.title} />
+      <CardBody className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 11h18" />
+            </svg>
+            {assignment.dueAt ? fmtDateTime(assignment.dueAt) : "Muddat belgilanmagan"}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            Maksimal ball: {assignment.maxScore}
+          </span>
+          <span className="inline-flex items-center rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">
+            Yaratilgan: {fmtDate(assignment.createdAt)}
+          </span>
+        </div>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+          {assignment.description ?? "Tavsif kiritilmagan."}
         </p>
       </CardBody>
     </Card>
@@ -109,10 +140,10 @@ export default async function AssignmentDetailPage({
           <CardBody className="space-y-4">
             {graded && submission ? (
               <>
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-2 rounded-2xl bg-gradient-to-br from-brand-50 to-white p-4 ring-1 ring-brand-100">
                   <span
                     className={cn(
-                      "text-3xl font-semibold",
+                      "text-4xl font-semibold tracking-tight",
                       gradeColor(submission.score, assignment.maxScore),
                     )}
                   >
@@ -121,21 +152,28 @@ export default async function AssignmentDetailPage({
                   <span className="text-sm text-slate-400">/ {assignment.maxScore} ball</span>
                 </div>
                 {submission.feedback ? (
-                  <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-                    {submission.feedback}
-                  </p>
+                  <div className="rounded-xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      O&apos;qituvchi izohi
+                    </p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                      {submission.feedback}
+                    </p>
+                  </div>
                 ) : null}
                 {submission.text ? (
-                  <p className="whitespace-pre-wrap text-sm text-slate-600">{submission.text}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                    {submission.text}
+                  </p>
                 ) : null}
                 {submission.fileUrl ? (
                   <a
                     href={submission.fileUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="block break-all text-sm text-blue-600 hover:underline"
+                    className="inline-flex max-w-full items-center gap-1.5 text-sm text-brand-700 hover:underline"
                   >
-                    {submission.fileUrl}
+                    <span className="truncate">{submission.fileUrl}</span>
                   </a>
                 ) : null}
                 <p className="text-xs text-slate-400">

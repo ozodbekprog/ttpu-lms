@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, ButtonLink, Card, CardBody, CardHeader, EmptyState } from "@/components/ui";
-import { cn, dayName, fmtDateTime } from "@/lib/utils";
+import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState } from "@/components/ui";
+import { cn, dayName } from "@/lib/utils";
 
 export type CalendarItem = {
   id: string;
@@ -155,30 +155,49 @@ export function CalendarView() {
           title={`${MONTH_NAMES[month - 1]} ${year}`}
           subtitle={loading ? "Yuklanmoqda..." : `${items.length} ta muddat`}
           action={
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="secondary" size="sm" onClick={() => goToMonth(-1)}>
-                ← Oldingi
-              </Button>
-              <Button variant="secondary" size="sm" onClick={goToToday}>
+            <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <button
+                type="button"
+                onClick={() => goToMonth(-1)}
+                aria-label="Oldingi oy"
+                className="px-3 py-1.5 text-sm text-slate-500 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-800"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={goToToday}
+                className="border-x border-slate-200 px-3.5 py-1.5 text-sm font-medium text-brand-700 transition-colors duration-150 hover:bg-brand-50"
+              >
                 Bugun
-              </Button>
-              <Button variant="secondary" size="sm" onClick={() => goToMonth(1)}>
-                Keyingi →
-              </Button>
+              </button>
+              <button
+                type="button"
+                onClick={() => goToMonth(1)}
+                aria-label="Keyingi oy"
+                className="px-3 py-1.5 text-sm text-slate-500 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-800"
+              >
+                →
+              </button>
             </div>
           }
         />
         <CardBody>
-          {error ? <p className="mb-3 text-sm text-rose-600">{error}</p> : null}
-          <div className="grid grid-cols-7 gap-1">
+          {error ? (
+            <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+          ) : null}
+          <div className="grid grid-cols-7 gap-1.5">
             {WEEKDAYS.map((name) => (
-              <div key={name} className="py-1 text-center text-xs font-medium text-slate-500">
+              <div
+                key={name}
+                className="pb-1 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+              >
                 {name}
               </div>
             ))}
             {cells.map((day, index) => {
               if (day === null) {
-                return <div key={`empty-${index}`} className="min-h-16 rounded-lg" />;
+                return <div key={`empty-${index}`} className="min-h-16 sm:min-h-20" />;
               }
               const key = dayKey(year, month, day);
               const dayItems = itemsByDay.get(key) ?? [];
@@ -190,35 +209,34 @@ export function CalendarView() {
                   type="button"
                   onClick={() => setSelected(key)}
                   className={cn(
-                    "flex min-h-16 flex-col items-start gap-1.5 rounded-lg border p-1.5 text-left text-xs transition sm:p-2",
-                    isSelected
-                      ? "border-blue-600 bg-blue-600 text-white"
-                      : isToday
-                        ? "border-blue-300 bg-blue-50 text-slate-900"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-blue-200 hover:bg-blue-50/50",
+                    "flex min-h-16 flex-col items-start gap-1.5 rounded-xl border border-slate-100 bg-white p-1.5 text-left transition-all duration-150 hover:border-brand-200 hover:bg-brand-50/40 sm:min-h-20 sm:p-2",
+                    isSelected && "border-brand-200 bg-brand-50/70 ring-1 ring-brand-200",
                   )}
                 >
-                  <span className={cn("font-medium", isToday && !isSelected ? "text-blue-700" : "")}>
+                  <span
+                    className={cn(
+                      "inline-flex size-7 items-center justify-center rounded-full text-sm",
+                      isToday
+                        ? "bg-brand-900 font-semibold text-white shadow-sm"
+                        : "font-medium text-slate-600",
+                    )}
+                  >
                     {day}
                   </span>
                   {dayItems.length > 0 ? (
-                    <span className="flex flex-wrap items-center gap-1">
-                      {dayItems.slice(0, 3).map((item) => (
+                    <span className="flex flex-wrap items-center gap-1 px-0.5">
+                      {dayItems.slice(0, 4).map((item) => (
                         <span
                           key={item.id}
                           className={cn(
                             "size-1.5 rounded-full",
-                            isSelected
-                              ? "bg-white"
-                              : item.type === "quiz"
-                                ? "bg-blue-600"
-                                : "bg-amber-500",
+                            item.type === "quiz" ? "bg-brand-600" : "bg-amber-500",
                           )}
                         />
                       ))}
-                      {dayItems.length > 3 ? (
-                        <span className={cn("text-[10px]", isSelected ? "text-white" : "text-slate-400")}>
-                          +{dayItems.length - 3}
+                      {dayItems.length > 4 ? (
+                        <span className="text-[10px] font-medium text-slate-400">
+                          +{dayItems.length - 4}
                         </span>
                       ) : null}
                     </span>
@@ -227,12 +245,18 @@ export function CalendarView() {
               );
             })}
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+          <div className="mt-4 flex flex-wrap items-center gap-5 text-xs text-slate-500">
             <span className="flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-blue-600" /> Test
+              <span className="size-1.5 rounded-full bg-brand-600" /> Test
             </span>
             <span className="flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-amber-500" /> Topshiriq
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-flex size-4 items-center justify-center rounded-full bg-brand-900 text-[9px] font-semibold text-white">
+                {today.getDate()}
+              </span>
+              Bugun
             </span>
           </div>
         </CardBody>
@@ -241,7 +265,11 @@ export function CalendarView() {
       <Card>
         <CardHeader
           title={selected ? selectedDayTitle(selected) : "Kun tanlanmagan"}
-          subtitle="Deadline'lar ro'yxati"
+          subtitle={
+            selected && selectedItems.length > 0
+              ? `${selectedItems.length} ta muddat`
+              : "Deadline'lar ro'yxati"
+          }
         />
         <CardBody className="space-y-3">
           {selected === null ? (
@@ -254,17 +282,22 @@ export function CalendarView() {
             selectedItems.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-100 p-3"
+                className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 bg-white p-3.5 transition-shadow duration-150 hover:shadow-lift"
               >
+                <span
+                  className={cn(
+                    "h-10 w-1 shrink-0 rounded-full",
+                    item.type === "quiz" ? "bg-brand-500" : "bg-amber-400",
+                  )}
+                />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                  <p className="text-xs text-slate-500">{item.courseTitle}</p>
+                  <p className="truncate text-sm font-medium text-slate-900">{item.title}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{item.courseTitle}</p>
                 </div>
-                <Badge tone={item.type === "quiz" ? "blue" : "amber"}>
+                <Badge tone={item.type === "quiz" ? "brand" : "amber"}>
                   {item.type === "quiz" ? "Test" : "Topshiriq"}
                 </Badge>
-                <span className="text-xs font-medium text-slate-600">{timeText(item.dueAt)}</span>
-                <span className="text-xs text-slate-400">{fmtDateTime(item.dueAt)}</span>
+                <span className="text-xs font-semibold text-slate-700">{timeText(item.dueAt)}</span>
                 {item.type === "quiz" ? (
                   <ButtonLink href={`/quizzes/${item.id}`} variant="secondary" size="sm">
                     Ko&apos;rish

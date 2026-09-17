@@ -197,16 +197,20 @@ export function ScheduleBoard({
           {canEdit ? (
             <Button onClick={() => openAdd(today, 1)}>{"Dars qo'shish"}</Button>
           ) : null}
-          <p className="text-xs text-slate-500">{entries.length} ta yozuv</p>
+          <Badge tone="slate" className="mb-2 self-end sm:ml-auto">
+            {entries.length} ta yozuv
+          </Badge>
         </CardBody>
       </Card>
 
       {error ? (
-        <p className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700">{error}</p>
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+          {error}
+        </p>
       ) : null}
 
       {form ? (
-        <Card>
+        <Card className="border-brand-200">
           <CardHeader
             title={form.id ? "Yozuvni tahrirlash" : "Yangi dars qo'shish"}
             subtitle={selectedGroupName ?? undefined}
@@ -296,59 +300,73 @@ export function ScheduleBoard({
         <CardBody>
           <Table className="[&>table]:min-w-[900px]">
             <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-3 py-2 font-medium">Vaqt</th>
+              <tr className="border-b border-slate-200">
+                <th className="w-28 px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Vaqt
+                </th>
                 {DAYS.map((day) => (
                   <th
                     key={day}
                     className={cn(
-                      "px-3 py-2 font-medium",
-                      day === today && "bg-blue-50 text-blue-700",
+                      "relative px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide",
+                      day === today ? "bg-brand-50 text-brand-800" : "text-slate-400",
                     )}
                   >
+                    {day === today ? (
+                      <span className="absolute inset-x-0 top-0 h-0.5 bg-gold-400" />
+                    ) : null}
                     {dayName(day)}
-                    {day === today ? <span className="ml-1 text-[10px] font-semibold">bugun</span> : null}
+                    {day === today ? (
+                      <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold normal-case text-brand-700">
+                        bugun
+                      </span>
+                    ) : null}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {SLOTS.map((slot) => (
-                <tr key={slot} className="border-b border-slate-100 align-top">
-                  <td className="w-32 px-3 py-3">
-                    <p className="text-sm font-medium text-slate-900">{slot}-par</p>
-                    <p className="text-xs text-slate-500">{SLOT_TIMES[slot]}</p>
+                <tr key={slot} className="border-b border-slate-100 align-top last:border-0">
+                  <td className="w-28 border-r border-slate-100 px-3 py-3.5">
+                    <p className="text-sm font-medium text-slate-700">{slot}-par</p>
+                    <p className="mt-0.5 text-[11px] text-slate-400">{SLOT_TIMES[slot]}</p>
                   </td>
                   {DAYS.map((day) => {
                     const cellEntries = entriesAt(day, slot);
                     return (
                       <td
                         key={day}
-                        className={cn("px-2 py-2", day === today && "bg-blue-50/40")}
+                        className={cn("px-2 py-2.5", day === today && "bg-brand-50/60")}
                       >
                         <div className="space-y-2">
                           {cellEntries.map((entry) => (
                             <div
                               key={entry.id}
-                              className="rounded-lg border border-slate-200 bg-white px-2.5 py-2"
+                              className="group rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 transition-all duration-150 hover:border-brand-200 hover:shadow-card"
                             >
-                              <p className="text-sm font-medium text-slate-900">{entry.subject}</p>
+                              <p className="text-sm font-semibold leading-snug text-slate-900">
+                                {entry.subject}
+                              </p>
                               {entry.teacher ? (
-                                <p className="text-xs text-slate-500">{entry.teacher}</p>
+                                <p className="mt-0.5 text-xs text-slate-500">{entry.teacher}</p>
                               ) : null}
-                              {entry.room ? (
-                                <p className="text-xs text-slate-500">{entry.room}</p>
-                              ) : null}
-                              {entry.parity ? (
-                                <Badge tone="amber" className="mt-1">
-                                  {PARITY_LABEL[entry.parity] ?? entry.parity}
-                                </Badge>
+                              {entry.room || entry.parity ? (
+                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                  {entry.room ? <Badge tone="slate">{entry.room}</Badge> : null}
+                                  {entry.parity ? (
+                                    <Badge tone="amber">
+                                      {PARITY_LABEL[entry.parity] ?? entry.parity}
+                                    </Badge>
+                                  ) : null}
+                                </div>
                               ) : null}
                               {canEdit ? (
-                                <div className="mt-1.5 flex gap-1">
+                                <div className="mt-2 flex gap-1 transition-opacity duration-150 md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
                                   <Button
                                     size="sm"
-                                    variant="secondary"
+                                    variant="ghost"
+                                    className="text-brand-700! hover:bg-brand-50!"
                                     onClick={() => openEdit(entry)}
                                     disabled={saving}
                                   >
@@ -357,7 +375,7 @@ export function ScheduleBoard({
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="text-rose-600"
+                                    className="text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
                                     onClick={() => remove(entry)}
                                     disabled={saving}
                                   >
@@ -371,10 +389,13 @@ export function ScheduleBoard({
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="w-full border border-dashed border-slate-300 text-slate-400"
+                              className="w-full border border-dashed border-slate-200 py-2 text-slate-400! hover:border-brand-300! hover:bg-brand-50/50! hover:text-brand-700!"
                               onClick={() => openAdd(day, slot)}
                               disabled={saving}
                             >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 5v14M5 12h14" />
+                              </svg>
                               {"Qo'shish"}
                             </Button>
                           ) : null}

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ButtonLink, Card, CardBody, EmptyState, PageHeader } from "@/components/ui";
+import { Avatar, ButtonLink, Card, CardBody, EmptyState, PageHeader } from "@/components/ui";
 import { fmtDateTime } from "@/lib/utils";
 import { canManageCourse } from "@/components/courses/course-access";
 import { CourseTabs } from "@/components/forum/course-tabs";
@@ -56,18 +56,32 @@ export default async function CourseAnnouncementsPage({
           description="Hozircha bu kursda e'lon chop etilmagan."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {announcements.map((announcement) => {
             const canModify = management || announcement.author.id === user.id;
             return (
-              <Card key={announcement.id}>
+              <Card
+                key={announcement.id}
+                className="transition-all duration-200 hover:shadow-lift"
+              >
                 <CardBody>
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-medium text-slate-900">{announcement.title}</h3>
-                      <p className="mt-0.5 text-xs text-slate-500">
-                        {announcement.author.name} · {fmtDateTime(announcement.createdAt)}
-                      </p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <Avatar name={announcement.author.name} />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {announcement.author.name}
+                          </p>
+                          <span className="text-xs text-slate-300">·</span>
+                          <p className="text-xs text-slate-500">
+                            {fmtDateTime(announcement.createdAt)}
+                          </p>
+                        </div>
+                        <h3 className="mt-1 font-semibold tracking-tight text-slate-900">
+                          {announcement.title}
+                        </h3>
+                      </div>
                     </div>
                     {canModify ? (
                       <AnnouncementsActions
@@ -79,7 +93,7 @@ export default async function CourseAnnouncementsPage({
                       />
                     ) : null}
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                     {announcement.body}
                   </p>
                 </CardBody>

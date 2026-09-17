@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, Card, CardBody, CardHeader, Input, Label, Select, Textarea } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import {
   QUESTION_TYPE_LABEL,
   type QuestionDraft,
@@ -95,7 +96,7 @@ export function QuestionForm({
   }
 
   return (
-    <Card className="border-blue-200">
+    <Card className="border-brand-200">
       <CardHeader
         title={initial ? "Savolni tahrirlash" : "Yangi savol"}
         subtitle="Savol matni, turi, variantlari va balli"
@@ -135,37 +136,61 @@ export function QuestionForm({
         </div>
 
         {type === "TEXT" ? (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
             Matnli savol avtomatik baholanmaydi — o&apos;qituvchi qo&apos;lda ball qo&apos;yadi.
           </p>
         ) : (
-          <div className="space-y-2">
-            <Label>Variantlar (to&apos;g&apos;risini belgilang)</Label>
-            {options.map((option, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
-                  type={type === "SINGLE" ? "radio" : "checkbox"}
-                  name="correct-option"
-                  checked={correct.includes(index)}
-                  onChange={() => toggleCorrect(index)}
-                  className="size-4 shrink-0 accent-blue-600"
-                />
-                <Input
-                  value={option}
-                  onChange={(event) => changeOption(index, event.target.value)}
-                  placeholder={`${index + 1}-variant`}
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => removeOption(index)}
-                  disabled={options.length <= 2}
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium text-slate-700">Variantlar</span>
+              <span className="text-xs text-slate-400">
+                {type === "SINGLE" ? "Bitta to'g'ri javobni belgilang" : "Bir nechta to'g'ri javobni belgilang"}
+              </span>
+            </div>
+            {options.map((option, index) => {
+              const checked = correct.includes(index);
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl border px-3 py-2 transition-colors duration-150",
+                    checked
+                      ? "border-emerald-300 bg-emerald-50/70"
+                      : "border-slate-200 bg-white hover:border-slate-300",
+                  )}
                 >
-                  O&apos;chirish
-                </Button>
-              </div>
-            ))}
+                  <input
+                    type={type === "SINGLE" ? "radio" : "checkbox"}
+                    name="correct-option"
+                    checked={checked}
+                    onChange={() => toggleCorrect(index)}
+                    className="size-4 shrink-0 accent-emerald-600"
+                  />
+                  <Input
+                    value={option}
+                    onChange={(event) => changeOption(index, event.target.value)}
+                    placeholder={`${index + 1}-variant`}
+                    className="border-transparent! bg-transparent! px-0! shadow-none! focus:border-transparent! focus:ring-0!"
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="shrink-0 text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
+                    onClick={() => removeOption(index)}
+                    disabled={options.length <= 2}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    </svg>
+                    <span className="sr-only">Variantni o&apos;chirish</span>
+                  </Button>
+                </div>
+              );
+            })}
             <Button size="sm" variant="secondary" onClick={() => setOptions((prev) => [...prev, ""])}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
               Variant qo&apos;shish
             </Button>
           </div>
@@ -173,7 +198,7 @@ export function QuestionForm({
 
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
           <Button variant="secondary" onClick={onCancel} disabled={saving}>
             Bekor qilish
           </Button>

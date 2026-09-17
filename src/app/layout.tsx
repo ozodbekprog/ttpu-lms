@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TTPU LMS — O'quv boshqaruv tizimi",
   description: "Turin Politexnika Universiteti uchun zamonaviy o'quv platformasi",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1d3460",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

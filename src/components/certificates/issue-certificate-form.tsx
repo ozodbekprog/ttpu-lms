@@ -96,10 +96,47 @@ export function IssueCertificateForm({
                 placeholder="Masalan: 92"
                 onChange={(event) => setGrade(event.target.value)}
               />
+              <p className="mt-1.5 text-xs text-slate-400">0 dan 100 gacha, ixtiyoriy</p>
             </div>
-            {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-            {message ? <p className="text-sm text-emerald-600">{message}</p> : null}
-            <div className="flex justify-end">
+            {error ? (
+              <p className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 8v4" />
+                  <path d="M12 16h.01" />
+                </svg>
+                {error}
+              </p>
+            ) : null}
+            {message ? (
+              <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0"
+                >
+                  <path d="m5 13 4 4L19 7" />
+                </svg>
+                {message}
+              </p>
+            ) : null}
+            <div className="flex justify-end pt-1">
               <Button type="submit" disabled={busy}>
                 {busy ? "Berilmoqda..." : "Sertifikat berish"}
               </Button>

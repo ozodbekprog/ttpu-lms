@@ -179,7 +179,7 @@ export function SessionPanel({
           </Button>
         }
       />
-      <CardBody className="space-y-5">
+      <CardBody className="space-y-6">
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-40">
             <Label>Davomiyligi</Label>
@@ -217,41 +217,52 @@ export function SessionPanel({
         </div>
 
         {error ? (
-          <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+          <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
         ) : null}
 
         {latest ? (
-          <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
-            <div className="mx-auto w-full max-w-60">
-              {qr ? (
-                <img
-                  src={qr}
-                  alt="Davomat uchun QR kod"
-                  className="aspect-square w-full rounded-xl border border-slate-200 bg-white p-2"
-                />
-              ) : (
-                <div className="aspect-square w-full animate-pulse rounded-xl bg-slate-100" />
-              )}
-              <p className="mt-3 text-center font-mono text-2xl font-semibold tracking-[0.35em] text-slate-900">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,16rem)_1fr]">
+            <div className="mx-auto w-full max-w-64">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                {qr ? (
+                  <img
+                    src={qr}
+                    alt="Davomat uchun QR kod"
+                    className="aspect-square w-full rounded-xl"
+                  />
+                ) : (
+                  <div className="aspect-square w-full animate-pulse rounded-xl bg-slate-100" />
+                )}
+              </div>
+              <p className="mt-4 text-center font-mono text-4xl font-semibold tracking-[0.3em] text-brand-900">
                 {latest.code}
               </p>
-              <p className="mt-1 text-center text-xs text-slate-400">
-                /attendance/check-in
-              </p>
+              <p className="mt-1 text-center text-xs text-slate-400">/attendance/check-in</p>
             </div>
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
+
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
                 {latestActive ? (
                   <Badge tone="green">Faol</Badge>
                 ) : (
                   <Badge tone="slate">Yopilgan</Badge>
                 )}
                 {latestActive ? (
-                  <span className="text-sm text-slate-600">
-                    Qolgan vaqt:{" "}
-                    <span className="font-mono font-semibold text-slate-900">
-                      {formatRemaining(remainingMs)}
-                    </span>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-gold-300/20 px-3 py-1 font-mono text-sm font-semibold text-gold-600">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 7v5l3 2" />
+                    </svg>
+                    {formatRemaining(remainingMs)}
                   </span>
                 ) : (
                   <span className="text-sm text-slate-500">
@@ -259,17 +270,21 @@ export function SessionPanel({
                   </span>
                 )}
               </div>
+
               <div>
                 <p className="text-sm font-medium text-slate-800">
-                  Belgilanganlar: {latest.marked.length}
-                  {studentCount ? ` / ${studentCount}` : ""}
+                  Belgilanganlar:{" "}
+                  <span className="font-semibold text-brand-800">{latest.marked.length}</span>
+                  {studentCount ? (
+                    <span className="text-slate-400"> / {studentCount}</span>
+                  ) : null}
                 </p>
                 {latest.marked.length === 0 ? (
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1.5 text-sm text-slate-500">
                     Hozircha hech kim belgilanmagan.
                   </p>
                 ) : (
-                  <ul className="mt-2 flex max-h-48 flex-wrap gap-2 overflow-y-auto">
+                  <ul className="mt-2.5 flex max-h-48 flex-wrap gap-2 overflow-y-auto">
                     {latest.marked.map((mark) => (
                       <li key={mark.studentId}>
                         <Badge tone={STATUS_TONES[mark.status]}>
@@ -280,6 +295,7 @@ export function SessionPanel({
                   </ul>
                 )}
               </div>
+
               <p className="text-xs text-slate-400">
                 Ro&apos;yxat 30 sekundda bir marta avtomatik yangilanadi.
               </p>
@@ -293,31 +309,40 @@ export function SessionPanel({
 
         {history.length > 0 ? (
           <div>
-            <p className="mb-2 text-sm font-medium text-slate-700">So&apos;nggi sessiyalar</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+              So&apos;nggi sessiyalar
+            </p>
             <Table>
               <thead>
-                <tr className="border-b border-slate-200 text-xs text-slate-500">
-                  <th className="py-2 pr-3 text-left font-medium">Kod</th>
-                  <th className="px-3 py-2 text-left font-medium">Sana</th>
-                  <th className="px-3 py-2 text-left font-medium">Holat</th>
-                  <th className="px-3 py-2 text-left font-medium">Belgilangan</th>
+                <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                  <th className="py-2.5 pr-3 text-left font-medium">Kod</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Sana</th>
+                  <th className="px-3 py-2.5 text-left font-medium">Holat</th>
+                  <th className="px-3 py-2.5 text-right font-medium">Belgilangan</th>
                 </tr>
               </thead>
               <tbody>
                 {history.map((session) => (
-                  <tr key={session.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-2 pr-3 font-mono text-xs text-slate-700">{session.code}</td>
-                    <td className="px-3 py-2 text-xs text-slate-500">
+                  <tr
+                    key={session.id}
+                    className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/70"
+                  >
+                    <td className="py-2.5 pr-3 font-mono text-xs tracking-wider text-slate-700">
+                      {session.code}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs text-slate-500">
                       {fmtDateTime(session.createdAt)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2.5">
                       {session.active ? (
                         <Badge tone="green">Faol</Badge>
                       ) : (
                         <Badge tone="slate">Yopilgan</Badge>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{session.marked.length}</td>
+                    <td className="px-3 py-2.5 text-right text-xs font-semibold text-slate-600">
+                      {session.marked.length}
+                    </td>
                   </tr>
                 ))}
               </tbody>

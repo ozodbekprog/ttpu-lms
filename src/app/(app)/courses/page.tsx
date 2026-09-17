@@ -63,7 +63,7 @@ export default async function CoursesPage() {
           action={staff ? <ButtonLink href="/courses/new">Yangi kurs</ButtonLink> : undefined}
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((course) => (
             <CourseCard key={course.id} course={course} staff={staff} />
           ))}

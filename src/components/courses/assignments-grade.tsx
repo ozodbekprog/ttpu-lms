@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, CardBody, CardHeader, Input, Label, Table, Textarea } from "@/components/ui";
 import { SubmissionBadge, type SubmissionStatusValue } from "@/components/courses/assignments-status";
-import { fmtDateTime } from "@/lib/utils";
+import { cn, fmtDateTime } from "@/lib/utils";
 
 export type SubmissionRow = {
   id: string;
@@ -67,45 +67,50 @@ export function AssignmentsGrade({
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader title="Topshirilgan ishlar" subtitle={`${submissions.length} ta`} />
       <CardBody className="space-y-4">
         {submissions.length === 0 ? (
-          <p className="text-sm text-slate-500">Hali hech kim topshirmagan.</p>
+          <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-6 text-center text-sm text-slate-500">
+            Hali hech kim topshirmagan.
+          </p>
         ) : (
           <Table>
             <thead>
-              <tr className="border-b border-slate-200 text-xs text-slate-500">
-                <th className="py-2 pr-3 text-left font-medium">Talaba</th>
-                <th className="px-3 py-2 text-left font-medium">Sana</th>
-                <th className="px-3 py-2 text-left font-medium">Holat</th>
-                <th className="px-3 py-2 text-left font-medium">Fayl</th>
-                <th className="px-3 py-2 text-left font-medium">Ball</th>
-                <th className="px-3 py-2" />
+              <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <th className="py-2.5 pr-3 text-left font-medium">Talaba</th>
+                <th className="px-3 py-2.5 text-left font-medium">Sana</th>
+                <th className="px-3 py-2.5 text-left font-medium">Holat</th>
+                <th className="px-3 py-2.5 text-left font-medium">Fayl</th>
+                <th className="px-3 py-2.5 text-left font-medium">Ball</th>
+                <th className="px-3 py-2.5" />
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {submissions.map((submission) => (
                 <tr
                   key={submission.id}
-                  className={selectedId === submission.id ? "bg-blue-50/60" : undefined}
+                  className={cn(
+                    "transition-colors duration-150",
+                    selectedId === submission.id ? "bg-brand-50/60" : "hover:bg-slate-50/70",
+                  )}
                 >
-                  <td className="py-2 pr-3 text-sm font-medium text-slate-800">
+                  <td className="py-3 pr-3 text-sm font-medium text-slate-800">
                     {submission.studentName}
                   </td>
-                  <td className="px-3 py-2 text-xs text-slate-500">
+                  <td className="px-3 py-3 text-xs text-slate-500">
                     {fmtDateTime(submission.submittedAt)}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-3 py-3">
                     <SubmissionBadge status={submission.status} />
                   </td>
-                  <td className="px-3 py-2 text-sm">
+                  <td className="px-3 py-3 text-sm">
                     {submission.fileUrl ? (
                       <a
                         href={submission.fileUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="inline-flex items-center gap-1.5 font-medium text-brand-700 hover:underline"
                       >
                         Yuklab olish
                       </a>
@@ -113,10 +118,15 @@ export function AssignmentsGrade({
                       <span className="text-slate-400">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-sm text-slate-700">
-                    {submission.score != null ? `${submission.score}/${maxScore}` : "—"}
+                  <td className="px-3 py-3 text-sm text-slate-700">
+                    {submission.score != null ? (
+                      <span className="font-semibold text-slate-800">{submission.score}</span>
+                    ) : (
+                      "—"
+                    )}
+                    <span className="text-slate-400">/{maxScore}</span>
                   </td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-3 py-3 text-right">
                     <Button size="sm" variant="secondary" onClick={() => select(submission)}>
                       Baholash
                     </Button>
@@ -128,19 +138,27 @@ export function AssignmentsGrade({
         )}
 
         {selected ? (
-          <form onSubmit={handleSubmit} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-800">{selected.studentName}</p>
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-2xl border border-brand-100 bg-brand-50/40 p-4"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-slate-800">{selected.studentName}</p>
+              <SubmissionBadge status={selected.status} />
+            </div>
             {selected.text ? (
-              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{selected.text}</p>
+              <p className="mt-3 whitespace-pre-wrap rounded-xl bg-white p-3 text-sm leading-relaxed text-slate-600">
+                {selected.text}
+              </p>
             ) : null}
             {selected.fileUrl ? (
               <a
                 href={selected.fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-1 block break-all text-sm text-blue-600 hover:underline"
+                className="mt-2 inline-flex max-w-full items-center gap-1.5 text-sm text-brand-700 hover:underline"
               >
-                {selected.fileUrl}
+                <span className="truncate">{selected.fileUrl}</span>
               </a>
             ) : null}
             <div className="mt-4 grid gap-4 sm:grid-cols-[140px_1fr]">
@@ -166,7 +184,7 @@ export function AssignmentsGrade({
               </div>
             </div>
             {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
-            <div className="mt-3 flex justify-end gap-2">
+            <div className="mt-4 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setSelectedId(null)}>
                 Yopish
               </Button>

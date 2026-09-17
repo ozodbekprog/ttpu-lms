@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Input, Label, Textarea } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Input, Label, Textarea } from "@/components/ui";
 
 export function ForumTopicCreate({ courseId }: { courseId: string }) {
   const router = useRouter();
@@ -48,43 +48,44 @@ export function ForumTopicCreate({ courseId }: { courseId: string }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
-      <h3 className="font-semibold text-slate-900">Yangi mavzu</h3>
-      <div className="mt-4 space-y-4">
-        <div>
-          <Label>Sarlavha</Label>
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            maxLength={200}
-            required
-            placeholder="Masalan: 2-topshiriq bo'yicha savol"
-          />
-        </div>
-        <div>
-          <Label>Matn</Label>
-          <Textarea
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            rows={4}
-            maxLength={10000}
-            required
-            placeholder="Savolingizni batafsil yozing..."
-          />
-        </div>
-      </div>
-      {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
-      <div className="mt-4 flex justify-end gap-2">
-        <Button variant="secondary" onClick={() => setOpen(false)}>
-          Bekor qilish
-        </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saqlanmoqda..." : "Yuborish"}
-        </Button>
-      </div>
-    </form>
+    <Card className="mb-6 overflow-hidden">
+      <CardHeader title="Yangi mavzu" subtitle="Savol yoki muhokama mavzusini boshlang" />
+      <CardBody>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <Label>Sarlavha</Label>
+              <Input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                maxLength={200}
+                required
+                placeholder="Masalan: 2-topshiriq bo'yicha savol"
+              />
+            </div>
+            <div>
+              <Label>Matn</Label>
+              <Textarea
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                rows={4}
+                maxLength={10000}
+                required
+                placeholder="Savolingizni batafsil yozing..."
+              />
+            </div>
+          </div>
+          {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
+          <div className="mt-5 flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setOpen(false)}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saqlanmoqda..." : "Yuborish"}
+            </Button>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
   );
 }

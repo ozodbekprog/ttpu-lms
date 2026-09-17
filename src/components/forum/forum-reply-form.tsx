@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Label, Textarea } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Textarea } from "@/components/ui";
 
 export function ForumReplyForm({ topicId }: { topicId: string }) {
   const router = useRouter();
@@ -36,25 +36,26 @@ export function ForumReplyForm({ topicId }: { topicId: string }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
-      <Label>Javob yozish</Label>
-      <Textarea
-        value={body}
-        onChange={(event) => setBody(event.target.value)}
-        rows={3}
-        maxLength={10000}
-        required
-        placeholder="Javobingizni yozing..."
-      />
-      {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
-      <div className="mt-3 flex justify-end">
-        <Button type="submit" disabled={saving}>
-          {saving ? "Yuborilmoqda..." : "Javob yuborish"}
-        </Button>
-      </div>
-    </form>
+    <Card className="overflow-hidden">
+      <CardHeader title="Javob yozish" subtitle="Fikringizni ulashing" />
+      <CardBody>
+        <form onSubmit={handleSubmit}>
+          <Textarea
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            rows={3}
+            maxLength={10000}
+            required
+            placeholder="Javobingizni yozing..."
+          />
+          {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
+          <div className="mt-4 flex justify-end">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Yuborilmoqda..." : "Javob yuborish"}
+            </Button>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
   );
 }

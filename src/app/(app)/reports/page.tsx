@@ -50,7 +50,7 @@ export default async function ReportsPage({
     <>
       <PageHeader
         title="Hisobotlar"
-        subtitle={selected.title}
+        subtitle={`${selected.title} · ${stats.studentCount} ta talaba`}
         action={
           <form method="get" className="flex items-end gap-2">
             <Select name="courseId" defaultValue={selected.id} className="w-64">
@@ -88,7 +88,7 @@ export default async function ReportsPage({
           value={percent(stats.attendanceRate)}
           hint={`${stats.attendanceCount} ta yozuv`}
         />
-        <Stat label="Test o'rtachasi" value={percent(stats.quizAverage)} />
+        <Stat label="Test o'rtachasi" value={percent(stats.quizAverage)} hint={`${stats.quizCount} ta test`} />
       </div>
 
       <Card className="mt-6">

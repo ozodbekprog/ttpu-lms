@@ -152,13 +152,14 @@ export function CourseStudents({
   return (
     <div className="space-y-4">
       {error ? (
-        <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+        <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-sm text-rose-700">{error}</p>
       ) : null}
 
       {resolvedCourseId ? (
         adding ? (
           <Card>
-            <CardBody className="flex flex-wrap items-end gap-2">
+            <CardHeader title="Talaba qo'shish" subtitle="Talabani ism yoki email bo'yicha toping" />
+            <CardBody className="flex flex-wrap items-end gap-3">
               <div className="min-w-52 flex-1">
                 <Label>Qidiruv</Label>
                 <Input
@@ -193,20 +194,20 @@ export function CourseStudents({
             </CardBody>
           </Card>
         ) : (
-          <Button variant="secondary" onClick={openAdd}>
-            {"+ Talaba qo'shish"}
-          </Button>
+          <div className="flex justify-end">
+            <Button onClick={openAdd}>{"+ Talaba qo'shish"}</Button>
+          </div>
         )
       ) : null}
 
       {enrollments.length === 0 ? (
         <EmptyState title="Talabalar yo'q" description="Bu kursga hali talaba yozilmagan." />
       ) : (
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader title="Talabalar" subtitle={`${enrollments.length} ta yozilgan`} />
           <Table>
-            <thead className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
-              <tr>
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-5 py-3 font-medium">#</th>
                 <th className="px-5 py-3 font-medium">Talaba</th>
                 <th className="px-5 py-3 font-medium">Email</th>
@@ -217,16 +218,28 @@ export function CourseStudents({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {enrollments.map((enrollment, index) => (
-                <tr key={enrollment.id}>
-                  <td className="px-5 py-3 text-slate-400">{index + 1}</td>
+                <tr key={enrollment.id} className="transition-colors duration-150 hover:bg-slate-50/70">
                   <td className="px-5 py-3">
-                    <span className="flex items-center gap-2">
-                      <Avatar name={enrollment.user.name} className="size-7 text-[10px]" />
+                    <span className="inline-flex size-6 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-500">
+                      {index + 1}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className="flex items-center gap-2.5">
+                      <Avatar name={enrollment.user.name} className="size-8! text-[10px]" />
                       <span className="font-medium text-slate-800">{enrollment.user.name}</span>
                     </span>
                   </td>
                   <td className="px-5 py-3 text-slate-500">{enrollment.user.email}</td>
-                  <td className="px-5 py-3 text-slate-500">{enrollment.user.group?.name ?? "—"}</td>
+                  <td className="px-5 py-3">
+                    {enrollment.user.group?.name ? (
+                      <span className="inline-flex rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                        {enrollment.user.group.name}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3 text-slate-500">{fmtDate(enrollment.createdAt)}</td>
                   <td className="px-5 py-3">
                     <Button

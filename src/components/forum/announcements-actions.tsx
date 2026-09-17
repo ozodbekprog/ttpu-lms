@@ -65,7 +65,7 @@ export function AnnouncementsActions({ announcement }: { announcement: Announcem
       {editing ? (
         <form
           onSubmit={handleSubmit}
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4"
         >
           <div className="space-y-4">
             <div>
@@ -90,10 +90,10 @@ export function AnnouncementsActions({ announcement }: { announcement: Announcem
           </div>
           {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
           <div className="mt-4 flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setEditing(false)}>
+            <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>
               Bekor qilish
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button size="sm" type="submit" disabled={saving}>
               {saving ? "Saqlanmoqda..." : "Saqlash"}
             </Button>
           </div>

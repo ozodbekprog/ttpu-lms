@@ -9,16 +9,37 @@ const QUICK_LINKS = [
     href: "/admin/users",
     title: "Foydalanuvchilar",
     description: "Yaratish, tahrirlash, parol tiklash",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
   },
   {
     href: "/admin/groups",
     title: "Guruhlar",
     description: "Guruhlarni qo'shish va tahrirlash",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m12 2 9 5-9 5-9-5 9-5" />
+        <path d="m3 12 9 5 9-5" />
+        <path d="m3 17 9 5 9-5" />
+      </svg>
+    ),
   },
   {
     href: "/admin/courses",
     title: "Kurslar",
-    description: "E'lon qilish, o'qituvchi biriktirish, o'chirish",
+    description: "E'lon qilish, o'qituvchi biriktirish",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      </svg>
+    ),
   },
 ];
 
@@ -37,27 +58,48 @@ export default async function AdminPage() {
 
   return (
     <>
-      <PageHeader title="Admin panel" subtitle="Tizim statistikasi va boshqaruv" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <PageHeader eyebrow="Boshqaruv" title="Admin panel" subtitle="Tizim statistikasi va boshqaruv" />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Stat label="Foydalanuvchilar" value={users} hint={`${teachers} o'qituvchi, ${students} talaba`} />
-        <Stat label="Kurslar" value={courses} />
-        <Stat label="Guruhlar" value={groups} />
-        <Stat label="Topshiriqlar" value={submissions} />
-        <Stat label="Testlar" value={quizzes} />
+        <Stat label="Kurslar" value={courses} hint="Barcha kurslar" />
+        <Stat label="Guruhlar" value={groups} hint="Tizimdagi guruhlar" />
+        <Stat label="Topshiriqlar" value={submissions} hint="Yuborilgan ishlar" />
+        <Stat label="Testlar" value={quizzes} hint="Yaratilgan testlar" />
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Tezkor havolalar" />
-          <CardBody className="space-y-2">
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader title="Tezkor havolalar" subtitle="Ko'p ishlatiladigan bo'limlar" />
+          <CardBody className="grid gap-3 sm:grid-cols-3">
             {QUICK_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block rounded-lg border border-slate-100 p-3 transition hover:border-blue-200 hover:bg-blue-50/50"
+                className="group flex flex-col gap-3 rounded-xl border border-slate-200/70 bg-slate-50/60 p-4 transition-all duration-150 hover:border-brand-200 hover:bg-brand-50/60 hover:shadow-sm"
               >
-                <span className="block text-sm font-medium text-slate-900">{link.title}</span>
-                <span className="block text-xs text-slate-500">{link.description}</span>
+                <span className="inline-flex size-9 items-center justify-center rounded-xl bg-white text-brand-700 shadow-sm ring-1 ring-slate-200/70 transition-colors duration-150 group-hover:bg-brand-900 group-hover:text-white group-hover:ring-brand-900">
+                  {link.icon}
+                </span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1 text-sm font-semibold text-slate-900">
+                    {link.title}
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-slate-300 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-brand-600"
+                    >
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">{link.description}</span>
+                </span>
               </Link>
             ))}
           </CardBody>

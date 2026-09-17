@@ -17,7 +17,13 @@ export function ForumReplyDelete({ replyId }: { replyId: string }) {
   }
 
   return (
-    <Button size="sm" variant="ghost" onClick={handleDelete} disabled={deleting}>
+    <Button
+      size="sm"
+      variant="ghost"
+      className="text-slate-400 hover:text-rose-600"
+      onClick={handleDelete}
+      disabled={deleting}
+    >
       O&apos;chirish
     </Button>
   );

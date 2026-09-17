@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Role } from "@prisma/client";
 import {
+  Avatar,
   Badge,
   Button,
   Card,
@@ -57,9 +58,9 @@ const ROLE_LABEL: Record<Role, string> = {
   STUDENT: "Talaba",
 };
 
-const ROLE_TONE: Record<Role, "purple" | "blue" | "slate"> = {
-  ADMIN: "purple",
-  TEACHER: "blue",
+const ROLE_TONE: Record<Role, "brand" | "purple" | "slate"> = {
+  ADMIN: "brand",
+  TEACHER: "purple",
   STUDENT: "slate",
 };
 
@@ -199,12 +200,23 @@ export default function UsersManager({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={openCreate}>+ Yangi foydalanuvchi</Button>
-        {notice ? <span className="text-sm text-emerald-600">{notice}</span> : null}
-        {error && !mode ? <span className="text-sm text-rose-600">{error}</span> : null}
+        {notice ? (
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            {notice}
+          </span>
+        ) : null}
+        {error && !mode ? (
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700">
+            {error}
+          </span>
+        ) : null}
       </div>
 
       {mode ? (
-        <Card>
+        <Card className="border-brand-200/70">
           <CardHeader
             title={
               mode === "create"
@@ -302,7 +314,7 @@ export default function UsersManager({
                     onChange={(e) => update("role", e.target.value as Role)}
                   >
                     <option value="STUDENT">Talaba</option>
-                    <option value="TEACHER">O'qituvchi</option>
+                    <option value="TEACHER">O&apos;qituvchi</option>
                     <option value="ADMIN">Administrator</option>
                   </Select>
                 </div>
@@ -350,21 +362,29 @@ export default function UsersManager({
         ) : (
           <Table>
             <thead>
-              <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
-                <th className="px-5 py-3 font-medium">Ism</th>
-                <th className="px-5 py-3 font-medium">Rol</th>
-                <th className="px-5 py-3 font-medium">Guruh</th>
-                <th className="px-5 py-3 font-medium">Holat</th>
-                <th className="px-5 py-3 font-medium">Ro'yxatdan o'tgan</th>
-                <th className="px-5 py-3 text-right font-medium">Amallar</th>
+              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <th className="px-5 py-3 font-semibold">Foydalanuvchi</th>
+                <th className="px-5 py-3 font-semibold">Rol</th>
+                <th className="px-5 py-3 font-semibold">Guruh</th>
+                <th className="px-5 py-3 font-semibold">Holat</th>
+                <th className="px-5 py-3 font-semibold">Ro&apos;yxatdan o&apos;tgan</th>
+                <th className="px-5 py-3 text-right font-semibold">Amallar</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="border-b border-slate-50 last:border-0">
+                <tr
+                  key={user.id}
+                  className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/60"
+                >
                   <td className="px-5 py-3">
-                    <span className="font-medium text-slate-900">{user.name}</span>
-                    <span className="block text-xs text-slate-500">{user.email}</span>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={user.name} className="size-8 text-[11px]" />
+                      <div className="min-w-0">
+                        <span className="block truncate font-medium text-slate-900">{user.name}</span>
+                        <span className="block truncate text-xs text-slate-500">{user.email}</span>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-5 py-3">
                     <Badge tone={ROLE_TONE[user.role]}>{ROLE_LABEL[user.role]}</Badge>
@@ -386,10 +406,10 @@ export default function UsersManager({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-rose-600 hover:bg-rose-50"
+                          className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                           onClick={() => remove(user)}
                         >
-                          O'chirish
+                          O&apos;chirish
                         </Button>
                       ) : null}
                     </div>

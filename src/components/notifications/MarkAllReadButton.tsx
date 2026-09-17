@@ -37,7 +37,16 @@ export function MarkAllReadButton() {
   return (
     <div className="flex flex-col items-end gap-1">
       <Button variant="secondary" onClick={markAll} disabled={loading}>
-        {loading ? "Belgilanmoqda..." : "Hammasini o'qildi"}
+        {loading ? (
+          "Belgilanmoqda..."
+        ) : (
+          <>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            Hammasini o&apos;qildi
+          </>
+        )}
       </Button>
       {error ? <p className="text-xs text-rose-600">{error}</p> : null}
     </div>

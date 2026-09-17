@@ -1,6 +1,18 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: To'lqin 3 (7 modul) — Komp 1
+Oxirgi yangilanish: UI jilo to'lqini (Komp 1)
+
+## UI jilo (brend dizayn tizimi)
+
+- [x] Brend tokenlar: `brand-*` (navy #1d3460), `gold-*` aksent, surface fon, yumshoq soyalar
+- [x] Logo (TTPU emblem SVG) + favicon + sidebar/topbar yangilandi
+- [x] `ui.tsx` v2: nafis Card/Button/Badge/Stat/Input + Progress/Skeleton
+- [x] Sidebar: faol holat pill (navy), gold nuqta indikatori, foydalanuvchi kartasi
+- [x] Sahifalar qayta dizayn: landing, auth (demo hisob chips), dashboard, kurslar,
+      topshiriqlar, e'lon/forum, testlar (fokus rejimi), jadval, baholar, hisobot,
+      kalendar, sertifikat (print saqlangan), davomat/check-in, admin, katalog,
+      bildirishnoma, profil
+- [x] 5 parallel UI agent, tsc 0 xato, 14 sahifa 200
 
 ## To'lqin 3 da qo'shildi
 

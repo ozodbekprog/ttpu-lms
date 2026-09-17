@@ -88,20 +88,20 @@ export default async function CourseAttendancePage({
             ) : (
               <Table>
                 <thead>
-                  <tr className="border-b border-slate-200 text-xs text-slate-500">
-                    <th className="py-2 pr-3 text-left font-medium">Sana</th>
-                    <th className="px-3 py-2 text-left font-medium">Holat</th>
-                    <th className="px-3 py-2 text-left font-medium">Izoh</th>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <th className="py-2.5 pr-3 text-left font-medium">Sana</th>
+                    <th className="px-3 py-2.5 text-left font-medium">Holat</th>
+                    <th className="px-3 py-2.5 text-left font-medium">Izoh</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {entries.map((entry) => (
-                    <tr key={entry.id} className="border-b border-slate-100 last:border-0">
-                      <td className="py-2 pr-3 text-sm text-slate-700">{fmtDate(entry.date)}</td>
-                      <td className="px-3 py-2">
+                    <tr key={entry.id} className="transition-colors duration-150 hover:bg-slate-50/70">
+                      <td className="py-3 pr-3 text-sm text-slate-700">{fmtDate(entry.date)}</td>
+                      <td className="px-3 py-3">
                         <Badge tone={STATUS_TONES[entry.status]}>{STATUS_LABELS[entry.status]}</Badge>
                       </td>
-                      <td className="px-3 py-2 text-xs text-slate-400">{entry.note ?? "—"}</td>
+                      <td className="px-3 py-3 text-xs text-slate-400">{entry.note ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -171,22 +171,22 @@ export default async function CourseAttendancePage({
             ) : (
               <Table>
                 <thead>
-                  <tr className="border-b border-slate-200 text-xs text-slate-500">
-                    <th className="py-2 pr-3 text-left font-medium">Sana</th>
-                    <th className="px-3 py-2 text-left font-medium">Bor</th>
-                    <th className="px-3 py-2 text-left font-medium">Yo&apos;q</th>
-                    <th className="px-3 py-2 text-left font-medium">Kech.</th>
-                    <th className="px-3 py-2 text-left font-medium">Sababli</th>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <th className="py-2.5 pr-3 text-left font-medium">Sana</th>
+                    <th className="px-3 py-2.5 text-left font-medium">Bor</th>
+                    <th className="px-3 py-2.5 text-left font-medium">Yo&apos;q</th>
+                    <th className="px-3 py-2.5 text-left font-medium">Kech.</th>
+                    <th className="px-3 py-2.5 text-left font-medium">Sababli</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {summaryRows.map(([date, summary]) => (
-                    <tr key={date} className="border-b border-slate-100 last:border-0">
-                      <td className="py-2 pr-3 text-sm text-slate-700">{fmtDate(date)}</td>
-                      <td className="px-3 py-2 text-sm text-emerald-600">{summary.present}</td>
-                      <td className="px-3 py-2 text-sm text-rose-600">{summary.absent}</td>
-                      <td className="px-3 py-2 text-sm text-amber-600">{summary.late}</td>
-                      <td className="px-3 py-2 text-sm text-blue-600">{summary.excused}</td>
+                    <tr key={date} className="transition-colors duration-150 hover:bg-slate-50/70">
+                      <td className="py-3 pr-3 text-sm text-slate-700">{fmtDate(date)}</td>
+                      <td className="px-3 py-3 text-sm font-medium text-emerald-600">{summary.present}</td>
+                      <td className="px-3 py-3 text-sm font-medium text-rose-600">{summary.absent}</td>
+                      <td className="px-3 py-3 text-sm font-medium text-amber-600">{summary.late}</td>
+                      <td className="px-3 py-3 text-sm font-medium text-blue-600">{summary.excused}</td>
                     </tr>
                   ))}
                 </tbody>
