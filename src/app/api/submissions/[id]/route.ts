@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { canManageCourse } from "@/components/courses/course-access";
+import { notifyUser } from "@/server/notify";
 
 const gradeSchema = z.object({
   score: z.coerce.number().int().min(0),
@@ -52,6 +53,13 @@ export async function PATCH(
       gradedAt: new Date(),
     },
   });
+
+  try {
+    await notifyUser(submission.studentId, {
+      title: `Topshiriq baholandi: ${submission.assignment.title} — ${parsed.data.score} ball`,
+      link: `/courses/${submission.assignment.course.slug}/assignments/${submission.assignmentId}`,
+    });
+  } catch {}
 
   return Response.json({ ok: true, data: updated });
 }

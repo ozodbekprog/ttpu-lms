@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { canManageCourse } from "@/components/courses/course-access";
+import { notifyCourseStudents } from "@/server/notify";
 
 const createSchema = z.object({
   title: z.string().trim().min(1, "Sarlavha kiriting").max(200),
@@ -99,6 +100,16 @@ export async function POST(
       maxScore: parsed.data.maxScore ?? 100,
     },
   });
+
+  try {
+    await notifyCourseStudents(course.id, {
+      title: `Yangi topshiriq: ${assignment.title}`,
+      body: assignment.dueAt
+        ? `Muddat: ${assignment.dueAt.toLocaleDateString("uz-UZ")}`
+        : undefined,
+      link: `/courses/${course.slug}/assignments/${assignment.id}`,
+    });
+  } catch {}
 
   return Response.json({ ok: true, data: assignment }, { status: 201 });
 }

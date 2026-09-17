@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { quizUpdateSchema } from "@/components/quiz/schema";
 import { publicError } from "@/components/quiz/server";
 import { toQuestionFull, toQuestionPublic } from "@/components/quiz/shared";
+import { notifyCourseStudents } from "@/server/notify";
 
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -80,6 +81,14 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     }
 
     const updated = await prisma.quiz.update({ where: { id }, data });
+    if (data.isPublished === true && !quiz.isPublished) {
+      try {
+        await notifyCourseStudents(updated.courseId, {
+          title: `Yangi test: ${updated.title}`,
+          link: `/quizzes/${updated.id}`,
+        });
+      } catch {}
+    }
     return Response.json({ ok: true, data: { id: updated.id } });
   } catch (error) {
     return Response.json({ ok: false, error: publicError(error) }, { status: 500 });

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { canManageCourse, canViewCourse, materialRuleError } from "@/components/courses/course-access";
+import { notifyCourseStudents } from "@/server/notify";
 
 const MATERIAL_TYPES = ["TEXT", "FILE", "VIDEO", "LINK"] as const;
 
@@ -98,6 +99,13 @@ export async function POST(
       position,
     },
   });
+
+  try {
+    await notifyCourseStudents(section.courseId, {
+      title: `Yangi material: ${material.title}`,
+      link: `/courses/${section.course.slug}`,
+    });
+  } catch {}
 
   return Response.json({ ok: true, data: material }, { status: 201 });
 }

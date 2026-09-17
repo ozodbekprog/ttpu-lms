@@ -4,6 +4,56 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 const PASSWORD = "ttpu1234";
 
+function daysAgo(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return new Date(d.toISOString().slice(0, 10));
+}
+
+async function ensureSection(courseId, title, position) {
+  const existing = await prisma.section.findFirst({ where: { courseId, title } });
+  if (existing) return existing;
+  return prisma.section.create({ data: { courseId, title, position } });
+}
+
+async function ensureMaterial(sectionId, title, data) {
+  const existing = await prisma.material.findFirst({ where: { sectionId, title } });
+  if (existing) return existing;
+  return prisma.material.create({ data: { sectionId, title, ...data } });
+}
+
+async function ensureAssignment(courseId, title, data) {
+  const existing = await prisma.assignment.findFirst({ where: { courseId, title } });
+  if (existing) return existing;
+  return prisma.assignment.create({ data: { courseId, title, ...data } });
+}
+
+async function ensureQuiz(courseId, title, data) {
+  const existing = await prisma.quiz.findFirst({ where: { courseId, title } });
+  if (existing) return existing;
+  return prisma.quiz.create({ data: { courseId, title, ...data } });
+}
+
+async function ensureQuestions(quizId, questions) {
+  const count = await prisma.question.count({ where: { quizId } });
+  if (count > 0) return;
+  await prisma.question.createMany({ data: questions.map((q) => ({ ...q, quizId })) });
+}
+
+async function ensureSubmission(assignmentId, studentId, data) {
+  return prisma.submission.upsert({
+    where: { assignmentId_studentId: { assignmentId, studentId } },
+    update: data,
+    create: { assignmentId, studentId, ...data },
+  });
+}
+
+async function ensureNotification(userId, title, data) {
+  const existing = await prisma.notification.findFirst({ where: { userId, title } });
+  if (existing) return existing;
+  return prisma.notification.create({ data: { userId, title, ...data } });
+}
+
 async function main() {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
 
@@ -92,131 +142,350 @@ async function main() {
 
   const prog = await prisma.course.findUnique({ where: { slug: "prog" } });
   const math = await prisma.course.findUnique({ where: { slug: "math1" } });
+  const phy = await prisma.course.findUnique({ where: { slug: "phy1" } });
+  const eng = await prisma.course.findUnique({ where: { slug: "eng1" } });
 
-  const sec1 = await prisma.section.create({
-    data: { courseId: prog.id, title: "1-hafta: Kirish va muhit", position: 1 },
-  });
-  const sec2 = await prisma.section.create({
-    data: { courseId: prog.id, title: "2-hafta: Algoritmlar", position: 2 },
-  });
-  const secM = await prisma.section.create({
-    data: { courseId: math.id, title: "1-hafta: Matritsalar", position: 1 },
-  });
+  const sec1 = await ensureSection(prog.id, "1-hafta: Kirish va muhit", 1);
+  const sec2 = await ensureSection(prog.id, "2-hafta: Algoritmlar", 2);
+  const secM = await ensureSection(math.id, "1-hafta: Matritsalar", 1);
+  const secM2 = await ensureSection(math.id, "2-hafta: Determinantlar va teskari matritsa", 2);
+  const secPhy = await ensureSection(phy.id, "1-hafta: Kinematika", 1);
+  const secEng = await ensureSection(eng.id, "1-hafta: Academic Writing", 1);
 
-  await prisma.material.createMany({
-    data: [
-      {
-        sectionId: sec1.id,
-        title: "Ma'ruza slaydlari (PDF)",
-        type: "LINK",
-        content: "https://example.com/prog-lecture-1.pdf",
-        position: 1,
-      },
-      {
-        sectionId: sec1.id,
-        title: "Muhitni o'rnatish qo'llanmasi",
-        type: "TEXT",
-        content:
-          "## VS Code + Python\n\n1. python.org dan Python 3.12 o'rnating\n2. VS Code'da Python extension o'rnating\n3. Birinchi `print(\"Hello, TTPU!\")` dasturingizni yozing",
-        position: 2,
-      },
-      {
-        sectionId: sec2.id,
-        title: "Algoritm turlari (video)",
-        type: "VIDEO",
-        content: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        position: 1,
-      },
-      {
-        sectionId: secM.id,
-        title: "Matritsa amallari — konspekt",
-        type: "TEXT",
-        content: "## Matritsalar\n\n- Qo'shish\n- Ko'paytirish\n- Determinant",
-        position: 1,
-      },
-    ],
-  });
-
-  const assignment = await prisma.assignment.create({
-    data: {
-      courseId: prog.id,
-      title: "Amaliy topshiriq 1: Kiritish-chiqarish",
-      description: "Foydalanuvchidan ism va yoshni so'rab, ekranga chiqaruvchi dastur yozing. Faylni yuklang.",
-      dueAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
-      maxScore: 100,
+  const materials = [
+    {
+      sectionId: sec1.id,
+      title: "Ma'ruza slaydlari (PDF)",
+      type: "LINK",
+      content: "https://example.com/prog-lecture-1.pdf",
+      position: 1,
     },
-  });
-  await prisma.assignment.create({
-    data: {
-      courseId: math.id,
-      title: "Uy vazifasi 1: Matritsalar",
-      description: "Berilgan matritsalarning ko'paytmasini hisoblang, yechimni matn ko'rinishida yuboring.",
-      dueAt: new Date(Date.now() + 5 * 24 * 3600 * 1000),
-      maxScore: 50,
+    {
+      sectionId: sec1.id,
+      title: "Muhitni o'rnatish qo'llanmasi",
+      type: "TEXT",
+      content:
+        "## VS Code + Python\n\n1. python.org dan Python 3.12 o'rnating\n2. VS Code'da Python extension o'rnating\n3. Birinchi `print(\"Hello, TTPU!\")` dasturingizni yozing",
+      position: 2,
     },
+    {
+      sectionId: sec2.id,
+      title: "Algoritm turlari (video)",
+      type: "VIDEO",
+      content: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      position: 1,
+    },
+    {
+      sectionId: secM.id,
+      title: "Matritsa amallari — konspekt",
+      type: "TEXT",
+      content: "## Matritsalar\n\n- Qo'shish\n- Ko'paytirish\n- Determinant",
+      position: 1,
+    },
+    {
+      sectionId: secM2.id,
+      title: "Determinantlar xossalari — konspekt",
+      type: "TEXT",
+      content:
+        "## Determinant\n\n- 2x2: `det = ad - bc`\n- Uchburchak qoidasi\n- Teskari matritsa: `A⁻¹ = adj(A) / det(A)`",
+      position: 1,
+    },
+    {
+      sectionId: secPhy.id,
+      title: "Kinematika asoslari — konspekt",
+      type: "TEXT",
+      content:
+        "## Kinematika\n\n- Tekis harakat: `s = v · t`\n- Tezlanish: `a = (v - v₀) / t`\n- Erkin tushish: `h = gt² / 2`",
+      position: 1,
+    },
+    {
+      sectionId: secPhy.id,
+      title: "Formulalar jadvali",
+      type: "LINK",
+      content: "https://example.com/phy1-formulas.pdf",
+      position: 2,
+    },
+    {
+      sectionId: secPhy.id,
+      title: "Ma'ruza yozuvi: Tekis harakat",
+      type: "VIDEO",
+      content: "https://www.youtube.com/watch?v=ZM8ECpBuQYE",
+      position: 3,
+    },
+    {
+      sectionId: secEng.id,
+      title: "Academic essay tuzilishi",
+      type: "TEXT",
+      content:
+        "## Essay tuzilishi\n\n1. Introduction (tezis)\n2. Body (2-3 paragraf, dalillar)\n3. Conclusion (xulosa)",
+      position: 1,
+    },
+    {
+      sectionId: secEng.id,
+      title: "Academic Word List (AWL)",
+      type: "LINK",
+      content: "https://www.wgtn.ac.nz/lals/resources/academicwordlist",
+      position: 2,
+    },
+    {
+      sectionId: secEng.id,
+      title: "Writing Task 1: video dars",
+      type: "VIDEO",
+      content: "https://www.youtube.com/watch?v=8UjG7bD4TXc",
+      position: 3,
+    },
+  ];
+
+  for (const m of materials) {
+    await ensureMaterial(m.sectionId, m.title, {
+      type: m.type,
+      content: m.content,
+      position: m.position,
+    });
+  }
+
+  const assignment = await ensureAssignment(prog.id, "Amaliy topshiriq 1: Kiritish-chiqarish", {
+    description: "Foydalanuvchidan ism va yoshni so'rab, ekranga chiqaruvchi dastur yozing. Faylni yuklang.",
+    dueAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
+    maxScore: 100,
+  });
+  await ensureAssignment(math.id, "Uy vazifasi 1: Matritsalar", {
+    description: "Berilgan matritsalarning ko'paytmasini hisoblang, yechimni matn ko'rinishida yuboring.",
+    dueAt: new Date(Date.now() + 5 * 24 * 3600 * 1000),
+    maxScore: 50,
+  });
+  const mathAssignment2 = await ensureAssignment(math.id, "Uy vazifasi 2: Determinantlar", {
+    description: "2x2 va 3x3 matritsalar determinantini hisoblang, yechim qadamlarini yozing.",
+    dueAt: new Date(Date.now() + 9 * 24 * 3600 * 1000),
+    maxScore: 50,
   });
 
   const ozodbek = created["ozodbek@ttpu.uz"];
-  await prisma.submission.create({
-    data: {
-      assignmentId: assignment.id,
-      studentId: ozodbek.id,
-      text: "Dastur kodini faylga joyladim: kirish-chiqarish misoli.",
-      status: "SUBMITTED",
-    },
-  });
+  const student2 = created["student2@ttpu.uz"];
+  const student3 = created["student3@ttpu.uz"];
+  const student4 = created["student4@ttpu.uz"];
 
-  const quiz = await prisma.quiz.create({
-    data: {
-      courseId: prog.id,
-      title: "Test 1: Asosiy tushunchalar",
-      description: "10 daqiqalik qisqa test",
-      timeLimitMin: 10,
-      maxAttempts: 2,
-      isPublished: true,
+  const progSubmissions = [
+    {
+      student: ozodbek,
+      data: {
+        text: "Dastur kodini faylga joyladim: kirish-chiqarish misoli.",
+        status: "GRADED",
+        score: 92,
+        feedback: "Ajoyib! Kod toza, o'zgaruvchilar nomi tushunarli.",
+        gradedAt: daysAgo(1),
+      },
     },
+    {
+      student: student2,
+      data: {
+        text: "Ism va yoshni kiritib chiqaruvchi dastur tayyor.",
+        status: "GRADED",
+        score: 85,
+        feedback: "Yaxshi bajarilgan, kiritishni validatsiya qilishni qo'shing.",
+        gradedAt: daysAgo(1),
+      },
+    },
+    {
+      student: student3,
+      data: {
+        text: "Vazifani bajardim, fayl ilova qilindi.",
+        status: "SUBMITTED",
+        score: null,
+        feedback: null,
+        gradedAt: null,
+      },
+    },
+    {
+      student: student4,
+      data: {
+        text: "Dastur ishlaydi, natijani skrinshot qildim.",
+        status: "SUBMITTED",
+        score: null,
+        feedback: null,
+        gradedAt: null,
+      },
+    },
+  ];
+
+  for (const s of progSubmissions) {
+    await ensureSubmission(assignment.id, s.student.id, s.data);
+  }
+
+  const mathSubmissions = [
+    {
+      student: ozodbek,
+      data: {
+        text: "Barcha determinantlar yechildi, qadamlar ketma-ket yozilgan.",
+        status: "GRADED",
+        score: 46,
+        feedback: "Yechim to'g'ri, 3-misolda bitta arifmetik xatolik.",
+        gradedAt: daysAgo(1),
+      },
+    },
+    {
+      student: student2,
+      data: {
+        text: "Determinantlarni hisobladim va teskari matritsani topdim.",
+        status: "GRADED",
+        score: 40,
+        feedback: "Teskari matritsa qadamlarini batafsil yozing.",
+        gradedAt: daysAgo(1),
+      },
+    },
+    {
+      student: student3,
+      data: {
+        text: "Yechimlar matn ko'rinishida yuborildi.",
+        status: "SUBMITTED",
+        score: null,
+        feedback: null,
+        gradedAt: null,
+      },
+    },
+    {
+      student: student4,
+      data: {
+        text: "Kech topshirganim uchun uzr, vazifa bajarildi.",
+        status: "LATE",
+        score: null,
+        feedback: null,
+        gradedAt: null,
+      },
+    },
+  ];
+
+  for (const s of mathSubmissions) {
+    await ensureSubmission(mathAssignment2.id, s.student.id, s.data);
+  }
+
+  const quiz = await ensureQuiz(prog.id, "Test 1: Asosiy tushunchalar", {
+    description: "10 daqiqalik qisqa test",
+    timeLimitMin: 10,
+    maxAttempts: 2,
+    isPublished: true,
   });
-  await prisma.question.createMany({
-    data: [
-      {
-        quizId: quiz.id,
-        text: "Python'da ekranga chiqarish uchun qaysi funksiya ishlatiladi?",
-        type: "SINGLE",
-        options: ["print()", "write()", "echo()", "output()"],
-        correct: [0],
-        points: 1,
-        position: 1,
-      },
-      {
-        quizId: quiz.id,
-        text: "Qaysilari dasturlash tili? (bir nechta javob)",
-        type: "MULTIPLE",
-        options: ["Python", "HTML", "C++", "Photoshop"],
-        correct: [0, 2],
-        points: 2,
-        position: 2,
-      },
-      {
-        quizId: quiz.id,
-        text: "Algoritm nima? Qisqacha yozing.",
-        type: "TEXT",
-        options: [],
-        correct: ["algoritm"],
-        points: 2,
-        position: 3,
-      },
-    ],
+  await ensureQuestions(quiz.id, [
+    {
+      text: "Python'da ekranga chiqarish uchun qaysi funksiya ishlatiladi?",
+      type: "SINGLE",
+      options: ["print()", "write()", "echo()", "output()"],
+      correct: [0],
+      points: 1,
+      position: 1,
+    },
+    {
+      text: "Qaysilari dasturlash tili? (bir nechta javob)",
+      type: "MULTIPLE",
+      options: ["Python", "HTML", "C++", "Photoshop"],
+      correct: [0, 2],
+      points: 2,
+      position: 2,
+    },
+    {
+      text: "Algoritm nima? Qisqacha yozing.",
+      type: "TEXT",
+      options: [],
+      correct: ["algoritm"],
+      points: 2,
+      position: 3,
+    },
+  ]);
+
+  const mathQuiz = await ensureQuiz(math.id, "Test 2: Determinantlar", {
+    description: "Determinant va teskari matritsa bo'yicha test",
+    timeLimitMin: 15,
+    maxAttempts: 2,
+    isPublished: true,
   });
+  await ensureQuestions(mathQuiz.id, [
+    {
+      text: "2x2 matritsaning determinanti qanday hisoblanadi?",
+      type: "SINGLE",
+      options: ["ad - bc", "ab - cd", "a + d - b - c", "ac - bd"],
+      correct: [0],
+      points: 2,
+      position: 1,
+    },
+    {
+      text: "Qaysi amallar determinant qiymatini o'zgartirmaydi? (bir nechta javob)",
+      type: "MULTIPLE",
+      options: [
+        "Satrga boshqa satrning karralisini qo'shish",
+        "Ikki satrni almashtirish",
+        "Satrni nolga ko'paytirish",
+        "Matritsani transponirlash",
+      ],
+      correct: [0, 3],
+      points: 2,
+      position: 2,
+    },
+    {
+      text: "3x3 determinantni hisoblash usulini qisqacha tushuntiring.",
+      type: "TEXT",
+      options: [],
+      correct: ["uchburchak"],
+      points: 2,
+      position: 3,
+    },
+  ]);
+
+  const existingMathAttempt = await prisma.quizAttempt.findFirst({
+    where: { quizId: mathQuiz.id, studentId: ozodbek.id },
+  });
+  if (!existingMathAttempt) {
+    const mathQuestions = await prisma.question.findMany({
+      where: { quizId: mathQuiz.id },
+      orderBy: { position: "asc" },
+    });
+    const values = [0, [0, 3], "Uchburchak qoidasi yoki satr bo'yicha yoyish orqali."];
+    const answers = {};
+    mathQuestions.forEach((q, index) => {
+      answers[q.id] = values[index];
+    });
+    await prisma.quizAttempt.create({
+      data: {
+        quizId: mathQuiz.id,
+        studentId: ozodbek.id,
+        startedAt: daysAgo(1),
+        finishedAt: new Date(),
+        score: 4,
+        answers,
+      },
+    });
+  }
+
+  const lessonDays = [10, 8, 6, 4, 2];
+  const attendancePlan = [
+    {
+      student: ozodbek,
+      statuses: ["PRESENT", "PRESENT", "LATE", "PRESENT", "PRESENT"],
+    },
+    {
+      student: student2,
+      statuses: ["PRESENT", "ABSENT", "PRESENT", "PRESENT", "PRESENT"],
+    },
+    {
+      student: student3,
+      statuses: ["PRESENT", "PRESENT", "PRESENT", "LATE", "PRESENT"],
+    },
+    {
+      student: student4,
+      statuses: ["ABSENT", "PRESENT", "PRESENT", "PRESENT", "PRESENT"],
+    },
+  ];
 
   const attendance = [];
-  for (let i = 7; i >= 1; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    attendance.push({
-      courseId: prog.id,
-      studentId: ozodbek.id,
-      date: new Date(d.toISOString().slice(0, 10)),
-      status: i === 3 ? "ABSENT" : "PRESENT",
+  for (const plan of attendancePlan) {
+    lessonDays.forEach((days, index) => {
+      const status = plan.statuses[index];
+      attendance.push({
+        courseId: prog.id,
+        studentId: plan.student.id,
+        date: daysAgo(days),
+        status,
+        note: status === "LATE" ? "Kechikdi" : status === "ABSENT" ? "Sababsiz" : null,
+      });
     });
   }
   await prisma.attendance.createMany({ data: attendance, skipDuplicates: true });
@@ -239,14 +508,100 @@ async function main() {
   }
 
   const all = await prisma.user.findMany({ where: { id: { not: ozodbek.id } } });
-  await prisma.notification.createMany({
-    data: all.slice(0, 5).map((u) => ({
-      userId: u.id,
+  for (const u of all.slice(0, 5)) {
+    await ensureNotification(u.id, "Tizim ishga tushdi", {
+      body: "TTPU LMS demo tizimiga xush kelibsiz!",
+      link: "/dashboard",
+    });
+  }
+
+  const notificationPlan = [
+    {
+      email: "ozodbek@ttpu.uz",
+      title: "Yangi material",
+      body: "PROG kursiga yangi video material qo'shildi: Algoritm turlari.",
+      link: "/courses/prog",
+      isRead: false,
+    },
+    {
+      email: "ozodbek@ttpu.uz",
+      title: "Yangi topshiriq",
+      body: "MATH 1 kursida yangi topshiriq e'lon qilindi: Uy vazifasi 2.",
+      link: "/courses/math1/assignments",
+      isRead: false,
+    },
+    {
+      email: "ozodbek@ttpu.uz",
+      title: "Topshiriq baholandi",
+      body: "PROG Amaliy topshiriq 1 baholandi: 92/100.",
+      link: "/courses/prog/assignments",
+      isRead: false,
+    },
+    {
+      email: "ozodbek@ttpu.uz",
       title: "Tizim ishga tushdi",
       body: "TTPU LMS demo tizimiga xush kelibsiz!",
       link: "/dashboard",
-    })),
-  });
+      isRead: true,
+    },
+    {
+      email: "student2@ttpu.uz",
+      title: "Topshiriq baholandi",
+      body: "PROG topshirig'ingiz baholandi: 85/100.",
+      link: "/courses/prog/assignments",
+      isRead: false,
+    },
+    {
+      email: "student2@ttpu.uz",
+      title: "Yangi material",
+      body: "ENG 1 kursiga yangi material qo'shildi.",
+      link: "/courses/eng1",
+      isRead: true,
+    },
+    {
+      email: "student3@ttpu.uz",
+      title: "Yangi topshiriq",
+      body: "MATH 1 kursida yangi topshiriq e'lon qilindi.",
+      link: "/courses/math1/assignments",
+      isRead: false,
+    },
+    {
+      email: "student3@ttpu.uz",
+      title: "Tizim ishga tushdi",
+      body: "TTPU LMS demo tizimiga xush kelibsiz!",
+      link: "/dashboard",
+      isRead: true,
+    },
+    {
+      email: "student4@ttpu.uz",
+      title: "Topshiriq baholandi",
+      body: "MATH 1 topshirig'ingiz baholandi: 40/50.",
+      link: "/courses/math1/assignments",
+      isRead: false,
+    },
+    {
+      email: "student4@ttpu.uz",
+      title: "Yangi test",
+      body: "MATH 1 kursida yangi test e'lon qilindi: Test 2.",
+      link: "/courses/math1",
+      isRead: true,
+    },
+    {
+      email: "student5@ttpu.uz",
+      title: "Tizim ishga tushdi",
+      body: "TTPU LMS demo tizimiga xush kelibsiz!",
+      link: "/dashboard",
+      isRead: false,
+    },
+  ];
+
+  for (const n of notificationPlan) {
+    await ensureNotification(created[n.email].id, n.title, {
+      body: n.body,
+      link: n.link,
+      isRead: n.isRead,
+    });
+  }
 
   console.log("Seed tayyor. Demo loginlar (parol: ttpu1234):");
   console.log("  admin@ttpu.uz | n.mahamatov@ttpu.uz | ozodbek@ttpu.uz");
