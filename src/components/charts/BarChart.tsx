@@ -77,7 +77,12 @@ export function BarChart({ data, height = 220 }: { data: BarChartDatum[]; height
               width={barWidth}
               height={barHeight}
               rx={5}
-              className="fill-brand-900"
+              className="origin-bottom animate-grow-y fill-brand-900"
+              style={{
+                animationDelay: `${index * 60}ms`,
+                transformBox: "fill-box",
+                transformOrigin: "bottom",
+              }}
             >
               <title>{`${item.label}: ${item.value}`}</title>
             </rect>

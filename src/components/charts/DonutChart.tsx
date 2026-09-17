@@ -32,9 +32,9 @@ export function DonutChart({ data }: { data: DonutChartDatum[] }) {
           r={RADIUS}
           fill="none"
           strokeWidth={STROKE}
-          className="stroke-slate-100"
+          className="animate-fade-in stroke-slate-100"
         />
-        {segments.map((segment) => {
+        {segments.map((segment, segmentIndex) => {
           if (segment.value <= 0) return null;
           return (
             <circle
@@ -48,6 +48,8 @@ export function DonutChart({ data }: { data: DonutChartDatum[] }) {
               strokeDasharray={`${segment.length} ${CIRCUMFERENCE - segment.length}`}
               strokeDashoffset={-segment.offset}
               transform={`rotate(-90 ${CENTER} ${CENTER})`}
+              className="animate-fade-in"
+              style={{ animationDelay: `${segmentIndex * 90}ms` }}
             >
               <title>{`${segment.label}: ${segment.value}`}</title>
             </circle>
@@ -57,22 +59,34 @@ export function DonutChart({ data }: { data: DonutChartDatum[] }) {
           x={CENTER}
           y={CENTER - 2}
           textAnchor="middle"
-          className="fill-brand-950"
+          className="animate-fade-in fill-brand-950"
           fontSize={26}
           fontWeight={600}
+          style={{ animationDelay: "220ms" }}
         >
           {total}
         </text>
-        <text x={CENTER} y={CENTER + 16} textAnchor="middle" className="fill-slate-400" fontSize={10}>
+        <text
+          x={CENTER}
+          y={CENTER + 16}
+          textAnchor="middle"
+          className="animate-fade-in fill-slate-400"
+          fontSize={10}
+          style={{ animationDelay: "220ms" }}
+        >
           jami
         </text>
       </svg>
 
       <ul className="flex w-full max-w-56 flex-col gap-2.5">
-        {data.map((item) => {
+        {data.map((item, index) => {
           const percent = Math.round((item.value / total) * 100);
           return (
-            <li key={item.label} className="flex items-center gap-2.5">
+            <li
+              key={item.label}
+              className="flex animate-fade-in items-center gap-2.5"
+              style={{ animationDelay: `${280 + index * 60}ms` }}
+            >
               <span
                 className="size-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: item.color }}

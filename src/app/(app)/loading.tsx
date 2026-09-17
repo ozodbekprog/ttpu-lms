@@ -7,7 +7,9 @@ function Bar({ className }: { className?: string }) {
 
 export default function Loading() {
   return (
-    <div>
+    <div className="animate-fade-in">
+      <span className="mb-4 block h-1 w-16 animate-shimmer rounded-full bg-gradient-to-r from-brand-900 to-gold-400" />
+
       <div className="mb-6">
         <Bar className="h-7 w-56" />
         <Bar className="mt-2 h-4 w-40" />

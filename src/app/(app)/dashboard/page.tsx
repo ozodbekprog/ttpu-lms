@@ -2,7 +2,10 @@ import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Avatar, Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState } from "@/components/ui";
+import { BarChart, DonutChart, LineChart } from "@/components/charts";
 import { cn, dayName, fmtDate, initials } from "@/lib/utils";
+import { getAdminAnalytics, getStudentAnalytics, getTeacherAnalytics } from "./analytics";
+import type { AdminAnalytics, StudentAnalytics, TeacherAnalytics } from "./analytics";
 import {
   SLOT_TIMES,
   dateFromIso,
@@ -105,6 +108,157 @@ function DateChip({ overdue, soon, children }: { overdue: boolean; soon: boolean
   );
 }
 
+function AnalyticsHeading({ subtitle }: { subtitle: string }) {
+  return (
+    <div className="mb-4">
+      <h2 className="text-lg font-semibold tracking-tight text-brand-950">Tahlillar</h2>
+      <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+    </div>
+  );
+}
+
+function AnalyticsCard({
+  title,
+  subtitle,
+  delay,
+  empty,
+  emptyDescription,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  delay: number;
+  empty: boolean;
+  emptyDescription: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="animate-fade-up" style={{ animationDelay: `${delay}ms` }}>
+      <Card className="h-full">
+        <CardHeader title={title} subtitle={subtitle} />
+        <CardBody>
+          {empty ? (
+            <EmptyState title="Hali ma'lumot yo'q" description={emptyDescription} />
+          ) : (
+            children
+          )}
+        </CardBody>
+      </Card>
+    </div>
+  );
+}
+
+function StudentAnalyticsSection({ data }: { data: StudentAnalytics }) {
+  return (
+    <section className="mt-8">
+      <AnalyticsHeading subtitle="Davomat va baholar bo'yicha shaxsiy ko'rsatkichlar" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <AnalyticsCard
+          title="Davomat taqsimoti"
+          subtitle="Barcha kurslar bo'yicha yozuvlar"
+          delay={60}
+          empty={data.attendanceTotal === 0}
+          emptyDescription="Davomat yozuvlari paydo bo'lganda taqsimot shu yerda ko'rinadi."
+        >
+          <DonutChart data={data.attendance} />
+        </AnalyticsCard>
+        <AnalyticsCard
+          title="Kurslar bo'yicha davomat"
+          subtitle="Keldi foizi (kechikkan va sababli bilan)"
+          delay={120}
+          empty={data.courseAttendance.length === 0}
+          emptyDescription="Darslar belgilangach kurslar kesimida foiz ko'rinadi."
+        >
+          <BarChart data={data.courseAttendance} />
+        </AnalyticsCard>
+        <AnalyticsCard
+          title="Baholar dinamikasi"
+          subtitle="Topshiriq va testlar, oxirgi 10 natija"
+          delay={180}
+          empty={data.gradeTrend.length === 0}
+          emptyDescription="Baholangan topshiriq yoki test natijalari hali yo'q."
+        >
+          <LineChart data={data.gradeTrend} />
+        </AnalyticsCard>
+      </div>
+    </section>
+  );
+}
+
+function TeacherAnalyticsSection({ data }: { data: TeacherAnalytics }) {
+  return (
+    <section className="mt-8">
+      <AnalyticsHeading subtitle="Kurslaringiz bo'yicha ko'rsatkichlar va so'nggi 14 kunlik dinamika" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <AnalyticsCard
+          title="Topshiriqlar topshirilishi"
+          subtitle="So'nggi 14 kunda yuborilgan ishlar"
+          delay={60}
+          empty={!data.submissionsByDay.some((point) => point.value > 0)}
+          emptyDescription="So'nggi 14 kunda topshirilgan ish yo'q."
+        >
+          <BarChart data={data.submissionsByDay} />
+        </AnalyticsCard>
+        <AnalyticsCard
+          title="Davomat dinamikasi"
+          subtitle="Faol dars kunlari bo'yicha o'rtacha foiz"
+          delay={120}
+          empty={data.attendanceByDay.length === 0}
+          emptyDescription="So'nggi 14 kunda davomat yozuvlari yo'q."
+        >
+          <LineChart data={data.attendanceByDay} />
+        </AnalyticsCard>
+        <AnalyticsCard
+          title="Kurslardagi talabalar"
+          subtitle="Har kurs bo'yicha yozilganlar soni"
+          delay={180}
+          empty={data.studentsByCourse.length === 0}
+          emptyDescription="Kurslaringizga hali talaba yozilmagan."
+        >
+          <BarChart data={data.studentsByCourse} />
+        </AnalyticsCard>
+        <AnalyticsCard
+          title="Topshiriqlar holati"
+          subtitle="Barcha topshiriqlar bo'yicha holatlar"
+          delay={240}
+          empty={!data.submissionStatus.some((slice) => slice.value > 0)}
+          emptyDescription="Topshiriqlar yuborilganda holatlar shu yerda ko'rinadi."
+        >
+          <DonutChart data={data.submissionStatus} />
+        </AnalyticsCard>
+      </div>
+    </section>
+  );
+}
+
+function AdminAnalyticsSection({ data }: { data: AdminAnalytics }) {
+  return (
+    <section className="mt-8">
+      <AnalyticsHeading subtitle="Tizim ko'rsatkichlari va so'nggi 14 kunlik dinamika" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <AnalyticsCard
+          title="Foydalanuvchilar rollari"
+          subtitle="Talabalar, o'qituvchilar va adminlar nisbati"
+          delay={60}
+          empty={data.usersByRole.every((slice) => slice.value === 0)}
+          emptyDescription="Foydalanuvchilar mavjud emas."
+        >
+          <DonutChart data={data.usersByRole} />
+        </AnalyticsCard>
+        <AnalyticsCard
+          title="Topshiriqlar dinamikasi"
+          subtitle="So'nggi 14 kunda yuborilgan ishlar"
+          delay={120}
+          empty={!data.submissionsByDay.some((point) => point.value > 0)}
+          emptyDescription="So'nggi 14 kunda topshirilgan ish yo'q."
+        >
+          <BarChart data={data.submissionsByDay} />
+        </AnalyticsCard>
+      </div>
+    </section>
+  );
+}
+
 export default async function DashboardPage() {
   const user = await requireUser();
   const now = new Date();
@@ -147,6 +301,8 @@ export default async function DashboardPage() {
         where: user.role === "TEACHER" ? { course: { teacherId: user.id } } : {},
       }),
     ]);
+    const analytics =
+      user.role === "TEACHER" ? await getTeacherAnalytics(user.id) : await getAdminAnalytics();
 
     const todayDow = now.getDay() === 0 ? 7 : now.getDay();
     const dateIso = todayIso();
@@ -317,6 +473,12 @@ export default async function DashboardPage() {
             </CardBody>
           </Card>
         ) : null}
+
+        {analytics.kind === "teacher" ? (
+          <TeacherAnalyticsSection data={analytics} />
+        ) : (
+          <AdminAnalyticsSection data={analytics} />
+        )}
       </>
     );
   }
@@ -346,6 +508,8 @@ export default async function DashboardPage() {
         orderBy: { slot: "asc" },
       })
     : [];
+
+  const analytics = await getStudentAnalytics(user.id);
 
   return (
     <>
@@ -520,6 +684,8 @@ export default async function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      <StudentAnalyticsSection data={analytics} />
     </>
   );
 }

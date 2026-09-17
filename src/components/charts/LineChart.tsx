@@ -51,30 +51,45 @@ export function LineChart({ data }: { data: LineChartDatum[] }) {
 
   return (
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full" role="img">
-      {[0, 25, 50, 75, 100].map((tick) => (
+      {[0, 25, 50, 75, 100].map((tick, tickIndex) => (
         <g key={tick}>
           <line
             x1={PAD.left}
             x2={WIDTH - PAD.right}
             y1={yFor(tick)}
             y2={yFor(tick)}
-            className="stroke-slate-200"
+            className="animate-fade-in stroke-slate-200"
             strokeWidth={1}
+            style={{ animationDelay: `${tickIndex * 60}ms` }}
           />
-          <text x={PAD.left - 8} y={yFor(tick) + 3} textAnchor="end" className="fill-slate-400" fontSize={9}>
+          <text
+            x={PAD.left - 8}
+            y={yFor(tick) + 3}
+            textAnchor="end"
+            className="animate-fade-in fill-slate-400"
+            fontSize={9}
+            style={{ animationDelay: `${tickIndex * 60}ms` }}
+          >
             {tick}%
           </text>
         </g>
       ))}
 
-      <path d={area} className="fill-brand-100" fillOpacity={0.55} />
+      <path
+        d={area}
+        className="animate-fade-in fill-brand-100"
+        fillOpacity={0.55}
+        style={{ animationDelay: "150ms" }}
+      />
       <path
         d={line}
-        className="stroke-brand-900"
+        className="animate-draw stroke-brand-900"
         strokeWidth={2.5}
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
+        pathLength={1}
+        strokeDasharray={1}
       />
 
       {points.map((point, index) => {
@@ -82,14 +97,26 @@ export function LineChart({ data }: { data: LineChartDatum[] }) {
         return (
           <g key={`${point.label}-${index}`}>
             {isLast ? (
-              <circle cx={point.x} cy={point.y} r={9} className="fill-gold-300" fillOpacity={0.25} />
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={9}
+                className="animate-fade-in fill-gold-300"
+                fillOpacity={0.25}
+                style={{ animationDelay: `${index * 50}ms` }}
+              />
             ) : null}
             <circle
               cx={point.x}
               cy={point.y}
               r={isLast ? 5 : 3.5}
-              className={isLast ? "fill-gold-500 stroke-white" : "fill-white stroke-brand-700"}
+              className={
+                isLast
+                  ? "animate-fade-in fill-gold-500 stroke-white"
+                  : "animate-fade-in fill-white stroke-brand-700"
+              }
               strokeWidth={2}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
               <title>{`${point.label}: ${point.value}%`}</title>
             </circle>
