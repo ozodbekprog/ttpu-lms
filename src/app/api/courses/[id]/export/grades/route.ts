@@ -1,6 +1,8 @@
 import { getCurrentUser } from "@/lib/auth";
 import { csvResponse, type CsvValue } from "@/components/reports/csv";
 import { buildCourseReport, resolveManagedCourse, scoreKey } from "@/components/reports/report-data";
+import { attendanceCounts } from "@/app/api/attendance/summary/data";
+import type { AttendanceStatus } from "@prisma/client";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -28,10 +30,18 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     "Testlar %",
     "Davomat %",
     "Umumiy %",
+    "Davomat %",
+    "Imtihon ruxsati (Ha/Yo'q)",
   ];
 
   const rows: CsvValue[][] = [header];
   for (const student of report.students) {
+    const statuses: AttendanceStatus[] = [];
+    for (const date of report.attendanceDates) {
+      const status = report.attendance.get(scoreKey(student.id, date));
+      if (status) statuses.push(status);
+    }
+    const attendance = attendanceCounts(statuses);
     rows.push([
       student.name,
       student.email,
@@ -46,6 +56,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       student.quizAverage,
       student.attendanceRate,
       student.overall,
+      attendance.percent,
+      attendance.eligible ? "Ha" : "Yo'q",
     ]);
   }
 

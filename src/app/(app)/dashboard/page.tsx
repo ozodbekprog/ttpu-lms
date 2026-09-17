@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Avatar, Badge, Card, CardBody, CardHeader, EmptyState } from "@/components/ui";
+import { Avatar, Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState } from "@/components/ui";
 import { cn, dayName, fmtDate, initials } from "@/lib/utils";
+import {
+  SLOT_TIMES,
+  dateFromIso,
+  matchCourseSlug,
+  normalizeTeacherName,
+  todayIso,
+} from "@/components/attendance/lesson-utils";
+import type { CourseOption } from "@/components/attendance/lesson-utils";
 import type { ReactNode } from "react";
 
 const PAIR_TIMES: Record<number, string> = {
@@ -20,6 +28,17 @@ const STAT_TONES = {
   emerald: "bg-emerald-50 text-emerald-600 ring-emerald-100",
   amber: "bg-amber-50 text-amber-600 ring-amber-100",
 } as const;
+
+type TodayLesson = {
+  id: string;
+  slot: number;
+  subject: string;
+  room: string | null;
+  groupName: string;
+  href: string | null;
+  statusText: string;
+  marked: boolean;
+};
 
 function Icon({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -128,6 +147,65 @@ export default async function DashboardPage() {
         where: user.role === "TEACHER" ? { course: { teacherId: user.id } } : {},
       }),
     ]);
+
+    const todayDow = now.getDay() === 0 ? 7 : now.getDay();
+    const dateIso = todayIso();
+    let todayLessons: TodayLesson[] = [];
+    if (user.role === "TEACHER") {
+      const [entries, teacherCourses, marks] = await Promise.all([
+        prisma.scheduleEntry.findMany({
+          where: { dayOfWeek: todayDow },
+          orderBy: { slot: "asc" },
+          include: { group: { select: { name: true } } },
+        }),
+        prisma.course.findMany({
+          where: { teacherId: user.id },
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            _count: { select: { enrollments: true } },
+          },
+        }),
+        prisma.attendance.groupBy({
+          by: ["courseId"],
+          where: { date: dateFromIso(dateIso), course: { teacherId: user.id } },
+          _count: { _all: true },
+        }),
+      ]);
+
+      const teacherName = normalizeTeacherName(user.name);
+      const markedByCourse = new Map(marks.map((row) => [row.courseId, row._count._all]));
+      const options: CourseOption[] = teacherCourses.map((item) => ({
+        slug: item.slug,
+        title: item.title,
+      }));
+      const fallbackSlug = teacherCourses[0]?.slug ?? null;
+
+      todayLessons = entries
+        .filter((entry) => entry.teacher && normalizeTeacherName(entry.teacher) === teacherName)
+        .map((entry) => {
+          const matchedSlug = matchCourseSlug(entry.subject, options);
+          const matched = teacherCourses.find((item) => item.slug === matchedSlug) ?? null;
+          const slug = matched?.slug ?? fallbackSlug;
+          const markedCount = matched ? (markedByCourse.get(matched.id) ?? 0) : 0;
+          const total = matched?._count.enrollments ?? 0;
+          return {
+            id: entry.id,
+            slot: entry.slot,
+            subject: entry.subject,
+            room: entry.room,
+            groupName: entry.group.name,
+            href: slug
+              ? `/courses/${slug}/attendance/lesson?date=${dateIso}&slot=${entry.slot}`
+              : null,
+            statusText: markedCount > 0 ? `${markedCount}/${total} belgilangan` : "Belgilanmagan",
+            marked: markedCount > 0,
+          };
+        });
+    }
+
     return (
       <>
         {hero}
@@ -184,6 +262,61 @@ export default async function DashboardPage() {
             }
           />
         </div>
+
+        {user.role === "TEACHER" ? (
+          <Card className="mt-6">
+            <CardHeader
+              title="Bugungi darslarim"
+              subtitle={`${dayName(now.getDay())}, ${fmtDate(now)} — ${todayLessons.length} ta dars`}
+            />
+            <CardBody className="space-y-2">
+              {todayLessons.length === 0 ? (
+                <EmptyState
+                  title="Bugun dars yo'q"
+                  description="Dars jadvalida bugunga sizning darsingiz yo'q."
+                />
+              ) : (
+                todayLessons.map((lesson) => (
+                  <div
+                    key={lesson.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 p-3 transition-colors duration-150 hover:bg-slate-50"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="inline-flex w-24 shrink-0 flex-col rounded-xl bg-brand-50 px-3 py-1.5 text-brand-800">
+                        <span className="text-xs font-semibold">{lesson.slot}-par</span>
+                        <span className="text-[11px] text-brand-600">
+                          {SLOT_TIMES[lesson.slot] ?? ""}
+                        </span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-slate-900">
+                          {lesson.subject}
+                        </span>
+                        <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                          {lesson.room ? (
+                            <>
+                              <span className="truncate">{lesson.room}</span>
+                              <span className="text-slate-300">·</span>
+                            </>
+                          ) : null}
+                          <span className="truncate">{lesson.groupName}</span>
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <Badge tone={lesson.marked ? "green" : "slate"}>{lesson.statusText}</Badge>
+                      {lesson.href ? (
+                        <ButtonLink href={lesson.href} size="sm">
+                          Davomat belgilash
+                        </ButtonLink>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardBody>
+          </Card>
+        ) : null}
       </>
     );
   }

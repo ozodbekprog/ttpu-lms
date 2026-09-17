@@ -101,6 +101,40 @@ export function formatEntries(entries) {
   return entries.map((entry) => formatLesson(entry)).join("\n");
 }
 
+const APP_BASE_URL = "http://localhost:3000";
+
+export function normalizeTeacher(name) {
+  return name.replace(/\./g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function normalizeTitle(value) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function matchCourseSlug(subject, courses) {
+  const subjectTokens = new Set(normalizeTitle(subject).split(" "));
+  let bestSlug = null;
+  let bestScore = 0;
+  for (const course of courses) {
+    const score = normalizeTitle(course.title)
+      .split(" ")
+      .filter((token) => token.length >= 3 && subjectTokens.has(token)).length;
+    if (score > bestScore) {
+      bestScore = score;
+      bestSlug = course.slug;
+    }
+  }
+  return bestScore > 0 ? bestSlug : null;
+}
+
+function attendanceUrl(slug, date, slot) {
+  return `${APP_BASE_URL}/courses/${slug}/attendance/lesson?date=${date}&slot=${slot}`;
+}
+
 const REMINDER_HOUR = 8;
 const REMINDER_CHECK_MS = 60 * 60 * 1000;
 
@@ -179,12 +213,55 @@ async function collectReminder(user, dayStart) {
   return { lessons, deadlines };
 }
 
-export function reminderText(user, day, lessons, deadlines) {
+async function collectTeacherLessons(user, dayOfWeek) {
+  const db = getPrisma();
+  const entries = await db.scheduleEntry.findMany({
+    where: { dayOfWeek },
+    include: { group: { select: { name: true } } },
+    orderBy: { slot: "asc" },
+  });
+  const own = entries.filter(
+    (entry) => entry.teacher && normalizeTeacher(entry.teacher) === normalizeTeacher(user.name),
+  );
+  if (own.length === 0) return [];
+  const courses = await db.course.findMany({
+    where: { teacherId: user.id },
+    select: { title: true, slug: true },
+  });
+  return own.map((entry) => ({
+    entry,
+    groupName: entry.group?.name ?? "",
+    slug: matchCourseSlug(entry.subject, courses),
+  }));
+}
+
+function teacherLessonText(item, date) {
+  const time = SLOT_TIMES[item.entry.slot];
+  const head = time ? `${item.entry.slot}-par ${time}` : `${item.entry.slot}-par`;
+  const parts = [head, item.entry.subject];
+  if (item.entry.room) parts.push(item.entry.room);
+  if (item.groupName) parts.push(item.groupName);
+  const lines = [`• ${parts.join(" | ")}`];
+  if (item.slug) lines.push(`  ${attendanceUrl(item.slug, date, item.entry.slot)}`);
+  return lines.join("\n");
+}
+
+export function reminderText(user, day, lessons, deadlines, teacherLessons = []) {
   const lines = [`Eslatma — bugun, ${DAY_NAMES[day.getDay()]}, ${dateKey(day)}`];
   if (user.group) lines.push(`Guruh: ${user.group.name}`);
   lines.push("");
   lines.push("Darslar:");
-  lines.push(lessons.length > 0 ? formatEntries(lessons) : "Bugun darslar yo'q.");
+  if (user.role === "TEACHER" && teacherLessons.length > 0) {
+    for (const item of teacherLessons) lines.push(teacherLessonText(item, dateKey(day)));
+    lines.push("");
+    lines.push("Davomatni belgilashni unutmang.");
+    const first = teacherLessons.find((item) => item.slug);
+    if (first) {
+      lines.push(`Birinchi dars havolasi: ${attendanceUrl(first.slug, dateKey(day), first.entry.slot)}`);
+    }
+  } else {
+    lines.push(lessons.length > 0 ? formatEntries(lessons) : "Bugun darslar yo'q.");
+  }
   lines.push("");
   lines.push("Bugungi muddatlar:");
   if (deadlines.length === 0) {
@@ -211,7 +288,9 @@ async function sendDailyReminders() {
       });
       if (!user) continue;
       const { lessons, deadlines } = await collectReminder(user, dayStart);
-      await sendMessage(chatId, reminderText(user, now, lessons, deadlines));
+      const teacherLessons =
+        user.role === "TEACHER" ? await collectTeacherLessons(user, now.getDay()) : [];
+      await sendMessage(chatId, reminderText(user, now, lessons, deadlines, teacherLessons));
     } catch (error) {
       console.error(`Eslatma yuborilmadi (${chatId}):`, errorText(error));
     }
@@ -236,6 +315,7 @@ const HELP_TEXT = [
   "/start — boshlash va emailni bog'lash",
   "/jadval — bugungi darslar",
   "/ertaga — ertangi darslar",
+  "/davomat — o'qituvchilar uchun bugungi darslar va davomat havolalari",
   "/help — shu yordam",
   "",
   "Email manzilingizni yuborsangiz (masalan: ozodbek@ttpu.uz), jadval guruhingizga bog'lanadi.",
@@ -314,6 +394,41 @@ async function sendSchedule(chatId, dayOffset) {
   await sendMessage(chatId, `${header}\n\n${formatEntries(entries)}`);
 }
 
+async function sendAttendance(chatId) {
+  const email = links[String(chatId)];
+  if (!email) {
+    await sendMessage(chatId, "Avval email manzilingizni yuboring (masalan: ozodbek@ttpu.uz).");
+    return;
+  }
+  const user = await getPrisma().user.findUnique({ where: { email }, include: { group: true } });
+  if (!user) {
+    delete links[String(chatId)];
+    saveData();
+    await sendMessage(chatId, "Bog'langan foydalanuvchi bazadan topilmadi. Emailni qayta yuboring.");
+    return;
+  }
+  if (user.role !== "TEACHER") {
+    await sendMessage(chatId, "Bu buyruq o'qituvchilar uchun. Bugungi jadvalingiz:");
+    await sendSchedule(chatId, 0);
+    return;
+  }
+
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const date = dateKey(today);
+  const header = `Davomat — bugun, ${DAY_NAMES[dayOfWeek]}, ${date}`;
+  const items = await collectTeacherLessons(user, dayOfWeek);
+  if (items.length === 0) {
+    await sendMessage(chatId, `${header}\nBugun darslaringiz yo'q.`);
+    return;
+  }
+  const lines = [header, ""];
+  for (const item of items) lines.push(teacherLessonText(item, date));
+  lines.push("");
+  lines.push("Davomatni belgilashni unutmang.");
+  await sendMessage(chatId, lines.join("\n"));
+}
+
 async function handleMessage(message) {
   const chatId = message.chat.id;
   const text = (message.text ?? "").trim();
@@ -334,6 +449,10 @@ async function handleMessage(message) {
   }
   if (command === "ertaga") {
     await sendSchedule(chatId, 1);
+    return;
+  }
+  if (command === "davomat") {
+    await sendAttendance(chatId);
     return;
   }
   if (command) {

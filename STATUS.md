@@ -1,6 +1,16 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: Profil + Chat + Chartlar + Bot (Komp 1)
+Oxirgi yangilanish: Davomat oqimi + 80% qoidasi (Komp 1)
+
+## To'lqin 5
+
+- [x] **Dars-davomat oqimi** — o'qituvchi dashboard'da "Bugungi darslarim" (jadval bo'yicha):
+      har darsda davomat holati (X/Y) + "Davomat belgilash" → talabalar ro'yxati K/Y/Kech/S,
+      "Hammasi keldi", saqlash; jadvaldan ham bir bosishда
+- [x] **80% qoidasi** — `/api/attendance/summary`, grades va kurs sahifasida
+      "Imtihonga ruxsat" / "Ruxsat yo'q" badge; CSV eksportda yangi ustunlar
+- [x] **Bot** — yangi `/davomat` buyrug'i o'qituvchi uchun (havolalar bilan);
+      08:00 eslatmada o'qituvchiga darslari + davomat eslatmasi
 
 ## Yangi (to'lqin 4)
 

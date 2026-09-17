@@ -41,6 +41,8 @@ faqat `.env` dagi `DATABASE_URL` manzilida PostgreSQL ishlab turishi kerak.
 - email yuborish (masalan `ozodbek@ttpu.uz`) — chatni foydalanuvchiga bog'laydi
 - `/jadval` — bugungi darslar
 - `/ertaga` — ertangi darslar
+- `/davomat` — o'qituvchi uchun bugungi darslari (par vaqti, fan, xona, guruh) va
+  har bir dars uchun davomat sahifasi havolasi. Talaba yuborsa, bugungi jadvali qaytadi.
 - `/help` — buyruqlar ro'yxati
 
 ## Avtomatik eslatma
@@ -51,12 +53,17 @@ kuniga bir marta bog'langan har bir foydalanuvchiga eslatma yuboradi:
 - bugungi darslar (guruh jadvali bo'yicha),
 - bugun tugaydigan deadline'lar: topshiriqlar va testlar (`dueAt`).
 
+O'qituvchilarga qo'shimcha ravishda o'z darslari (guruh va davomat havolasi bilan)
+hamda "Davomatni belgilashni unutmang" eslatmasi va birinchi dars havolasi yuboriladi.
+Talaba eslatmasi matni o'zgarmaydi.
+
 Eslatma bir kunda takroran yuborilmasligi uchun oxirgi yuborilgan sana
 `bot/data.json` dagi `lastReminderDate` maydonida saqlanadi. Xatolik yuz bersa
 (bitta foydalanuvchi yoki butun tekshiruv), bot ishlashda davom etadi.
 
 ## Eslatmalar
 
+- `/davomat` va o'qituvchi eslatmasidagi havolalar `http://localhost:3000` ga ishora qiladi.
 - `bot/data.json` — `{ "links": { chatId: email }, "lastReminderDate": "YYYY-MM-DD" }`.
   Eski (faqat chatId → email) fayl ham o'qiladi va keyingi saqlashda yangi formatga o'tadi.
   Fayl gitga qo'shilmaydi (`.gitignore` da).

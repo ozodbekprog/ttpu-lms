@@ -16,6 +16,7 @@ import {
 } from "@/components/ui";
 import { cn, fmtDate, fmtDateTime, gradeColor, scorePercent } from "@/lib/utils";
 import { SubmissionBadge } from "@/components/courses/assignments-status";
+import { getStudentAttendance } from "@/app/api/attendance/summary/data";
 
 function percentTone(pct: number) {
   if (pct >= 80) return "bg-emerald-50 text-emerald-700";
@@ -31,7 +32,7 @@ export default async function GradesPage({
   const user = await requireUser();
 
   if (user.role === "STUDENT") {
-    const [submissions, attempts] = await Promise.all([
+    const [submissions, attempts, attendance] = await Promise.all([
       prisma.submission.findMany({
         where: { studentId: user.id },
         include: {
@@ -44,6 +45,7 @@ export default async function GradesPage({
         include: { quiz: { include: { course: { select: { title: true } } } } },
         orderBy: { startedAt: "desc" },
       }),
+      getStudentAttendance(user.id),
     ]);
 
     const graded = submissions.filter((submission) => submission.score != null);
@@ -91,6 +93,46 @@ export default async function GradesPage({
     return (
       <>
         <PageHeader title="Baholarim" subtitle={user.group?.name ?? "Talaba"} />
+
+        {attendance.courses.length > 0 ? (
+          <Card className="mb-6">
+            <CardHeader
+              title="Davomat"
+              subtitle="Imtihonga ruxsat uchun har kursda kamida 80% davomat kerak"
+            />
+            <CardBody className="grid gap-5 sm:grid-cols-2">
+              {attendance.courses.map((course) => (
+                <div key={course.courseId} className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Link
+                      href={`/courses/${course.slug}`}
+                      className="text-sm font-medium text-slate-800 transition-colors duration-150 hover:text-brand-700"
+                    >
+                      {course.courseTitle}
+                    </Link>
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "text-sm font-semibold",
+                          course.eligible ? "text-emerald-600" : "text-rose-600",
+                        )}
+                      >
+                        {course.percent}%
+                      </span>
+                      <Badge tone={course.eligible ? "green" : "rose"}>
+                        {course.eligible ? "Imtihonga ruxsat" : "Ruxsat yo'q"}
+                      </Badge>
+                    </span>
+                  </div>
+                  <Progress value={course.percent} max={100} className="h-2" />
+                  {course.eligible ? null : (
+                    <p className="text-xs text-slate-400">Kamida 80% kerak</p>
+                  )}
+                </div>
+              ))}
+            </CardBody>
+          </Card>
+        ) : null}
 
         <Card className="relative overflow-hidden">
           <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />

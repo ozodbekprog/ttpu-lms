@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   Badge,
   Button,
+  ButtonLink,
   Card,
   CardBody,
   CardHeader,
@@ -16,6 +17,12 @@ import {
   Table,
 } from "@/components/ui";
 import { cn, dayName } from "@/lib/utils";
+import {
+  isoForWeekday,
+  matchCourseSlug,
+  normalizeTeacherName,
+} from "@/components/attendance/lesson-utils";
+import type { CourseOption } from "@/components/attendance/lesson-utils";
 
 export type ScheduleEntryItem = {
   id: string;
@@ -78,6 +85,51 @@ export function ScheduleBoard({
   const [form, setForm] = useState<FormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [teacher, setTeacher] = useState<{ name: string; courses: CourseOption[] } | null>(null);
+
+  useEffect(() => {
+    if (!canEdit) return;
+    let cancelled = false;
+    async function load() {
+      try {
+        const [meResponse, coursesResponse] = await Promise.all([
+          fetch("/api/me"),
+          fetch("/api/courses"),
+        ]);
+        const me = (await meResponse.json().catch(() => null)) as {
+          ok?: boolean;
+          user?: { role?: string; name?: string };
+        } | null;
+        if (!me?.ok || me.user?.role !== "TEACHER" || !me.user.name) return;
+        const payload = (await coursesResponse.json().catch(() => null)) as {
+          ok?: boolean;
+          data?: Array<{ slug: string; title: string }>;
+        } | null;
+        if (!payload?.ok || !payload.data) return;
+        if (!cancelled) {
+          setTeacher({
+            name: me.user.name,
+            courses: payload.data.map((course) => ({ slug: course.slug, title: course.title })),
+          });
+        }
+      } catch {
+        if (!cancelled) setTeacher(null);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [canEdit]);
+
+  function attendanceHref(entry: ScheduleEntryItem): string | null {
+    if (!teacher || !entry.teacher) return null;
+    if (normalizeTeacherName(entry.teacher) !== normalizeTeacherName(teacher.name)) return null;
+    if (entry.dayOfWeek > today) return null;
+    const slug = matchCourseSlug(entry.subject, teacher.courses) ?? teacher.courses[0]?.slug;
+    if (!slug) return null;
+    return `/courses/${slug}/attendance/lesson?date=${isoForWeekday(entry.dayOfWeek, today)}&slot=${entry.slot}`;
+  }
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
   const selectedGroupName = selectedGroup?.name ?? null;
@@ -340,51 +392,66 @@ export function ScheduleBoard({
                         className={cn("px-2 py-2.5", day === today && "bg-brand-50/60")}
                       >
                         <div className="space-y-2">
-                          {cellEntries.map((entry) => (
-                            <div
-                              key={entry.id}
-                              className="group rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 transition-all duration-150 hover:border-brand-200 hover:shadow-card"
-                            >
-                              <p className="text-sm font-semibold leading-snug text-slate-900">
-                                {entry.subject}
-                              </p>
-                              {entry.teacher ? (
-                                <p className="mt-0.5 text-xs text-slate-500">{entry.teacher}</p>
-                              ) : null}
-                              {entry.room || entry.parity ? (
-                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                  {entry.room ? <Badge tone="slate">{entry.room}</Badge> : null}
-                                  {entry.parity ? (
-                                    <Badge tone="amber">
-                                      {PARITY_LABEL[entry.parity] ?? entry.parity}
-                                    </Badge>
-                                  ) : null}
-                                </div>
-                              ) : null}
-                              {canEdit ? (
-                                <div className="mt-2 flex gap-1 transition-opacity duration-150 md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-brand-700! hover:bg-brand-50!"
-                                    onClick={() => openEdit(entry)}
-                                    disabled={saving}
-                                  >
-                                    Tahrir
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
-                                    onClick={() => remove(entry)}
-                                    disabled={saving}
-                                  >
-                                    {"O'chirish"}
-                                  </Button>
-                                </div>
-                              ) : null}
-                            </div>
-                          ))}
+                          {cellEntries.map((entry) => {
+                            const href = attendanceHref(entry);
+                            return (
+                              <div
+                                key={entry.id}
+                                className="group rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 transition-all duration-150 hover:border-brand-200 hover:shadow-card"
+                              >
+                                <p className="text-sm font-semibold leading-snug text-slate-900">
+                                  {entry.subject}
+                                </p>
+                                {entry.teacher ? (
+                                  <p className="mt-0.5 text-xs text-slate-500">{entry.teacher}</p>
+                                ) : null}
+                                {entry.room || entry.parity ? (
+                                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                    {entry.room ? <Badge tone="slate">{entry.room}</Badge> : null}
+                                    {entry.parity ? (
+                                      <Badge tone="amber">
+                                        {PARITY_LABEL[entry.parity] ?? entry.parity}
+                                      </Badge>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                                {href ? (
+                                  <div className="mt-2 flex">
+                                    <ButtonLink
+                                      size="sm"
+                                      variant="ghost"
+                                      href={href}
+                                      className="border border-slate-200 text-brand-700! hover:border-brand-300! hover:bg-brand-50!"
+                                    >
+                                      Davomat
+                                    </ButtonLink>
+                                  </div>
+                                ) : null}
+                                {canEdit ? (
+                                  <div className="mt-2 flex gap-1 transition-opacity duration-150 md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-brand-700! hover:bg-brand-50!"
+                                      onClick={() => openEdit(entry)}
+                                      disabled={saving}
+                                    >
+                                      Tahrir
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
+                                      onClick={() => remove(entry)}
+                                      disabled={saving}
+                                    >
+                                      {"O'chirish"}
+                                    </Button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          })}
                           {canEdit && cellEntries.length === 0 ? (
                             <Button
                               size="sm"

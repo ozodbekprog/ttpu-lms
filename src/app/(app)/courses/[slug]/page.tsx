@@ -5,6 +5,7 @@ import { Avatar, Badge, ButtonLink } from "@/components/ui";
 import { CourseMaterials } from "@/components/courses/course-materials";
 import { CourseStudents } from "@/components/courses/course-students";
 import { CourseTabs } from "@/components/forum/course-tabs";
+import { getCourseAttendance } from "@/app/api/attendance/summary/data";
 
 export default async function CoursePage({
   params,
@@ -50,6 +51,7 @@ export default async function CoursePage({
 
   const activeTab = tab === "students" && canManage ? "students" : "materials";
   const materialsCount = course.sections.reduce((sum, section) => sum + section.materials.length, 0);
+  const attendance = !canManage && isEnrolled ? await getCourseAttendance(course.id, user.id) : null;
 
   return (
     <>
@@ -66,6 +68,11 @@ export default async function CoursePage({
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{course.title}</h1>
                 {!course.isPublished ? <Badge tone="gold">Qoralama</Badge> : null}
+                {attendance && attendance.total > 0 ? (
+                  <Badge tone={attendance.eligible ? "green" : "rose"}>
+                    Davomat: {attendance.percent}% {attendance.eligible ? "✓" : "⚠"}
+                  </Badge>
+                ) : null}
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/85">
                 <span className="inline-flex items-center gap-2">
