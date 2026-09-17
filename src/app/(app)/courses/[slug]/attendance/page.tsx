@@ -52,6 +52,11 @@ export default async function CourseAttendancePage({
       Topshiriqlar
     </ButtonLink>
   );
+  const journal = (
+    <ButtonLink href={`/courses/${course.slug}/attendance/journal`} size="sm">
+      Guruh jurnali
+    </ButtonLink>
+  );
 
   if (user.role === "STUDENT") {
     const enrolled = await prisma.enrollment.findUnique({
@@ -73,7 +78,16 @@ export default async function CourseAttendancePage({
 
     return (
       <>
-        <PageHeader title="Davomat" subtitle={course.title} action={back} />
+        <PageHeader
+          title="Davomat"
+          subtitle={course.title}
+          action={
+            <>
+              {journal}
+              {back}
+            </>
+          }
+        />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Davomat foizi" value={`${percent}%`} hint={`${total} ta dars`} />
           <Stat label="Bor" value={present} />
@@ -150,7 +164,12 @@ export default async function CourseAttendancePage({
       <PageHeader
         title="Davomat"
         subtitle={`${course.title} · ${students.length} ta talaba`}
-        action={back}
+        action={
+          <>
+            {journal}
+            {back}
+          </>
+        }
       />
       <SessionPanel courseId={course.id} studentCount={students.length} />
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">

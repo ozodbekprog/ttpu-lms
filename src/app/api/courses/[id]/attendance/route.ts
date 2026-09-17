@@ -15,6 +15,11 @@ const bulkSchema = z.object({
     .min(1, "Kamida bitta yozuv kerak"),
 });
 
+const removeSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Sana YYYY-MM-DD ko'rinishida bo'lishi kerak"),
+  studentId: z.string().min(1),
+});
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -138,5 +143,48 @@ export async function POST(
   return Response.json({
     ok: true,
     data: { date: parsed.data.date, count: uniqueEntries.length },
+  });
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const course = await prisma.course.findFirst({ where: { OR: [{ id }, { slug: id }] } });
+  if (!course) {
+    return Response.json({ ok: false, error: "Kurs topilmadi" }, { status: 404 });
+  }
+  if (!canManageCourse(user, course)) {
+    return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const parsed = removeSchema.safeParse(body);
+  if (!parsed.success) {
+    const message = parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri";
+    return Response.json({ ok: false, error: message }, { status: 400 });
+  }
+
+  const date = new Date(`${parsed.data.date}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) {
+    return Response.json({ ok: false, error: "Sana noto'g'ri" }, { status: 400 });
+  }
+
+  const removed = await prisma.attendance.deleteMany({
+    where: { courseId: course.id, studentId: parsed.data.studentId, date },
+  });
+  if (removed.count === 0) {
+    return Response.json({ ok: false, error: "Yozuv topilmadi" }, { status: 404 });
+  }
+
+  return Response.json({
+    ok: true,
+    data: { date: parsed.data.date, studentId: parsed.data.studentId },
   });
 }
