@@ -40,6 +40,25 @@ export default function AdminLoading() {
           </div>
         </Card>
       </div>
+
+      <div className="mt-8">
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="mt-3 h-4 w-72" />
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index}>
+              <div className="border-b border-slate-100 px-6 py-4">
+                <Skeleton className="h-5 w-44" />
+                <Skeleton className="mt-2 h-3.5 w-60" />
+              </div>
+              <div className="px-6 py-5">
+                <Skeleton className="h-52" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

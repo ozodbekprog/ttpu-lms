@@ -46,6 +46,8 @@ model User {
   name         String
   role         Role     @default(STUDENT)
   avatarUrl    String?
+  coverUrl     String?
+  bio          String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -65,6 +67,9 @@ model User {
   certificatesIssued   Certificate[]      @relation("CertificateIssuedBy")
   certificatesReceived Certificate[]      @relation("CertificateStudent")
   attendanceSessions   AttendanceSession[]
+  conversationsA       Conversation[]     @relation("ConversationA")
+  conversationsB       Conversation[]     @relation("ConversationB")
+  messagesSent         Message[]          @relation("MessageSender")
 
   @@index([groupId])
 }
@@ -325,4 +330,34 @@ model AttendanceSession {
   createdBy User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   @@index([courseId, date])
+}
+
+model Conversation {
+  id             String   @id @default(cuid())
+  participantAId String
+  participantBId String
+  lastMessageAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  participantA User      @relation("ConversationA", fields: [participantAId], references: [id], onDelete: Cascade)
+  participantB User      @relation("ConversationB", fields: [participantBId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@unique([participantAId, participantBId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
 }

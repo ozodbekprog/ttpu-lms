@@ -1,6 +1,18 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: UI jilo to'lqini (Komp 1)
+Oxirgi yangilanish: Profil + Chat + Chartlar + Bot (Komp 1)
+
+## Yangi (to'lqin 4)
+
+- [x] **Facebook-uslub profil** — cover rasm, katta avatar (yuklash bilan), bio (300 belgi),
+      statistika (kurslar/sertifikatlar/o'rtacha), boshqa foydalanuvchi profili `/users/[id]`
+- [x] **Chat tizimi** — DM (student↔teacher↔admin): suhbatlar ro'yxati, o'qilmagan badge
+      (sidebar), 5s polling, foydalanuvchi qidiruvi, `?user=` bilan to'g'ridan-to'g'ri ochish,
+      1 soniya flood himoyasi
+- [x] **Admin chartlar** — sof SVG (Donut/Bar/Line): rollar, topshiriqlar 14 kun,
+      davomat foizi, top kurslar; `/admin` "Tahlillar" bo'limi
+- [x] **Telegram bot jonli** — @ttpu_uz_bot ishga tushdi (`node bot/telegram.mjs`),
+      `/jadval`, `/ertaga`, kunlik eslatma 08:00, data.json (gitignored)
 
 ## UI jilo (brend dizayn tizimi)
 

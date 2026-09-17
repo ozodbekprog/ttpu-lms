@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 const profileSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
   avatarUrl: z.union([z.literal(""), z.string().trim().url().max(500)]).optional(),
+  bio: z.string().max(300).optional(),
 });
 
 const passwordSchema = z.object({
@@ -23,6 +24,8 @@ function publicUser(user: ProfileUser) {
     email: user.email,
     role: user.role,
     avatarUrl: user.avatarUrl,
+    coverUrl: user.coverUrl,
+    bio: user.bio,
     createdAt: user.createdAt,
     group: user.group ? { id: user.group.id, name: user.group.name } : null,
   };
@@ -58,7 +61,11 @@ export async function PATCH(request: Request) {
   if (!parsed.success) {
     return Response.json({ ok: false, error: "Ma'lumotlar xato" }, { status: 400 });
   }
-  if (parsed.data.name === undefined && parsed.data.avatarUrl === undefined) {
+  if (
+    parsed.data.name === undefined &&
+    parsed.data.avatarUrl === undefined &&
+    parsed.data.bio === undefined
+  ) {
     return Response.json({ ok: false, error: "O'zgartirish uchun maydon yuborilmadi" }, { status: 400 });
   }
 
@@ -66,6 +73,9 @@ export async function PATCH(request: Request) {
   if (parsed.data.name !== undefined) data.name = parsed.data.name;
   if (parsed.data.avatarUrl !== undefined) {
     data.avatarUrl = parsed.data.avatarUrl === "" ? null : parsed.data.avatarUrl;
+  }
+  if (parsed.data.bio !== undefined) {
+    data.bio = parsed.data.bio.trim() === "" ? null : parsed.data.bio;
   }
 
   const updated = await prisma.user.update({

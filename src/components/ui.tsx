@@ -115,19 +115,40 @@ export function EmptyState({
   );
 }
 
-export function Avatar({ name, className }: { name: string; className?: string }) {
+export function Avatar({
+  name,
+  src,
+  size,
+  className,
+}: {
+  name: string;
+  src?: string | null;
+  size?: number;
+  className?: string;
+}) {
   const letters = name
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join("");
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={cn("inline-block size-9 shrink-0 rounded-full object-cover shadow-sm", className)}
+        style={size ? { width: size, height: size } : undefined}
+      />
+    );
+  }
   return (
     <span
       className={cn(
         "inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-800 to-brand-600 text-xs font-semibold text-white shadow-sm",
         className,
       )}
+      style={size ? { width: size, height: size } : undefined}
     >
       {letters}
     </span>

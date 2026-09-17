@@ -1,64 +1,89 @@
-import type { Role } from "@prisma/client";
 import { requireUser } from "@/lib/auth";
-import { Avatar, Badge, Card, CardBody, PageHeader } from "@/components/ui";
-import { fmtDate } from "@/lib/utils";
-import { ProfileForm } from "@/components/profile/ProfileForm";
+import { prisma } from "@/lib/prisma";
+import { PageHeader, Stat } from "@/components/ui";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { PasswordForm } from "@/components/profile/PasswordForm";
-
-const ROLE_META: Record<Role, { label: string; tone: "brand" | "purple" | "slate" }> = {
-  ADMIN: { label: "Administrator", tone: "brand" },
-  TEACHER: { label: "O'qituvchi", tone: "purple" },
-  STUDENT: { label: "Talaba", tone: "slate" },
-};
+import { ProfileForm } from "@/components/profile/ProfileForm";
+import { ProfileHero } from "@/components/profile/ProfileHero";
 
 export default async function ProfilePage() {
   const user = await requireUser();
-  const role = ROLE_META[user.role];
+
+  let coursesCount = 0;
+  let certificatesCount = 0;
+  let thirdLabel = "Ma'lumot";
+  let thirdValue: string | number = "—";
+  let thirdHint: string | undefined;
+
+  if (user.role === "STUDENT") {
+    const [enrollments, certificates, graded] = await Promise.all([
+      prisma.enrollment.count({ where: { userId: user.id } }),
+      prisma.certificate.count({ where: { studentId: user.id } }),
+      prisma.submission.findMany({
+        where: { studentId: user.id, status: "GRADED", score: { not: null } },
+        select: { score: true, assignment: { select: { maxScore: true } } },
+      }),
+    ]);
+    coursesCount = enrollments;
+    certificatesCount = certificates;
+    const percents = graded.map((item) =>
+      item.assignment.maxScore > 0 ? (item.score ?? 0) / item.assignment.maxScore : 0,
+    );
+    thirdLabel = "O'rtacha ball";
+    thirdValue = percents.length
+      ? `${Math.round((percents.reduce((sum, value) => sum + value, 0) / percents.length) * 100)}%`
+      : "—";
+    thirdHint = percents.length ? `${percents.length} ta baholangan ish` : "Hali baho yo'q";
+  } else if (user.role === "TEACHER") {
+    const [courses, certificates, students] = await Promise.all([
+      prisma.course.count({ where: { teacherId: user.id } }),
+      prisma.certificate.count({ where: { issuedById: user.id } }),
+      prisma.enrollment.findMany({
+        where: { course: { teacherId: user.id } },
+        distinct: ["userId"],
+        select: { userId: true },
+      }),
+    ]);
+    coursesCount = courses;
+    certificatesCount = certificates;
+    thirdLabel = "Talabalar";
+    thirdValue = students.length;
+    thirdHint = "Kurslariga yozilgan";
+  } else {
+    const [courses, certificates, users] = await Promise.all([
+      prisma.course.count(),
+      prisma.certificate.count(),
+      prisma.user.count({ where: { isActive: true } }),
+    ]);
+    coursesCount = courses;
+    certificatesCount = certificates;
+    thirdLabel = "Foydalanuvchilar";
+    thirdValue = users;
+    thirdHint = "Faol hisoblar";
+  }
 
   return (
     <>
       <PageHeader eyebrow="Hisob" title="Profil" subtitle="Shaxsiy ma'lumotlar va xavfsizlik" />
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="h-fit overflow-hidden lg:col-span-1">
-          <div className="h-20 bg-gradient-to-r from-brand-900 via-brand-700 to-brand-900" />
-          <CardBody className="-mt-12 flex flex-col items-center gap-3 text-center">
-            {user.avatarUrl ? (
-              <span
-                role="img"
-                aria-label={user.name}
-                className="inline-block size-20 shrink-0 rounded-full bg-slate-200 bg-cover bg-center ring-4 ring-white"
-                style={{ backgroundImage: `url(${user.avatarUrl})` }}
-              />
-            ) : (
-              <Avatar name={user.name} className="size-20 text-2xl ring-4 ring-white" />
-            )}
-            <div>
-              <p className="text-lg font-semibold tracking-tight text-brand-950">{user.name}</p>
-              <p className="text-sm text-slate-500">{user.email}</p>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <Badge tone={role.tone}>{role.label}</Badge>
-              {user.group ? <Badge tone="gold">{user.group.name}</Badge> : null}
-            </div>
-            <dl className="mt-1 w-full space-y-2 border-t border-slate-100 pt-4 text-left text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-slate-500">Ro&apos;yxatdan o&apos;tgan</dt>
-                <dd className="font-medium text-slate-900">{fmtDate(user.createdAt)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt className="text-slate-500">Holat</dt>
-                <dd>
-                  <Badge tone="green">Faol</Badge>
-                </dd>
-              </div>
-            </dl>
-          </CardBody>
-        </Card>
-
-        <div className="space-y-6 lg:col-span-2">
-          <ProfileForm initialName={user.name} initialAvatarUrl={user.avatarUrl} />
-          <PasswordForm />
-        </div>
+      <ProfileHero
+        name={user.name}
+        email={user.email}
+        role={user.role}
+        avatarUrl={user.avatarUrl}
+        coverUrl={user.coverUrl}
+        bio={user.bio}
+        createdAt={user.createdAt}
+        groupName={user.group?.name ?? null}
+        avatar={<AvatarUpload name={user.name} src={user.avatarUrl} />}
+      />
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <Stat label="Kurslar" value={coursesCount} />
+        <Stat label="Sertifikatlar" value={certificatesCount} />
+        <Stat label={thirdLabel} value={thirdValue} hint={thirdHint} />
+      </div>
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+        <ProfileForm initialName={user.name} initialBio={user.bio} avatarUrl={user.avatarUrl} />
+        <PasswordForm />
       </div>
     </>
   );

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardBody, CardHeader, PageHeader, Stat } from "@/components/ui";
+import { BarChart, DonutChart, LineChart } from "@/components/charts";
+import { getAdminCharts } from "@/app/api/admin/charts/data";
 import FileUpload from "@/components/admin/FileUpload";
 
 const QUICK_LINKS = [
@@ -46,15 +48,17 @@ const QUICK_LINKS = [
 export default async function AdminPage() {
   await requireRole(["ADMIN"]);
 
-  const [users, courses, groups, submissions, quizzes, teachers, students] = await Promise.all([
-    prisma.user.count(),
-    prisma.course.count(),
-    prisma.group.count(),
-    prisma.submission.count(),
-    prisma.quiz.count(),
-    prisma.user.count({ where: { role: "TEACHER" } }),
-    prisma.user.count({ where: { role: "STUDENT" } }),
-  ]);
+  const [users, courses, groups, submissions, quizzes, teachers, students, charts] =
+    await Promise.all([
+      prisma.user.count(),
+      prisma.course.count(),
+      prisma.group.count(),
+      prisma.submission.count(),
+      prisma.quiz.count(),
+      prisma.user.count({ where: { role: "TEACHER" } }),
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      getAdminCharts(),
+    ]);
 
   return (
     <>
@@ -112,6 +116,57 @@ export default async function AdminPage() {
           </CardBody>
         </Card>
       </div>
+
+      <section className="mt-8">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold tracking-tight text-brand-950">Tahlillar</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Tizim ko&apos;rsatkichlari va so&apos;nggi 14 kunlik dinamika
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader
+              title="Foydalanuvchilar rollari"
+              subtitle="Talabalar, o'qituvchilar va adminlar nisbati"
+            />
+            <CardBody>
+              <DonutChart data={charts.usersByRole} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Topshiriqlar dinamikasi"
+              subtitle="So'nggi 14 kunda yuborilgan ishlar soni"
+            />
+            <CardBody>
+              <BarChart data={charts.submissionsByDay} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Davomat ko'rsatkichi"
+              subtitle="So'nggi 14 kun: tashrif va sababli holatlar foizi"
+            />
+            <CardBody>
+              <LineChart data={charts.attendanceRateByDay} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Eng faol kurslar"
+              subtitle="Ro'yxatdan o'tganlar soni bo'yicha top 5 kurs"
+            />
+            <CardBody>
+              <BarChart data={charts.topCourses} />
+            </CardBody>
+          </Card>
+        </div>
+      </section>
     </>
   );
 }

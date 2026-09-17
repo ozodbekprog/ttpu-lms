@@ -2,20 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, CardBody, CardHeader, Input, Label } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Input, Label, Textarea } from "@/components/ui";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { CoverUpload } from "@/components/profile/CoverUpload";
+
+const BIO_MAX = 300;
 
 type ApiResult = { ok?: boolean; error?: string } | null;
 
 export function ProfileForm({
   initialName,
-  initialAvatarUrl,
+  initialBio,
+  avatarUrl,
 }: {
   initialName: string;
-  initialAvatarUrl: string | null;
+  initialBio: string | null;
+  avatarUrl: string | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
+  const [bio, setBio] = useState(initialBio ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,7 +35,7 @@ export function ProfileForm({
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, avatarUrl }),
+        body: JSON.stringify({ name, bio }),
       });
       const json = (await res.json().catch(() => null)) as ApiResult;
       if (!res.ok || !json?.ok) {
@@ -47,9 +53,19 @@ export function ProfileForm({
 
   return (
     <Card>
-      <CardHeader title="Profil ma'lumotlari" subtitle="Ism va avatar havolasini o'zgartiring" />
+      <CardHeader title="Profilni tahrirlash" subtitle="Avatar, muqova, ism va bio" />
       <CardBody>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-5">
+          <div className="flex flex-wrap items-center gap-8 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-4">
+            <div className="flex flex-col items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Avatar</span>
+              <AvatarUpload name={initialName} src={avatarUrl} size={72} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-slate-500">Muqova</span>
+              <CoverUpload />
+            </div>
+          </div>
           <div>
             <Label>Ism</Label>
             <Input
@@ -62,12 +78,18 @@ export function ProfileForm({
             />
           </div>
           <div>
-            <Label>Avatar havolasi</Label>
-            <Input
-              type="url"
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://example.com/avatar.png"
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <Label className="mb-0">Bio</Label>
+              <span className="text-xs tabular-nums text-slate-400">
+                {bio.length}/{BIO_MAX}
+              </span>
+            </div>
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              maxLength={BIO_MAX}
+              rows={4}
+              placeholder="O'zingiz haqingizda qisqacha..."
             />
           </div>
           {error ? (

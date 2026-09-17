@@ -33,20 +33,25 @@ try {
 let token = "";
 let prisma = null;
 let links = {};
+let lastReminderDate = "";
 
-function loadLinks() {
-  if (!existsSync(DATA_FILE)) return {};
+function loadData() {
+  if (!existsSync(DATA_FILE)) return;
   try {
     const parsed = JSON.parse(readFileSync(DATA_FILE, "utf8"));
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
-    return {};
-  } catch {
-    return {};
-  }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return;
+    if (parsed.links && typeof parsed.links === "object" && !Array.isArray(parsed.links)) {
+      links = parsed.links;
+      lastReminderDate = typeof parsed.lastReminderDate === "string" ? parsed.lastReminderDate : "";
+      return;
+    }
+    links = parsed;
+  } catch {}
 }
 
-function saveLinks() {
-  writeFileSync(DATA_FILE, `${JSON.stringify(links, null, 2)}\n`, "utf8");
+function saveData() {
+  const payload = { links, lastReminderDate };
+  writeFileSync(DATA_FILE, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
 function getPrisma() {

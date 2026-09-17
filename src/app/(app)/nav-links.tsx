@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type NavLink = { href: string; label: string };
+type NavLink = { href: string; label: string; badge?: ReactNode };
 
 export function NavLinks({ links, variant = "side" }: { links: NavLink[]; variant?: "side" | "top" }) {
   const pathname = usePathname();
@@ -19,11 +20,12 @@ export function NavLinks({ links, variant = "side" }: { links: NavLink[]; varian
               key={l.href}
               href={l.href}
               className={cn(
-                "whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                 active ? "bg-brand-900 text-white" : "text-slate-600 hover:bg-slate-100",
               )}
             >
               {l.label}
+              {l.badge}
             </Link>
           );
         })}
@@ -53,6 +55,7 @@ export function NavLinks({ links, variant = "side" }: { links: NavLink[]; varian
               )}
             />
             {l.label}
+            {l.badge ? <span className="ml-auto">{l.badge}</span> : null}
           </Link>
         );
       })}

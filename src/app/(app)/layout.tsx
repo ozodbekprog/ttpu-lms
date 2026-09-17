@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/auth";
 import { Avatar } from "@/components/ui";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { UnreadBadge } from "@/components/chat/UnreadBadge";
 import { Logo } from "@/components/brand/logo";
 import { NavLinks } from "./nav-links";
 
@@ -20,6 +21,7 @@ export default async function AppLayout({
     { href: "/calendar", label: "Kalendar" },
     { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholarim" },
     { href: "/certificates", label: "Sertifikatlar" },
+    { href: "/messages", label: "Xabarlar", badge: <UnreadBadge /> },
     ...(isStaff(user.role) ? [{ href: "/reports", label: "Hisobotlar" }] : []),
     ...(user.role === "ADMIN" ? [{ href: "/admin", label: "Admin panel" }] : []),
   ];
@@ -42,13 +44,16 @@ export default async function AppLayout({
         </div>
         <NavLinks links={links} />
         <div className="border-t border-slate-100 p-3">
-          <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-            <Avatar name={user.name} />
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 transition-colors hover:bg-brand-50"
+          >
+            <Avatar name={user.name} src={user.avatarUrl} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-slate-900">{user.name}</p>
               <p className="truncate text-xs text-slate-500">{roleLabel}</p>
             </div>
-          </div>
+          </Link>
           <form action="/api/auth/logout" method="post">
             <button
               type="submit"
