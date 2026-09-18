@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { DragEvent, MouseEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Badge,
@@ -11,9 +11,6 @@ import {
   CardBody,
   CardHeader,
   EmptyState,
-  Input,
-  Label,
-  Select,
   Table,
 } from "@/components/ui";
 import { cn, dayName } from "@/lib/utils";
@@ -24,7 +21,18 @@ import {
 } from "@/components/attendance/lesson-utils";
 import type { CourseOption } from "@/components/attendance/lesson-utils";
 import { NowLesson } from "./now-lesson";
-import type { ScheduleEntryItem, ScheduleStatus } from "./types";
+import type { ScheduleStatus } from "./types";
+import { BuilderToast } from "./builder/toast";
+import { LegoSurface } from "./builder/lego";
+import { LegoPalette, isLegoDragPayload } from "./builder/lego-palette";
+import type {
+  BoardEntry,
+  BuilderEntry,
+  CellRef,
+  LegoDragPayload,
+  PaletteBlock,
+  ToastMessage,
+} from "./builder/types";
 import {
   dayIsoInWeek,
   formatDayShort,
@@ -38,19 +46,17 @@ import {
 type GroupItem = { id: string; name: string };
 type ViewMode = "grid" | "list";
 type StaffMode = "group" | "teacher" | "room";
-type ApiResponse = { ok: true; data: unknown } | { ok: false; error: string };
+type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: string; status?: number };
 type IconProps = { className?: string };
 
-type FormState = {
-  id: string | null;
-  dayOfWeek: number;
-  slot: number;
-  subject: string;
-  teacher: string;
-  room: string;
-  parity: "" | "odd" | "even";
-  status: ScheduleStatus;
-  note: string;
+type NewBlockData = {
+  blockId: string;
+  title: string;
+  subjectId: string | null;
+  lessonType: string | null;
+  room: string | null;
+  teacher: string | null;
+  color: string | null;
 };
 
 const DAYS = [1, 2, 3, 4, 5, 6];
@@ -84,7 +90,6 @@ const SUBJECT_TONES = [
 const BLOCK_SHADOW = "shadow-[0_1px_2px_rgba(16,24,40,0.05),0_10px_22px_-14px_rgba(29,52,96,0.32)]";
 
 const ATTENDANCE_CLASS = "border border-slate-200 text-brand-700! hover:border-brand-300! hover:bg-brand-50!";
-const EDIT_CLASS = "text-brand-700! hover:bg-brand-50!";
 const DELETE_CLASS = "text-slate-400! hover:bg-rose-50! hover:text-rose-600!";
 const EXPORT_CLASS =
   "inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm transition-all duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900";
@@ -195,14 +200,6 @@ function SlidersIcon({ className }: IconProps) {
   );
 }
 
-function PlusIcon({ className }: IconProps) {
-  return (
-    <SvgIcon className={className}>
-      <path d="M12 5v14M5 12h14" />
-    </SvgIcon>
-  );
-}
-
 function UsersIcon({ className }: IconProps) {
   return (
     <SvgIcon className={className}>
@@ -236,15 +233,6 @@ function CheckCircleIcon({ className }: IconProps) {
     <SvgIcon className={className}>
       <circle cx="12" cy="12" r="9" />
       <path d="m8.5 12.5 2.5 2.5 4.5-5" />
-    </SvgIcon>
-  );
-}
-
-function PencilIcon({ className }: IconProps) {
-  return (
-    <SvgIcon className={className}>
-      <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
-      <path d="m13.5 5.5 3 3" />
     </SvgIcon>
   );
 }
@@ -295,40 +283,110 @@ function cellBackground(isToday: boolean, isNowPair: boolean) {
   return "";
 }
 
-function toStatus(value: string): ScheduleStatus {
-  return value === "CHANGED" || value === "MOVED" || value === "CANCELLED" ? value : "NORMAL";
+async function apiRequest<T>(url: string, init?: RequestInit): Promise<ApiResponse<T>> {
+  try {
+    const response = await fetch(url, init);
+    const payload = (await response.json().catch(() => null)) as ApiResponse<T> | null;
+    if (!payload) return { ok: false, error: "Server bilan aloqa xatosi" };
+    if (payload.ok) return payload;
+    if (response.status === 409) return { ok: false, error: "Bu vaqt band", status: 409 };
+    return { ok: false, error: payload.error, status: response.status };
+  } catch {
+    return { ok: false, error: "Server bilan aloqa xatosi" };
+  }
+}
+
+function toBoardEntry(entry: BuilderEntry, groupName: string): BoardEntry {
+  return {
+    id: entry.id,
+    groupId: entry.groupId,
+    groupName,
+    dayOfWeek: entry.dayOfWeek,
+    slot: entry.slot,
+    subject: entry.subject,
+    subjectId: entry.subjectId,
+    lessonType: entry.lessonType,
+    subjectRef: entry.subjectRef,
+    teacher: entry.teacher,
+    room: entry.room,
+    parity: entry.parity,
+    status: entry.status,
+    note: entry.note,
+  };
+}
+
+function matchesBlock(entry: BoardEntry, block: PaletteBlock) {
+  if (block.subjectId && entry.subjectId === block.subjectId) return true;
+  return entry.subject.trim().toLowerCase() === block.title.trim().toLowerCase();
+}
+
+let tempSeq = 0;
+let toastSeq = 0;
+
+function nextTempId() {
+  tempSeq += 1;
+  return `temp-${tempSeq}`;
+}
+
+function nextToastId() {
+  toastSeq += 1;
+  return toastSeq;
 }
 
 export function ScheduleBoard({
   canEdit,
+  role,
+  userName,
   groups,
   selectedGroupId,
-  entries,
+  entries: initialEntries,
   today,
   isCurrentWeek,
   weekStart,
   todayIso,
   nowMinutes,
+  palette,
+  teacherOptions,
 }: {
   canEdit: boolean;
+  role: "ADMIN" | "TEACHER" | "STUDENT";
+  userName: string;
   groups: GroupItem[];
   selectedGroupId: string | null;
-  entries: ScheduleEntryItem[];
+  entries: BoardEntry[];
   today: number;
   isCurrentWeek: boolean;
   weekStart: string;
   todayIso: string;
   nowMinutes: number;
+  palette: PaletteBlock[];
+  teacherOptions: string[];
 }) {
   const router = useRouter();
-  const [form, setForm] = useState<FormState | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [teacher, setTeacher] = useState<{ name: string; courses: CourseOption[] } | null>(null);
+  const [entries, setEntries] = useState<BoardEntry[]>(initialEntries);
   const [mode, setMode] = useState<StaffMode>("group");
+  const [view, setView] = useState<ViewMode>("grid");
+  const [teacher, setTeacher] = useState<{ name: string; courses: CourseOption[] } | null>(null);
   const [teacherFilter, setTeacherFilter] = useState("");
   const [roomQuery, setRoomQuery] = useState("");
-  const [view, setView] = useState<ViewMode>("grid");
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [panelId, setPanelId] = useState<string | null>(null);
+  const [hover, setHover] = useState<CellRef | null>(null);
+  const [snapId, setSnapId] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const [pending, setPending] = useState(false);
+  const [adminTeacher, setAdminTeacher] = useState("");
+  const actionRef = useRef<(() => void) | null>(null);
+  const deletedRef = useRef<BoardEntry | null>(null);
+
+  const isAdmin = role === "ADMIN";
+  const groupMode = mode === "group";
+  const canDrop = canEdit && groupMode && view === "grid";
+
+  const dismissToast = useCallback(() => {
+    actionRef.current = null;
+    setToast(null);
+  }, []);
 
   useEffect(() => {
     if (!canEdit) return;
@@ -373,7 +431,7 @@ export function ScheduleBoard({
   const parityLabel = parity === "even" ? "Juft hafta" : "Toq hafta";
   const nowPair = isCurrentWeek ? slotAtMinutes(nowMinutes) : null;
 
-  const teacherOptions = (() => {
+  const teacherOptionsFromEntries = (() => {
     const map = new Map<string, string>();
     for (const entry of entries) {
       if (!entry.teacher) continue;
@@ -400,9 +458,43 @@ export function ScheduleBoard({
           ? parityEntries.filter((entry) => (entry.room ?? "").toLowerCase().includes(roomNeedle))
           : [];
 
+  const paletteBlocks = useMemo(() => {
+    const scoped = entries.filter((entry) => entry.groupId === selectedGroupId);
+    return palette.map((block) => ({
+      ...block,
+      placedCount: scoped.filter((entry) => matchesBlock(entry, block)).length,
+    }));
+  }, [entries, palette, selectedGroupId]);
+
+  const selectedBlock = selectedBlockId
+    ? paletteBlocks.find((block) => block.id === selectedBlockId) ?? null
+    : null;
+  const panelEntry = panelId ? entries.find((entry) => entry.id === panelId) ?? null : null;
+
   const exportQuery = `groupId=${encodeURIComponent(selectedGroupId ?? "")}&week=${weekStart}`;
 
-  function attendanceHref(entry: ScheduleEntryItem): string | null {
+  function canManageEntry(entry: BoardEntry) {
+    if (isAdmin) return true;
+    if (!entry.teacher) return false;
+    return normalizeTeacherName(entry.teacher) === normalizeTeacherName(userName);
+  }
+
+  function teacherForBlock(block: PaletteBlock) {
+    if (!isAdmin) return userName || block.teacherName;
+    return adminTeacher.trim() || block.teacherName;
+  }
+
+  function showToast(tone: ToastMessage["tone"], text: string, actionLabel?: string, action?: () => void) {
+    actionRef.current = action ?? null;
+    setToast({ id: nextToastId(), tone, text, actionLabel });
+  }
+
+  function flashSnap(id: string) {
+    setSnapId(id);
+    window.setTimeout(() => setSnapId((current) => (current === id ? null : current)), 240);
+  }
+
+  function attendanceHref(entry: BoardEntry): string | null {
     if (!teacher || !entry.teacher) return null;
     if (normalizeTeacherName(entry.teacher) !== normalizeTeacherName(teacher.name)) return null;
     const date = dayIsoInWeek(weekStart, entry.dayOfWeek);
@@ -429,89 +521,294 @@ export function ScheduleBoard({
 
   function changeMode(next: StaffMode) {
     setMode(next);
-    if (next === "teacher" && !teacherFilter && teacherOptions[0]) {
-      setTeacherFilter(teacherOptions[0]);
+    setSelectedBlockId(null);
+    setPanelId(null);
+    if (next === "teacher" && !teacherFilter && teacherOptionsFromEntries[0]) {
+      setTeacherFilter(teacherOptionsFromEntries[0]);
     }
   }
 
-  function openAdd(day: number, slot: number) {
-    setError(null);
-    setForm({ id: null, dayOfWeek: day, slot, subject: "", teacher: "", room: "", parity: "", status: "NORMAL", note: "" });
+  function changeView(next: ViewMode) {
+    setView(next);
+    setSelectedBlockId(null);
+    setPanelId(null);
   }
 
-  function openEdit(entry: ScheduleEntryItem) {
-    setError(null);
-    setForm({
-      id: entry.id,
-      dayOfWeek: entry.dayOfWeek,
-      slot: entry.slot,
-      subject: entry.subject,
-      teacher: entry.teacher ?? "",
-      room: entry.room ?? "",
-      parity: entry.parity === "odd" || entry.parity === "even" ? entry.parity : "",
-      status: entry.status,
-      note: entry.note ?? "",
+  async function placeBlock(cell: CellRef, data: NewBlockData) {
+    if (!selectedGroupId) return;
+    setPanelId(null);
+    const tempId = nextTempId();
+    const optimistic: BoardEntry = {
+      id: tempId,
+      groupId: selectedGroupId,
+      groupName: selectedGroupName ?? "",
+      dayOfWeek: cell.day,
+      slot: cell.slot,
+      subject: data.title,
+      subjectId: data.subjectId,
+      lessonType: data.lessonType,
+      subjectRef: { name: data.title, color: data.color },
+      teacher: data.teacher,
+      room: data.room,
+      parity: null,
+      status: "NORMAL",
+      note: null,
+    };
+    setEntries((prev) => [...prev, optimistic]);
+    flashSnap(tempId);
+    setPending(true);
+    const result = await apiRequest<BuilderEntry>("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        groupId: selectedGroupId,
+        dayOfWeek: cell.day,
+        slot: cell.slot,
+        subject: data.title,
+        subjectId: data.subjectId,
+        lessonType: data.lessonType,
+        teacher: data.teacher,
+        room: data.room,
+        parity: null,
+        status: "NORMAL",
+      }),
+    });
+    setPending(false);
+    if (!result.ok) {
+      setEntries((prev) => prev.filter((entry) => entry.id !== tempId));
+      showToast("error", result.error);
+      return;
+    }
+    const created = result.data;
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === tempId
+          ? {
+              ...toBoardEntry(created, selectedGroupName ?? ""),
+              subjectRef: created.subjectRef ?? optimistic.subjectRef,
+            }
+          : entry,
+      ),
+    );
+    flashSnap(created.id);
+    showToast("success", "Qo'yildi ✓");
+  }
+
+  async function moveEntry(id: string, cell: CellRef) {
+    const current = entries.find((entry) => entry.id === id);
+    if (!current || current.id.startsWith("temp-")) return;
+    if (current.dayOfWeek === cell.day && current.slot === cell.slot) return;
+    setPanelId(null);
+    const snapshot = current;
+    setEntries((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, dayOfWeek: cell.day, slot: cell.slot } : entry)),
+    );
+    flashSnap(id);
+    setPending(true);
+    const result = await apiRequest<BuilderEntry>(`/api/schedule/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dayOfWeek: cell.day, slot: cell.slot }),
+    });
+    setPending(false);
+    if (!result.ok) {
+      setEntries((prev) => prev.map((entry) => (entry.id === id ? snapshot : entry)));
+      showToast("error", result.error);
+      return;
+    }
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === id
+          ? {
+              ...toBoardEntry(result.data, snapshot.groupName),
+              subjectRef: result.data.subjectRef ?? snapshot.subjectRef,
+            }
+          : entry,
+      ),
+    );
+    showToast("success", "Ko'chirildi ✓");
+  }
+
+  async function toggleCancel(entry: BoardEntry) {
+    const next: ScheduleStatus = entry.status === "CANCELLED" ? "NORMAL" : "CANCELLED";
+    const snapshot = entry.status;
+    setEntries((prev) => prev.map((item) => (item.id === entry.id ? { ...item, status: next } : item)));
+    setPending(true);
+    const result = await apiRequest<BuilderEntry>(`/api/schedule/${entry.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: next }),
+    });
+    setPending(false);
+    if (!result.ok) {
+      setEntries((prev) => prev.map((item) => (item.id === entry.id ? { ...item, status: snapshot } : item)));
+      showToast("error", result.error);
+      return;
+    }
+    setEntries((prev) =>
+      prev.map((item) =>
+        item.id === entry.id
+          ? {
+              ...toBoardEntry(result.data, entry.groupName),
+              subjectRef: result.data.subjectRef ?? entry.subjectRef,
+            }
+          : item,
+      ),
+    );
+    showToast("success", next === "CANCELLED" ? "Bekor qilindi" : "Tiklandi");
+  }
+
+  async function undoDelete() {
+    const entry = deletedRef.current;
+    if (!entry) return;
+    deletedRef.current = null;
+    setPending(true);
+    const result = await apiRequest<BuilderEntry>("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        groupId: entry.groupId,
+        dayOfWeek: entry.dayOfWeek,
+        slot: entry.slot,
+        subject: entry.subject,
+        subjectId: entry.subjectId,
+        lessonType: entry.lessonType,
+        teacher: entry.teacher,
+        room: entry.room,
+        parity: entry.parity === "odd" || entry.parity === "even" ? entry.parity : null,
+        status: entry.status,
+        note: entry.note,
+      }),
+    });
+    setPending(false);
+    if (!result.ok) {
+      showToast("error", result.error);
+      return;
+    }
+    const created = result.data;
+    setEntries((prev) => [
+      ...prev,
+      { ...toBoardEntry(created, entry.groupName), subjectRef: created.subjectRef ?? entry.subjectRef },
+    ]);
+    showToast("success", "Qaytarildi ✓");
+  }
+
+  async function deleteEntry(entry: BoardEntry) {
+    setPending(true);
+    const result = await apiRequest<{ id: string }>(`/api/schedule/${entry.id}`, { method: "DELETE" });
+    setPending(false);
+    if (!result.ok) {
+      showToast("error", result.error);
+      return;
+    }
+    setEntries((prev) => prev.filter((item) => item.id !== entry.id));
+    setPanelId(null);
+    setSelectedBlockId(null);
+    deletedRef.current = entry;
+    showToast("success", "O'chirildi", "Qaytarish", () => {
+      void undoDelete();
     });
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!form) return;
-    setSaving(true);
-    setError(null);
-    const payload = {
-      dayOfWeek: form.dayOfWeek,
-      slot: form.slot,
-      subject: form.subject.trim(),
-      teacher: form.teacher.trim() || null,
-      room: form.room.trim() || null,
-      parity: form.parity || null,
-      status: form.status,
-      note: form.note.trim() || null,
-    };
-    try {
-      const response = form.id
-        ? await fetch(`/api/schedule/${form.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-        : await fetch("/api/schedule", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...payload, groupId: selectedGroupId }),
-          });
-      const json = (await response.json()) as ApiResponse;
-      if (!json.ok) {
-        setError(json.error);
-        return;
-      }
-      setForm(null);
-      router.refresh();
-    } catch {
-      setError("Server bilan aloqa xatosi");
-    } finally {
-      setSaving(false);
-    }
+  function handleDragStart(event: DragEvent<HTMLElement>, payload: LegoDragPayload) {
+    const ghost = document.createElement("div");
+    ghost.textContent = payload.subject;
+    ghost.className =
+      "rounded-xl border-2 border-brand-400 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-900 shadow-lg";
+    ghost.style.position = "fixed";
+    ghost.style.top = "-1000px";
+    ghost.style.left = "-1000px";
+    document.body.appendChild(ghost);
+    event.dataTransfer.setDragImage(ghost, 16, 16);
+    event.dataTransfer.effectAllowed = payload.kind === "new" ? "copy" : "move";
+    event.dataTransfer.setData("application/json", JSON.stringify(payload));
+    window.setTimeout(() => ghost.remove(), 0);
+    setHover(null);
+    setPanelId(null);
   }
 
-  async function remove(entry: ScheduleEntryItem) {
-    if (!window.confirm(`${entry.subject} darsini o'chirishni tasdiqlaysizmi?`)) return;
-    setSaving(true);
-    setError(null);
+  function handlePaletteDragStart(event: DragEvent<HTMLElement>, block: PaletteBlock) {
+    if (!canDrop) return;
+    handleDragStart(event, {
+      kind: "new",
+      blockId: block.id,
+      subject: block.title,
+      subjectId: block.subjectId,
+      lessonType: block.lessonType,
+      room: block.room,
+      teacher: teacherForBlock(block),
+      color: block.color,
+    });
+  }
+
+  function handleDragOverCell(event: DragEvent<HTMLElement>, cell: CellRef) {
+    if (!canDrop) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    if (hover?.day !== cell.day || hover?.slot !== cell.slot) setHover(cell);
+  }
+
+  function handleDragLeaveCell(event: DragEvent<HTMLElement>) {
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) return;
+    setHover(null);
+  }
+
+  function handleDropCell(event: DragEvent<HTMLElement>, cell: CellRef) {
+    event.preventDefault();
+    setHover(null);
+    let parsed: unknown = null;
     try {
-      const response = await fetch(`/api/schedule/${entry.id}`, { method: "DELETE" });
-      const json = (await response.json()) as ApiResponse;
-      if (!json.ok) {
-        setError(json.error);
-        return;
-      }
-      router.refresh();
+      parsed = JSON.parse(event.dataTransfer.getData("application/json"));
     } catch {
-      setError("Server bilan aloqa xatosi");
-    } finally {
-      setSaving(false);
+      parsed = null;
     }
+    if (!isLegoDragPayload(parsed)) return;
+    if (parsed.kind === "move") {
+      void moveEntry(parsed.id, cell);
+      return;
+    }
+    void placeBlock(cell, {
+      blockId: parsed.blockId,
+      title: parsed.subject,
+      subjectId: parsed.subjectId,
+      lessonType: parsed.lessonType,
+      room: parsed.room,
+      teacher: parsed.teacher,
+      color: parsed.color,
+    });
+  }
+
+  function handleCellClick(cell: CellRef) {
+    if (!canEdit) return;
+    if (selectedBlock) {
+      void placeBlock(cell, {
+        blockId: selectedBlock.id,
+        title: selectedBlock.title,
+        subjectId: selectedBlock.subjectId,
+        lessonType: selectedBlock.lessonType,
+        room: selectedBlock.room,
+        teacher: teacherForBlock(selectedBlock),
+        color: selectedBlock.color,
+      });
+      return;
+    }
+    if (panelId) setPanelId(null);
+  }
+
+  function handleEntryClick(event: MouseEvent<HTMLElement>, entry: BoardEntry) {
+    if (!canEdit || !canManageEntry(entry) || entry.id.startsWith("temp-")) return;
+    const target = event.target;
+    if (target instanceof HTMLElement && target.closest("a")) return;
+    event.stopPropagation();
+    setSelectedBlockId(null);
+    setPanelId((current) => (current === entry.id ? null : entry.id));
+  }
+
+  function toggleBlock(block: PaletteBlock) {
+    if (!canDrop) return;
+    setPanelId(null);
+    setSelectedBlockId((current) => (current === block.id ? null : block.id));
   }
 
   function entriesAt(day: number, slot: number) {
@@ -553,6 +850,381 @@ export function ScheduleBoard({
         Bekor
       </span>
     </div>
+  );
+
+  const gridSection = (
+    <Card className={cn("animate-fade-in", view === "list" && "hidden")}>
+      <CardHeader
+        title="Haftalik jadval"
+        subtitle={
+          canEdit && view === "grid"
+            ? "Blokni katakka sudrab tashlang yoki blokni bosib, katakni bosing"
+            : selectedGroupName ?? undefined
+        }
+        action={pending ? <span className="text-xs font-medium text-slate-400">Saqlanmoqda…</span> : legend}
+      />
+      <CardBody>
+        <Table className="[&>table]:min-w-[900px]">
+          <thead>
+            <tr className="border-b border-slate-200">
+              <th className="w-28 px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Vaqt
+              </th>
+              {DAYS.map((day) => {
+                const isToday = isCurrentWeek && day === today;
+                return (
+                  <th
+                    key={day}
+                    className={cn(
+                      "relative px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide",
+                      isToday ? "bg-brand-50 text-brand-800" : "text-slate-400",
+                    )}
+                  >
+                    {isToday ? <span className="absolute inset-x-0 top-0 h-0.5 bg-gold-400" /> : null}
+                    {`${dayName(day)} ${formatDayShort(dayIsoInWeek(weekStart, day))}`}
+                    {isToday ? (
+                      <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold normal-case text-brand-700">
+                        bugun
+                      </span>
+                    ) : null}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {SLOTS.map((slot) => {
+              const isNowPair = nowPair === slot;
+              return (
+                <tr key={slot} className="border-b border-slate-100 align-top last:border-0">
+                  <td
+                    className={cn(
+                      "w-28 border-r border-slate-100 px-3 py-3.5",
+                      isNowPair && "bg-gold-300/10",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <p className={cn("text-sm font-medium", isNowPair ? "text-brand-800" : "text-slate-700")}>
+                        {slot}-par
+                      </p>
+                      {isNowPair ? (
+                        <span className="relative inline-flex size-1.5">
+                          <span className="absolute inline-flex size-full animate-ping rounded-full bg-gold-500 opacity-60" />
+                          <span className="relative inline-flex size-1.5 rounded-full bg-gold-500" />
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-slate-400">{SLOT_TIMES[slot]}</p>
+                  </td>
+                  {DAYS.map((day) => {
+                    const cellEntries = entriesAt(day, slot);
+                    const isToday = isCurrentWeek && day === today;
+                    const isHover = hover?.day === day && hover?.slot === slot;
+                    return (
+                      <td
+                        key={day}
+                        onDragOver={canDrop ? (event) => handleDragOverCell(event, { day, slot }) : undefined}
+                        onDragLeave={canDrop ? handleDragLeaveCell : undefined}
+                        onDrop={canDrop ? (event) => handleDropCell(event, { day, slot }) : undefined}
+                        onClick={canEdit ? () => handleCellClick({ day, slot }) : undefined}
+                        className={cn(
+                          "px-2 py-2.5 align-top transition-colors duration-150",
+                          cellBackground(isToday, isNowPair && isToday),
+                          canDrop && "cursor-pointer",
+                          isHover && "bg-brand-50 ring-2 ring-inset ring-brand-200",
+                          canDrop && selectedBlockId && !isHover && "bg-brand-50/40",
+                        )}
+                      >
+                        <div className="space-y-2">
+                          {cellEntries.map((entry) => {
+                            const href = attendanceHref(entry);
+                            const meta = STATUS_META[entry.status];
+                            const cancelled = entry.status === "CANCELLED";
+                            const tone = toneForSubject(entry.subject);
+                            const stripe = meta?.stripe ?? tone.stripe;
+                            const manageable = canEdit && canManageEntry(entry) && !entry.id.startsWith("temp-");
+                            const inner = (
+                              <>
+                                <p
+                                  className={cn(
+                                    "text-sm font-semibold leading-snug",
+                                    cancelled ? "text-slate-500 line-through" : "text-slate-900",
+                                  )}
+                                >
+                                  {entry.subject}
+                                </p>
+                                {entry.teacher ? (
+                                  <p className="mt-0.5 truncate text-xs text-slate-500">{entry.teacher}</p>
+                                ) : null}
+                                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                  {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
+                                  {entry.room ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200/80">
+                                      <PinIcon className="size-3" />
+                                      {entry.room}
+                                    </span>
+                                  ) : null}
+                                  {entry.parity ? (
+                                    <Badge tone="amber">{PARITY_LABEL[entry.parity] ?? entry.parity}</Badge>
+                                  ) : null}
+                                  {meta ? (
+                                    <Badge tone={meta.tone} className="gap-1.5">
+                                      <span className={cn("size-1.5 rounded-full", meta.dot)} />
+                                      {meta.label}
+                                    </Badge>
+                                  ) : null}
+                                </div>
+                                {entry.note ? (
+                                  <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{entry.note}</p>
+                                ) : null}
+                                {href ? (
+                                  <div className="mt-2 flex">
+                                    <ButtonLink size="sm" variant="ghost" href={href} className={ATTENDANCE_CLASS}>
+                                      <CheckCircleIcon className="size-3.5" />
+                                      Davomat
+                                    </ButtonLink>
+                                  </div>
+                                ) : null}
+                              </>
+                            );
+                            if (canEdit) {
+                              return (
+                                <div
+                                  key={entry.id}
+                                  draggable={canDrop && manageable}
+                                  onDragStart={
+                                    canDrop && manageable
+                                      ? (event) =>
+                                          handleDragStart(event, {
+                                            kind: "move",
+                                            id: entry.id,
+                                            subject: entry.subject,
+                                          })
+                                      : undefined
+                                  }
+                                  onDragEnd={canDrop ? () => setHover(null) : undefined}
+                                  onClick={manageable ? (event) => handleEntryClick(event, entry) : undefined}
+                                  title={entry.note ?? undefined}
+                                  className={cn(
+                                    "transition-transform duration-200",
+                                    manageable && canDrop
+                                      ? "cursor-grab active:cursor-grabbing"
+                                      : manageable
+                                        ? "cursor-pointer"
+                                        : "",
+                                    snapId === entry.id && "z-10",
+                                  )}
+                                >
+                                  <LegoSurface
+                                    seed={entry.subject}
+                                    color={entry.subjectRef?.color}
+                                    selected={panelId === entry.id}
+                                    muted={cancelled}
+                                    snapping={snapId === entry.id}
+                                    className="p-3 pl-4"
+                                  >
+                                    {inner}
+                                  </LegoSurface>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div
+                                key={entry.id}
+                                title={entry.note ?? undefined}
+                                className={cn(
+                                  "group relative overflow-hidden rounded-xl border border-slate-200/70 p-3 pl-4 transition-all duration-200 ease-out",
+                                  BLOCK_SHADOW,
+                                  cancelled
+                                    ? "opacity-70"
+                                    : "hover:-translate-y-0.5 hover:border-transparent hover:shadow-lift",
+                                )}
+                              >
+                                <span className={cn("pointer-events-none absolute inset-0", tone.wash)} />
+                                <span className={cn("absolute inset-y-0 left-0 w-1.5", stripe)} />
+                                <div className="relative">{inner}</div>
+                              </div>
+                            );
+                          })}
+                          {canDrop && cellEntries.length === 0 ? (
+                            <div
+                              className={cn(
+                                "flex min-h-[72px] items-center justify-center rounded-xl border border-dashed text-lg font-semibold transition-all duration-150",
+                                isHover || selectedBlockId
+                                  ? "border-brand-300 bg-brand-50/70 text-brand-500"
+                                  : "border-slate-200/80 text-slate-300 opacity-60",
+                              )}
+                            >
+                              {isHover ? "+" : selectedBlockId ? "Qo'yish" : "+"}
+                            </div>
+                          ) : null}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </CardBody>
+    </Card>
+  );
+
+  const listSection = (
+    <Card className={cn("animate-fade-in", view === "grid" && "hidden")}>
+      <CardHeader
+        title="Kunlik agenda"
+        subtitle={selectedGroupName ?? undefined}
+        action={<Badge tone="slate">{`${visibleEntries.length} ta dars`}</Badge>}
+      />
+      <CardBody className="space-y-5">
+        {DAYS.map((day) => {
+          const dayEntries = entriesForDay(day);
+          const isToday = isCurrentWeek && day === today;
+          const dateIso = dayIsoInWeek(weekStart, day);
+          return (
+            <section
+              key={day}
+              className={cn(
+                "overflow-hidden rounded-2xl border bg-white",
+                isToday ? "border-brand-200/80 shadow-card" : "border-slate-200/70",
+              )}
+            >
+              <header
+                className={cn(
+                  "flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3",
+                  isToday
+                    ? "border-brand-100 bg-gradient-to-r from-brand-50 to-white"
+                    : "border-slate-100 bg-slate-50/60",
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold",
+                      isToday
+                        ? "bg-brand-900 text-white shadow-sm"
+                        : "bg-white text-slate-600 ring-1 ring-slate-200",
+                    )}
+                  >
+                    {dateIso.slice(8, 10)}
+                  </span>
+                  <div>
+                    <p className={cn("text-sm font-semibold", isToday ? "text-brand-900" : "text-slate-700")}>
+                      {dayName(day)}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {dayEntries.length > 0 ? `${dayEntries.length} ta dars` : "Darslar yo'q"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">{formatDayShort(dateIso)}</span>
+                  {isToday ? <Badge tone="blue">bugun</Badge> : null}
+                </div>
+              </header>
+              {dayEntries.length === 0 ? (
+                <p className="px-4 py-5 text-center text-xs text-slate-400">{"Bu kunda dars yo'q"}</p>
+              ) : (
+                <div className="px-4 py-4">
+                  {dayEntries.map((entry, index) => {
+                    const href = attendanceHref(entry);
+                    const meta = STATUS_META[entry.status];
+                    const cancelled = entry.status === "CANCELLED";
+                    const tone = toneForSubject(entry.subject);
+                    const stripe = meta?.stripe ?? tone.stripe;
+                    const time = SLOT_TIMES[entry.slot] ?? "";
+                    const [from, to] = time.split("–");
+                    const manageable = canEdit && canManageEntry(entry) && !entry.id.startsWith("temp-");
+                    return (
+                      <div key={entry.id} className="flex gap-3">
+                        <div className="w-14 shrink-0 pt-1 text-right">
+                          <p className="text-xs font-semibold text-slate-600">{from ?? `${entry.slot}-par`}</p>
+                          {to ? <p className="text-[10px] text-slate-400">{to}</p> : null}
+                        </div>
+                        <div
+                          className={cn(
+                            "relative flex-1 border-l border-slate-200 pl-4",
+                            index === dayEntries.length - 1 ? "pb-0" : "pb-4",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "absolute -left-[5.5px] top-2 size-2.5 rounded-full ring-4 ring-white",
+                              stripe,
+                            )}
+                          />
+                          <div
+                            title={entry.note ?? undefined}
+                            onClick={manageable ? (event) => handleEntryClick(event, entry) : undefined}
+                            className={cn(
+                              "relative overflow-hidden rounded-xl border p-3 pl-4 transition-all duration-200 ease-out",
+                              BLOCK_SHADOW,
+                              cancelled
+                                ? "border-rose-200/70 opacity-70"
+                                : "border-slate-200/70 hover:-translate-y-0.5 hover:shadow-lift",
+                              manageable && "cursor-pointer",
+                            )}
+                          >
+                            <span className={cn("pointer-events-none absolute inset-0", tone.wash)} />
+                            <span className={cn("absolute inset-y-0 left-0 w-1", stripe)} />
+                            <div className="relative flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p
+                                  className={cn(
+                                    "text-sm font-semibold leading-snug",
+                                    cancelled ? "text-slate-500 line-through" : "text-slate-900",
+                                  )}
+                                >
+                                  {entry.subject}
+                                </p>
+                                <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+                                  {entry.teacher ? <span>{entry.teacher}</span> : null}
+                                  {entry.room ? (
+                                    <span className="inline-flex items-center gap-1">
+                                      <PinIcon className="size-3 text-slate-400" />
+                                      {entry.room}
+                                    </span>
+                                  ) : null}
+                                </p>
+                                {entry.note ? (
+                                  <p className="mt-1 text-[11px] text-slate-400">{entry.note}</p>
+                                ) : null}
+                                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                  {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
+                                  {entry.parity ? (
+                                    <Badge tone="slate">{PARITY_LABEL[entry.parity] ?? entry.parity}</Badge>
+                                  ) : null}
+                                  {meta ? (
+                                    <Badge tone={meta.tone} className="gap-1.5">
+                                      <span className={cn("size-1.5 rounded-full", meta.dot)} />
+                                      {meta.label}
+                                    </Badge>
+                                  ) : null}
+                                </div>
+                              </div>
+                              {href ? (
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <ButtonLink size="sm" variant="ghost" href={href} className={ATTENDANCE_CLASS}>
+                                    <CheckCircleIcon className="size-3.5" />
+                                    Davomat
+                                  </ButtonLink>
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </CardBody>
+    </Card>
   );
 
   return (
@@ -662,7 +1334,7 @@ export function ScheduleBoard({
                   className={FILTER_CLASS}
                 >
                   <option value="">Tanlang</option>
-                  {teacherOptions.map((name) => (
+                  {teacherOptionsFromEntries.map((name) => (
                     <option key={name} value={name}>
                       {name}
                     </option>
@@ -693,7 +1365,7 @@ export function ScheduleBoard({
               <div className="inline-flex h-9 items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
                 <button
                   type="button"
-                  onClick={() => setView("grid")}
+                  onClick={() => changeView("grid")}
                   aria-pressed={view === "grid"}
                   className={cn(
                     "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-all duration-150",
@@ -705,7 +1377,7 @@ export function ScheduleBoard({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setView("list")}
+                  onClick={() => changeView("list")}
                   aria-pressed={view === "list"}
                   className={cn(
                     "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-all duration-150",
@@ -733,482 +1405,101 @@ export function ScheduleBoard({
                   Konstruktor
                 </a>
               ) : null}
-              {canEdit && mode === "group" ? (
-                <Button size="sm" className="h-9" onClick={() => openAdd(today, 1)}>
-                  <PlusIcon className="size-3.5" />
-                  {"Dars qo'shish"}
-                </Button>
-              ) : null}
             </div>
           </div>
         </CardBody>
       </Card>
 
-      {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
-          {error}
-        </p>
-      ) : null}
+      {canEdit && view === "grid" ? (
+        <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
+          <div className="self-start xl:sticky xl:top-4">
+            <LegoPalette
+              title={
+                isAdmin
+                  ? `Barcha fanlar — ${selectedGroupName ?? ""}`
+                  : `Mening darslarim — ${selectedGroupName ?? ""}`
+              }
+              subtitle={`${paletteBlocks.length} ta fan · tayyor bloklar`}
+              blocks={paletteBlocks}
+              selectedBlockId={selectedBlockId}
+              onSelect={toggleBlock}
+              onDragStart={handlePaletteDragStart}
+              onDragEnd={() => setHover(null)}
+              isAdmin={isAdmin}
+              teacherValue={adminTeacher}
+              onTeacherChange={setAdminTeacher}
+              teacherOptions={teacherOptions}
+              resolveTeacher={teacherForBlock}
+              disabled={!canDrop}
+            />
+          </div>
+          <div className="min-w-0 space-y-4">
+            {gridSection}
+            {listSection}
+          </div>
+        </div>
+      ) : (
+        <>
+          {gridSection}
+          {listSection}
+        </>
+      )}
 
-      {form ? (
-        <Card className="border-brand-200">
-          <CardHeader
-            title={form.id ? "Yozuvni tahrirlash" : "Yangi dars qo'shish"}
-            subtitle={selectedGroupName ?? undefined}
-          />
-          <CardBody>
-            <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div>
-                <Label>Kun</Label>
-                <Select
-                  value={form.dayOfWeek}
-                  onChange={(event) => setForm({ ...form, dayOfWeek: Number(event.target.value) })}
-                >
-                  {DAYS.map((day) => (
-                    <option key={day} value={day}>
-                      {dayName(day)}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>Par</Label>
-                <Select
-                  value={form.slot}
-                  onChange={(event) => setForm({ ...form, slot: Number(event.target.value) })}
-                >
-                  {SLOTS.map((slot) => (
-                    <option key={slot} value={slot}>
-                      {slot}-par ({SLOT_TIMES[slot]})
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>Fan</Label>
-                <Input
-                  required
-                  value={form.subject}
-                  onChange={(event) => setForm({ ...form, subject: event.target.value })}
-                  placeholder="MATH 1"
-                />
-              </div>
-              <div>
-                <Label>{"O'qituvchi"}</Label>
-                <Input
-                  value={form.teacher}
-                  onChange={(event) => setForm({ ...form, teacher: event.target.value })}
-                  placeholder="A.MAMANAZAROV"
-                />
-              </div>
-              <div>
-                <Label>Xona</Label>
-                <Input
-                  value={form.room}
-                  onChange={(event) => setForm({ ...form, room: event.target.value })}
-                  placeholder="205-xona"
-                />
-              </div>
-              <div>
-                <Label>Hafta turi (ixtiyoriy)</Label>
-                <Select
-                  value={form.parity}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setForm({ ...form, parity: value === "odd" || value === "even" ? value : "" });
-                  }}
-                >
-                  <option value="">Har hafta</option>
-                  <option value="odd">Toq hafta</option>
-                  <option value="even">Juft hafta</option>
-                </Select>
-              </div>
-              <div>
-                <Label>Holat</Label>
-                <Select
-                  value={form.status}
-                  onChange={(event) => setForm({ ...form, status: toStatus(event.target.value) })}
-                >
-                  <option value="NORMAL">{"O'zgarishsiz"}</option>
-                  <option value="CHANGED">{"O'zgargan"}</option>
-                  <option value="MOVED">{"Ko'chirilgan"}</option>
-                  <option value="CANCELLED">Bekor qilindi</option>
-                </Select>
-              </div>
-              <div className="sm:col-span-2">
-                <Label>Izoh (ixtiyoriy)</Label>
-                <Input
-                  value={form.note}
-                  onChange={(event) => setForm({ ...form, note: event.target.value })}
-                  placeholder="Masalan: xona o'zgardi"
-                />
-              </div>
-              <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-3">
-                <Button type="submit" disabled={saving}>
-                  {form.id ? "Saqlash" : "Qo'shish"}
+      {canEdit && panelEntry ? (
+        <div className="fixed bottom-4 right-4 z-40 w-[calc(100vw-2rem)] max-w-xs animate-fade-in">
+          <Card className="border-brand-200 shadow-xl">
+            <CardHeader
+              title={panelEntry.subject}
+              subtitle={`${dayName(panelEntry.dayOfWeek)}, ${panelEntry.slot}-par`}
+              action={
+                <Button variant="ghost" size="sm" onClick={() => setPanelId(null)}>
+                  Yopish
                 </Button>
-                <Button variant="secondary" onClick={() => setForm(null)} disabled={saving}>
+              }
+            />
+            <CardBody className="space-y-2">
+              {panelEntry.status === "CANCELLED" ? (
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  disabled={pending}
+                  onClick={() => void toggleCancel(panelEntry)}
+                >
+                  Tiklash
+                </Button>
+              ) : (
+                <Button
+                  variant="danger"
+                  className="w-full"
+                  disabled={pending}
+                  onClick={() => void toggleCancel(panelEntry)}
+                >
                   Bekor qilish
                 </Button>
-              </div>
-            </form>
-          </CardBody>
-        </Card>
+              )}
+              <Button
+                variant="ghost"
+                className={cn("w-full", DELETE_CLASS)}
+                disabled={pending}
+                onClick={() => void deleteEntry(panelEntry)}
+              >
+                <TrashIcon className="size-3.5" />
+                {"O'chirish"}
+              </Button>
+            </CardBody>
+          </Card>
+        </div>
       ) : null}
 
-      <Card className={cn("animate-fade-in", view === "list" && "hidden")}>
-        <CardHeader title="Haftalik jadval" subtitle={selectedGroupName ?? undefined} action={legend} />
-        <CardBody>
-          <Table className="[&>table]:min-w-[900px]">
-            <thead>
-              <tr className="border-b border-slate-200">
-                <th className="w-28 px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Vaqt
-                </th>
-                {DAYS.map((day) => {
-                  const isToday = isCurrentWeek && day === today;
-                  return (
-                    <th
-                      key={day}
-                      className={cn(
-                        "relative px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide",
-                        isToday ? "bg-brand-50 text-brand-800" : "text-slate-400",
-                      )}
-                    >
-                      {isToday ? <span className="absolute inset-x-0 top-0 h-0.5 bg-gold-400" /> : null}
-                      {`${dayName(day)} ${formatDayShort(dayIsoInWeek(weekStart, day))}`}
-                      {isToday ? (
-                        <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold normal-case text-brand-700">
-                          bugun
-                        </span>
-                      ) : null}
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              {SLOTS.map((slot) => {
-                const isNowPair = nowPair === slot;
-                return (
-                  <tr key={slot} className="border-b border-slate-100 align-top last:border-0">
-                    <td
-                      className={cn(
-                        "w-28 border-r border-slate-100 px-3 py-3.5",
-                        isNowPair && "bg-gold-300/10",
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <p className={cn("text-sm font-medium", isNowPair ? "text-brand-800" : "text-slate-700")}>
-                          {slot}-par
-                        </p>
-                        {isNowPair ? (
-                          <span className="relative inline-flex size-1.5">
-                            <span className="absolute inline-flex size-full animate-ping rounded-full bg-gold-500 opacity-60" />
-                            <span className="relative inline-flex size-1.5 rounded-full bg-gold-500" />
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-0.5 text-[11px] text-slate-400">{SLOT_TIMES[slot]}</p>
-                    </td>
-                    {DAYS.map((day) => {
-                      const cellEntries = entriesAt(day, slot);
-                      const isToday = isCurrentWeek && day === today;
-                      return (
-                        <td
-                          key={day}
-                          className={cn("px-2 py-2.5 align-top", cellBackground(isToday, isNowPair && isToday))}
-                        >
-                          <div className="space-y-2">
-                            {cellEntries.map((entry) => {
-                              const href = attendanceHref(entry);
-                              const meta = STATUS_META[entry.status];
-                              const cancelled = entry.status === "CANCELLED";
-                              const tone = toneForSubject(entry.subject);
-                              const stripe = meta?.stripe ?? tone.stripe;
-                              return (
-                                <div
-                                  key={entry.id}
-                                  title={entry.note ?? undefined}
-                                  className={cn(
-                                    "group relative overflow-hidden rounded-xl border border-slate-200/70 p-3 pl-4 transition-all duration-200 ease-out",
-                                    BLOCK_SHADOW,
-                                    cancelled
-                                      ? "opacity-70"
-                                      : "hover:-translate-y-0.5 hover:border-transparent hover:shadow-lift",
-                                  )}
-                                >
-                                  <span className={cn("pointer-events-none absolute inset-0", tone.wash)} />
-                                  <span className={cn("absolute inset-y-0 left-0 w-1.5", stripe)} />
-                                  <div className="relative">
-                                    <p
-                                      className={cn(
-                                        "text-sm font-semibold leading-snug",
-                                        cancelled ? "text-slate-500 line-through" : "text-slate-900",
-                                      )}
-                                    >
-                                      {entry.subject}
-                                    </p>
-                                    {entry.teacher ? (
-                                      <p className="mt-0.5 truncate text-xs text-slate-500">{entry.teacher}</p>
-                                    ) : null}
-                                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                      {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
-                                      {entry.room ? (
-                                        <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200/80">
-                                          <PinIcon className="size-3" />
-                                          {entry.room}
-                                        </span>
-                                      ) : null}
-                                      {entry.parity ? (
-                                        <Badge tone="amber">{PARITY_LABEL[entry.parity] ?? entry.parity}</Badge>
-                                      ) : null}
-                                      {meta ? (
-                                        <Badge tone={meta.tone} className="gap-1.5">
-                                          <span className={cn("size-1.5 rounded-full", meta.dot)} />
-                                          {meta.label}
-                                        </Badge>
-                                      ) : null}
-                                    </div>
-                                    {entry.note ? (
-                                      <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{entry.note}</p>
-                                    ) : null}
-                                    {href ? (
-                                      <div className="mt-2 flex">
-                                        <ButtonLink size="sm" variant="ghost" href={href} className={ATTENDANCE_CLASS}>
-                                          <CheckCircleIcon className="size-3.5" />
-                                          Davomat
-                                        </ButtonLink>
-                                      </div>
-                                    ) : null}
-                                    {canEdit ? (
-                                      <div className="mt-2 flex gap-1 transition-opacity duration-150 md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className={EDIT_CLASS}
-                                          onClick={() => openEdit(entry)}
-                                          disabled={saving}
-                                        >
-                                          <PencilIcon className="size-3.5" />
-                                          Tahrir
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className={DELETE_CLASS}
-                                          onClick={() => remove(entry)}
-                                          disabled={saving}
-                                        >
-                                          <TrashIcon className="size-3.5" />
-                                          {"O'chirish"}
-                                        </Button>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                            {canEdit && mode === "group" && cellEntries.length === 0 ? (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="w-full border border-dashed border-slate-200 py-2 text-slate-400! hover:border-brand-300! hover:bg-brand-50/50! hover:text-brand-700!"
-                                onClick={() => openAdd(day, slot)}
-                                disabled={saving}
-                              >
-                                <PlusIcon className="size-3" />
-                                {"Qo'shish"}
-                              </Button>
-                            ) : null}
-                          </div>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-        </CardBody>
-      </Card>
-
-      <Card className={cn("animate-fade-in", view === "grid" && "hidden")}>
-        <CardHeader
-          title="Kunlik agenda"
-          subtitle={selectedGroupName ?? undefined}
-          action={<Badge tone="slate">{`${visibleEntries.length} ta dars`}</Badge>}
-        />
-        <CardBody className="space-y-5">
-          {DAYS.map((day) => {
-            const dayEntries = entriesForDay(day);
-            const isToday = isCurrentWeek && day === today;
-            const dateIso = dayIsoInWeek(weekStart, day);
-            return (
-              <section
-                key={day}
-                className={cn(
-                  "overflow-hidden rounded-2xl border bg-white",
-                  isToday
-                    ? "border-brand-200/80 shadow-card"
-                    : "border-slate-200/70",
-                )}
-              >
-                <header
-                  className={cn(
-                    "flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3",
-                    isToday
-                      ? "border-brand-100 bg-gradient-to-r from-brand-50 to-white"
-                      : "border-slate-100 bg-slate-50/60",
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        "inline-flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold",
-                        isToday
-                          ? "bg-brand-900 text-white shadow-sm"
-                          : "bg-white text-slate-600 ring-1 ring-slate-200",
-                      )}
-                    >
-                      {dateIso.slice(8, 10)}
-                    </span>
-                    <div>
-                      <p className={cn("text-sm font-semibold", isToday ? "text-brand-900" : "text-slate-700")}>
-                        {dayName(day)}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {dayEntries.length > 0 ? `${dayEntries.length} ta dars` : "Darslar yo'q"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400">{formatDayShort(dateIso)}</span>
-                    {isToday ? <Badge tone="blue">bugun</Badge> : null}
-                  </div>
-                </header>
-                {dayEntries.length === 0 ? (
-                  <p className="px-4 py-5 text-center text-xs text-slate-400">{"Bu kunda dars yo'q"}</p>
-                ) : (
-                  <div className="px-4 py-4">
-                    {dayEntries.map((entry, index) => {
-                      const href = attendanceHref(entry);
-                      const meta = STATUS_META[entry.status];
-                      const cancelled = entry.status === "CANCELLED";
-                      const tone = toneForSubject(entry.subject);
-                      const stripe = meta?.stripe ?? tone.stripe;
-                      const time = SLOT_TIMES[entry.slot] ?? "";
-                      const [from, to] = time.split("–");
-                      return (
-                        <div key={entry.id} className="flex gap-3">
-                          <div className="w-14 shrink-0 pt-1 text-right">
-                            <p className="text-xs font-semibold text-slate-600">{from ?? `${entry.slot}-par`}</p>
-                            {to ? <p className="text-[10px] text-slate-400">{to}</p> : null}
-                          </div>
-                          <div
-                            className={cn(
-                              "relative flex-1 border-l border-slate-200 pl-4",
-                              index === dayEntries.length - 1 ? "pb-0" : "pb-4",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "absolute -left-[5.5px] top-2 size-2.5 rounded-full ring-4 ring-white",
-                                stripe,
-                              )}
-                            />
-                            <div
-                              title={entry.note ?? undefined}
-                              className={cn(
-                                "group relative overflow-hidden rounded-xl border p-3 pl-4 transition-all duration-200 ease-out",
-                                BLOCK_SHADOW,
-                                cancelled
-                                  ? "border-rose-200/70 opacity-70"
-                                  : "border-slate-200/70 hover:-translate-y-0.5 hover:shadow-lift",
-                              )}
-                            >
-                              <span className={cn("pointer-events-none absolute inset-0", tone.wash)} />
-                              <span className={cn("absolute inset-y-0 left-0 w-1", stripe)} />
-                              <div className="relative flex flex-wrap items-start justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                  <p
-                                    className={cn(
-                                      "text-sm font-semibold leading-snug",
-                                      cancelled ? "text-slate-500 line-through" : "text-slate-900",
-                                    )}
-                                  >
-                                    {entry.subject}
-                                  </p>
-                                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
-                                    {entry.teacher ? <span>{entry.teacher}</span> : null}
-                                    {entry.room ? (
-                                      <span className="inline-flex items-center gap-1">
-                                        <PinIcon className="size-3 text-slate-400" />
-                                        {entry.room}
-                                      </span>
-                                    ) : null}
-                                  </p>
-                                  {entry.note ? (
-                                    <p className="mt-1 text-[11px] text-slate-400">{entry.note}</p>
-                                  ) : null}
-                                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                    {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
-                                    {entry.parity ? (
-                                      <Badge tone="slate">{PARITY_LABEL[entry.parity] ?? entry.parity}</Badge>
-                                    ) : null}
-                                    {meta ? (
-                                      <Badge tone={meta.tone} className="gap-1.5">
-                                        <span className={cn("size-1.5 rounded-full", meta.dot)} />
-                                        {meta.label}
-                                      </Badge>
-                                    ) : null}
-                                  </div>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                  {href ? (
-                                    <ButtonLink size="sm" variant="ghost" href={href} className={ATTENDANCE_CLASS}>
-                                      <CheckCircleIcon className="size-3.5" />
-                                      Davomat
-                                    </ButtonLink>
-                                  ) : null}
-                                  {canEdit ? (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className={EDIT_CLASS}
-                                        onClick={() => openEdit(entry)}
-                                        disabled={saving}
-                                      >
-                                        <PencilIcon className="size-3.5" />
-                                        Tahrir
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className={DELETE_CLASS}
-                                        onClick={() => remove(entry)}
-                                        disabled={saving}
-                                      >
-                                        <TrashIcon className="size-3.5" />
-                                        {"O'chirish"}
-                                      </Button>
-                                    </>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
-            );
-          })}
-        </CardBody>
-      </Card>
+      <BuilderToast
+        toast={toast}
+        onClose={dismissToast}
+        onAction={() => {
+          const action = actionRef.current;
+          actionRef.current = null;
+          if (action) action();
+        }}
+      />
     </div>
   );
 }

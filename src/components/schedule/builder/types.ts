@@ -1,4 +1,4 @@
-import type { ScheduleStatus } from "@/components/schedule/types";
+import type { ScheduleEntryItem, ScheduleStatus } from "@/components/schedule/types";
 
 export type BuilderGroup = { id: string; name: string };
 
@@ -42,6 +42,36 @@ export type Selection =
   | { kind: "new"; subject: string; subjectId: string | null }
   | { kind: "move"; id: string };
 
-export type ToastMessage = { id: number; tone: "error" | "success"; text: string };
+export type ToastMessage = { id: number; tone: "error" | "success"; text: string; actionLabel?: string };
 
 export type Dictionaries = { subjects: BuilderSubject[]; lessonTypes: BuilderLessonType[] };
+
+export type BoardEntry = ScheduleEntryItem & {
+  subjectId: string | null;
+  lessonType: string | null;
+  subjectRef: BuilderSubjectRef | null;
+};
+
+export type PaletteBlock = {
+  id: string;
+  title: string;
+  subjectId: string | null;
+  color: string | null;
+  teacherName: string | null;
+  placedCount: number;
+  lessonType: string;
+  room: string | null;
+};
+
+export type LegoDragPayload =
+  | {
+      kind: "new";
+      blockId: string;
+      subject: string;
+      subjectId: string | null;
+      lessonType: string | null;
+      room: string | null;
+      teacher: string | null;
+      color: string | null;
+    }
+  | { kind: "move"; id: string; subject: string };

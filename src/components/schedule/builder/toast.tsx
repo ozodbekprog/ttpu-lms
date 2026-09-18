@@ -4,7 +4,15 @@ import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { ToastMessage } from "./types";
 
-export function BuilderToast({ toast, onClose }: { toast: ToastMessage | null; onClose: () => void }) {
+export function BuilderToast({
+  toast,
+  onClose,
+  onAction,
+}: {
+  toast: ToastMessage | null;
+  onClose: () => void;
+  onAction?: () => void;
+}) {
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(onClose, 3200);
@@ -24,6 +32,18 @@ export function BuilderToast({ toast, onClose }: { toast: ToastMessage | null; o
         )}
       >
         {toast.text}
+        {toast.actionLabel && onAction ? (
+          <button
+            type="button"
+            onClick={() => {
+              onAction();
+              onClose();
+            }}
+            className="rounded-lg bg-white/80 px-2 py-0.5 text-xs font-semibold underline-offset-2 hover:underline"
+          >
+            {toast.actionLabel}
+          </button>
+        ) : null}
         <button type="button" onClick={onClose} className="text-xs opacity-60 transition-opacity hover:opacity-100">
           ✕
         </button>
