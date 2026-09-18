@@ -16,6 +16,8 @@ export type BuilderLessonType = { id: string | null; name: string; color: string
 
 export type BuilderSubjectRef = { name: string; color: string | null };
 
+export type BuilderTeacherRef = { id: string; name: string };
+
 export type BuilderEntry = {
   id: string;
   groupId: string;
@@ -26,6 +28,8 @@ export type BuilderEntry = {
   lessonType: string | null;
   subjectRef: BuilderSubjectRef | null;
   teacher: string | null;
+  teacherId: string | null;
+  teacherRef: BuilderTeacherRef | null;
   room: string | null;
   parity: string | null;
   status: ScheduleStatus;
@@ -50,6 +54,8 @@ export type BoardEntry = ScheduleEntryItem & {
   subjectId: string | null;
   lessonType: string | null;
   subjectRef: BuilderSubjectRef | null;
+  teacherId: string | null;
+  teacherRef: BuilderTeacherRef | null;
 };
 
 export type PaletteBlock = {
@@ -58,6 +64,8 @@ export type PaletteBlock = {
   subjectId: string | null;
   color: string | null;
   teacherName: string | null;
+  teacherId: string | null;
+  teacherChoices: BuilderTeacherRef[];
   placedCount: number;
   lessonType: string;
   room: string | null;

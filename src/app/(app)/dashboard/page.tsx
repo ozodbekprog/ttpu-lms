@@ -520,7 +520,11 @@ export default async function DashboardPage() {
       const fallbackSlug = teacherCourses[0]?.slug ?? null;
 
       todayLessons = entries
-        .filter((entry) => entry.teacher && normalizeTeacherName(entry.teacher) === teacherName)
+        .filter((entry) =>
+          entry.teacherId
+            ? entry.teacherId === user.id
+            : entry.teacher !== null && normalizeTeacherName(entry.teacher) === teacherName,
+        )
         .map((entry) => {
           const matchedSlug = matchCourseSlug(entry.subject, options);
           const matched = teacherCourses.find((item) => item.slug === matchedSlug) ?? null;

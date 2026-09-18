@@ -60,6 +60,18 @@ const SUBJECT_NAMES = [
   "Electronics",
   "Statistics",
   "Discrete Math",
+  "Robotics",
+  "Machine Learning",
+  "Cybersecurity",
+  "Chemistry",
+  "History of Uzbekistan",
+  "Philosophy",
+  "Economics",
+  "Academic Writing",
+  "Linear Algebra",
+  "Operating Systems",
+  "Computer Networks",
+  "Cloud Computing",
 ] as const;
 
 const TEACHER_NAMES = [

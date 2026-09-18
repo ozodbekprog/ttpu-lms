@@ -35,10 +35,25 @@ export async function ensureDictionaryDefaults() {
 
 export async function listDictionaries() {
   const [subjects, timeSlots, lessonTypes] = await Promise.all([
-    prisma.subject.findMany({ orderBy: { name: "asc" } }),
+    prisma.subject.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        teachers: {
+          orderBy: { teacher: { name: "asc" } },
+          select: { teacher: { select: { id: true, name: true } } },
+        },
+      },
+    }),
     prisma.timeSlot.findMany({ orderBy: { slot: "asc" } }),
     prisma.lessonType.findMany({ orderBy: { name: "asc" } }),
   ]);
 
-  return { subjects, timeSlots, lessonTypes };
+  return {
+    subjects: subjects.map(({ teachers, ...subject }) => ({
+      ...subject,
+      teachers: teachers.map((item) => item.teacher),
+    })),
+    timeSlots,
+    lessonTypes,
+  };
 }

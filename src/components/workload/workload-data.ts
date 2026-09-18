@@ -138,7 +138,7 @@ export async function buildWorkloadData(options: {
       },
     }),
     prisma.scheduleEntry.findMany({
-      select: { id: true, teacher: true, subject: true },
+      select: { id: true, teacher: true, teacherId: true, subject: true },
     }),
   ]);
 
@@ -179,11 +179,13 @@ export async function buildWorkloadData(options: {
   const teacherByKey = new Map(
     teacherUsers.map((teacher) => [normalizeTeacherName(teacher.name), teacher]),
   );
+  const teacherById = new Map(teacherUsers.map((teacher) => [teacher.id, teacher]));
   const entryCountByCourse = new Map<string, number>();
   const entryCountByTeacher = new Map<string, number>();
   for (const entry of scheduleRows) {
-    if (!entry.teacher) continue;
-    const teacher = teacherByKey.get(normalizeTeacherName(entry.teacher));
+    const teacher =
+      (entry.teacherId ? teacherById.get(entry.teacherId) : undefined) ??
+      (entry.teacher ? teacherByKey.get(normalizeTeacherName(entry.teacher)) : undefined);
     if (!teacher) continue;
     entryCountByTeacher.set(teacher.id, (entryCountByTeacher.get(teacher.id) ?? 0) + 1);
     const matched = matchCourseId(entry.subject, coursesByTeacher.get(teacher.id) ?? []);

@@ -10,6 +10,13 @@ export type DictionarySubject = {
   name: string;
   code: string | null;
   color: string;
+  teachers: Array<{ id: string; name: string }>;
+};
+
+export type TeacherUser = {
+  id: string;
+  name: string;
+  email: string;
 };
 
 export type DictionaryTimeSlot = {
@@ -200,6 +207,10 @@ export default function DictionariesManager({
   const [subjectForm, setSubjectForm] = useState({ name: "", code: "", color: SUBJECT_COLOR });
   const [slotForm, setSlotForm] = useState({ slot: "", startTime: "09:00", endTime: "10:20" });
   const [typeForm, setTypeForm] = useState({ name: "", color: LESSON_TYPE_COLOR });
+  const [teacherSubject, setTeacherSubject] = useState<DictionarySubject | null>(null);
+  const [teacherList, setTeacherList] = useState<TeacherUser[] | null>(null);
+  const [teacherIds, setTeacherIds] = useState<string[]>([]);
+  const [teachersLoading, setTeachersLoading] = useState(false);
 
   const meta = SECTION_META[tab];
   const activeTab = TABS.find((item) => item.key === tab);
@@ -214,6 +225,15 @@ export default function DictionariesManager({
     const timer = setTimeout(() => setNotice(null), 2600);
     return () => clearTimeout(timer);
   }, [notice]);
+
+  useEffect(() => {
+    if (!teacherSubject) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setTeacherSubject(null);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [teacherSubject]);
 
   function switchTab(key: SectionKey) {
     setTab(key);
@@ -266,7 +286,7 @@ export default function DictionariesManager({
     setError(null);
   }
 
-  async function send(url: string, method: "POST" | "PATCH" | "DELETE", body?: unknown) {
+  async function send(url: string, method: "POST" | "PATCH" | "PUT" | "DELETE", body?: unknown) {
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -333,6 +353,51 @@ export default function DictionariesManager({
     const ok = await send(url, "DELETE");
     if (!ok) return;
     setNotice(message);
+    router.refresh();
+  }
+
+  async function openTeachers(subject: DictionarySubject) {
+    setTeacherSubject(subject);
+    setTeacherIds(subject.teachers.map((item) => item.id));
+    setTeacherList(null);
+    setError(null);
+    setNotice(null);
+    setTeachersLoading(true);
+    try {
+      const res = await fetch("/api/admin/users?role=TEACHER");
+      const json = (await res.json().catch(() => null)) as
+        | { ok: boolean; data?: TeacherUser[]; error?: string }
+        | null;
+      if (!res.ok || !json || !json.ok || !json.data) {
+        setError(json?.error ?? "O'qituvchilar ro'yxatini yuklab bo'lmadi");
+        return;
+      }
+      setTeacherList([...json.data].sort((a, b) => a.name.localeCompare(b.name)));
+    } catch {
+      setError("Tarmoqda xatolik");
+    } finally {
+      setTeachersLoading(false);
+    }
+  }
+
+  function closeTeachers() {
+    setTeacherSubject(null);
+    setTeacherList(null);
+    setTeacherIds([]);
+  }
+
+  function toggleTeacher(id: string) {
+    setTeacherIds((ids) => (ids.includes(id) ? ids.filter((item) => item !== id) : [...ids, id]));
+  }
+
+  async function saveTeachers() {
+    if (!teacherSubject) return;
+    const ok = await send(`/api/admin/subjects/${teacherSubject.id}/teachers`, "PUT", {
+      teacherIds,
+    });
+    if (!ok) return;
+    setNotice(`"${teacherSubject.name}" faniga o'qituvchilar saqlandi`);
+    closeTeachers();
     router.refresh();
   }
 
@@ -632,6 +697,7 @@ export default function DictionariesManager({
                     <th className="px-5 py-3 font-semibold">Fan</th>
                     <th className="px-5 py-3 font-semibold">Kod</th>
                     <th className="px-5 py-3 font-semibold">Rang</th>
+                    <th className="px-5 py-3 font-semibold">O&apos;qituvchilar</th>
                   </>
                 ) : null}
                 {tab === "timeSlots" ? (
@@ -687,7 +753,39 @@ export default function DictionariesManager({
                         </span>
                       </td>
                       <td className="px-5 py-3">
+                        {subject.teachers.length === 0 ? (
+                          <span className="text-xs italic text-slate-400">Biriktirilmagan</span>
+                        ) : (
+                          <div className="flex max-w-72 flex-wrap items-center gap-1">
+                            {subject.teachers.slice(0, 3).map((teacher) => (
+                              <span
+                                key={teacher.id}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-brand-100 bg-brand-50/80 px-2 py-0.5 text-xs font-medium text-brand-800"
+                              >
+                                <span className="inline-flex size-4 items-center justify-center rounded-full bg-brand-800/10 text-[9px] font-bold uppercase text-brand-800">
+                                  {teacher.name.trim().charAt(0)}
+                                </span>
+                                {teacher.name}
+                              </span>
+                            ))}
+                            {subject.teachers.length > 3 ? (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                                +{subject.teachers.length - 3}
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-3">
                         <div className="flex justify-end gap-1.5">
+                          <Button size="sm" variant="secondary" onClick={() => openTeachers(subject)}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                              <circle cx="9" cy="7" r="4" />
+                              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            O&apos;qituvchilar
+                          </Button>
                           <Button size="sm" variant="secondary" onClick={() => openEditSubject(subject)}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z" />
@@ -834,6 +932,126 @@ export default function DictionariesManager({
           </Table>
         )}
       </Card>
+
+      {teacherSubject ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="O'qituvchilarni biriktirish"
+        >
+          <button
+            type="button"
+            aria-label="Panelni yopish"
+            onClick={closeTeachers}
+            className="animate-fade-in absolute inset-0 cursor-default bg-slate-900/45 backdrop-blur-sm"
+          />
+          <div className="animate-fade-up relative w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_24px_60px_-20px_rgba(15,23,42,0.45)]">
+            <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
+              <div className="min-w-0">
+                <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-800 to-brand-950 text-white shadow-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </span>
+                  O&apos;qituvchilarni biriktirish
+                </p>
+                <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-slate-500">
+                  <ColorDot
+                    color={HEX_RE.test(teacherSubject.color) ? teacherSubject.color : FALLBACK_COLOR}
+                    size="size-3"
+                  />
+                  {teacherSubject.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeTeachers}
+                aria-label="Yopish"
+                className="rounded-lg p-1.5 text-slate-400 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="max-h-80 space-y-1 overflow-y-auto px-3 py-3">
+              {teachersLoading ? (
+                <div className="space-y-2 px-1 py-2">
+                  {[0, 1, 2, 3].map((item) => (
+                    <div key={item} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
+                      <span className="size-4 animate-pulse rounded bg-slate-100" />
+                      <span className="h-3.5 flex-1 animate-pulse rounded bg-slate-100" style={{ animationDelay: `${item * 80}ms` }} />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {!teachersLoading && teacherList && teacherList.length === 0 ? (
+                <p className="px-2 py-6 text-center text-sm text-slate-400">O&apos;qituvchilar topilmadi</p>
+              ) : null}
+              {!teachersLoading && teacherList
+                ? teacherList.map((teacher) => {
+                    const checked = teacherIds.includes(teacher.id);
+                    return (
+                      <label
+                        key={teacher.id}
+                        className={cn(
+                          "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-150",
+                          checked
+                            ? "border-brand-200 bg-brand-50/70 shadow-[0_1px_2px_rgba(29,52,96,0.06)]"
+                            : "border-transparent hover:bg-slate-50",
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleTeacher(teacher.id)}
+                          className="size-4 shrink-0 rounded border-slate-300 accent-brand-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-slate-800">{teacher.name}</span>
+                          <span className="block truncate text-xs text-slate-400">{teacher.email}</span>
+                        </span>
+                        {checked ? (
+                          <svg
+                            className="shrink-0 text-brand-600"
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        ) : null}
+                      </label>
+                    );
+                  })
+                : null}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-3">
+              <span className="text-xs font-medium text-slate-500">
+                <Badge tone={teacherIds.length > 0 ? "blue" : "slate"}>{teacherIds.length} ta tanlandi</Badge>
+              </span>
+              <span className="flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={closeTeachers}>
+                  Bekor qilish
+                </Button>
+                <Button size="sm" onClick={saveTeachers} disabled={busy || teachersLoading}>
+                  {busy ? "Saqlanmoqda..." : "Saqlash"}
+                </Button>
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

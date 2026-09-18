@@ -19,6 +19,7 @@ import type {
   BuilderGroup,
   BuilderLessonType,
   BuilderSubject,
+  BuilderTeacherRef,
   CellRef,
   DragPayload,
   Selection,
@@ -57,9 +58,11 @@ function mergeEntry(current: BuilderEntry, incoming: BuilderEntry): BuilderEntry
 
 export function ScheduleBuilder({
   role,
+  userId,
   userName,
   groups,
   myGroupIds,
+  mySubjects,
   selectedGroupId,
   weekStart,
   weekParity,
@@ -70,16 +73,18 @@ export function ScheduleBuilder({
   roomOptions,
 }: {
   role: "TEACHER" | "ADMIN";
+  userId: string;
   userName: string;
   groups: BuilderGroup[];
   myGroupIds: string[];
+  mySubjects: BuilderSubject[];
   selectedGroupId: string;
   weekStart: string;
   weekParity: "odd" | "even";
   weekNumber: number;
   entries: BuilderEntry[];
   courses: BuilderCourse[];
-  teacherOptions: string[];
+  teacherOptions: BuilderTeacherRef[];
   roomOptions: string[];
 }) {
   const router = useRouter();
@@ -123,8 +128,13 @@ export function ScheduleBuilder({
   }, []);
 
   const subjectOptions = useMemo(
-    () => (subjects && subjects.length > 0 ? subjects : fallbackSubjects(courses)),
-    [subjects, courses],
+    () =>
+      role === "TEACHER" && mySubjects.length > 0
+        ? mySubjects
+        : subjects && subjects.length > 0
+          ? subjects
+          : fallbackSubjects(courses),
+    [role, mySubjects, subjects, courses],
   );
   const lessonTypeOptions = useMemo(
     () => (lessonTypes && lessonTypes.length > 0 ? lessonTypes : fallbackLessonTypes()),
@@ -143,6 +153,7 @@ export function ScheduleBuilder({
 
   function canManageEntry(entry: BuilderEntry) {
     if (role === "ADMIN") return true;
+    if (entry.teacherId) return entry.teacherId === userId;
     if (!entry.teacher) return false;
     return normalizeTeacherName(entry.teacher) === normalizeTeacherName(userName);
   }
@@ -177,14 +188,24 @@ export function ScheduleBuilder({
     }
   }
 
+  function resolveTeacherId(name: string) {
+    const normalized = normalizeTeacherName(name);
+    if (!normalized) return null;
+    return (
+      teacherOptions.find((option) => option.id && normalizeTeacherName(option.name) === normalized)?.id ?? null
+    );
+  }
+
   async function createEntry(cell: CellRef, subject: string, subjectId: string | null) {
     setPending(true);
+    const teacherId = role === "TEACHER" ? userId : resolveTeacherId(teacher);
     const baseBody = {
       groupId: selectedGroupId,
       dayOfWeek: cell.day,
       slot: cell.slot,
       subject,
       teacher: teacher || null,
+      teacherId,
       room: room || null,
       parity: parity || null,
       status: "NORMAL" as const,
@@ -435,7 +456,7 @@ export function ScheduleBuilder({
             fixedTeacher={userName}
             teacherValue={teacherInput}
             onTeacher={setTeacherInput}
-            teacherOptions={teacherOptions}
+            teacherOptions={teacherOptions.map((option) => option.name)}
             parity={parity}
             onParity={setParity}
           />

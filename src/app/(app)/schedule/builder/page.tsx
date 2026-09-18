@@ -3,7 +3,13 @@ import { isStaff, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ButtonLink, EmptyState, PageHeader } from "@/components/ui";
 import { ScheduleBuilder } from "@/components/schedule/builder/schedule-builder";
-import type { BuilderCourse, BuilderEntry, BuilderGroup } from "@/components/schedule/builder/types";
+import type {
+  BuilderCourse,
+  BuilderEntry,
+  BuilderGroup,
+  BuilderSubject,
+  BuilderTeacherRef,
+} from "@/components/schedule/builder/types";
 import { formatWeekRange, isoWeekNumber, resolveWeekStart, weekParityOf } from "@/components/schedule/week-utils";
 
 const STANDARD_ROOMS = ["203", "205", "304", "LAB 403", "Green Hall", "Yellow Hall", "Conference Hall", "Onlayn"];
@@ -41,7 +47,10 @@ export default async function ScheduleBuilderPage({
   const rowEntries = await prisma.scheduleEntry.findMany({
     where: { groupId: selectedGroup.id },
     orderBy: [{ dayOfWeek: "asc" }, { slot: "asc" }],
-    include: { subjectRef: { select: { name: true, color: true } } },
+    include: {
+      subjectRef: { select: { name: true, color: true } },
+      teacherRef: { select: { id: true, name: true } },
+    },
   });
 
   const courseRows = await prisma.course.findMany({
@@ -62,6 +71,16 @@ export default async function ScheduleBuilderPage({
     subjectId: course.subjectId,
     coverColor: course.coverColor,
   }));
+
+  let mySubjects: BuilderSubject[] = [];
+  if (user.role === "TEACHER") {
+    const attached = await prisma.teacherSubject.findMany({
+      where: { teacherId: user.id },
+      orderBy: { subject: { name: "asc" } },
+      select: { subject: { select: { id: true, name: true, color: true } } },
+    });
+    mySubjects = attached.map(({ subject }) => ({ id: subject.id, name: subject.name, color: subject.color }));
+  }
 
   let myGroupIds: string[] = [];
   if (user.role === "TEACHER") {
@@ -86,21 +105,21 @@ export default async function ScheduleBuilderPage({
     if (row.room) roomSet.add(row.room);
   }
 
-  const teacherSet = new Set<string>();
+  const teacherSet = new Map<string, BuilderTeacherRef>();
   if (user.role === "ADMIN") {
     const teacherRows = await prisma.user.findMany({
       where: { role: "TEACHER", isActive: true },
       orderBy: { name: "asc" },
-      select: { name: true },
+      select: { id: true, name: true },
     });
-    for (const row of teacherRows) teacherSet.add(row.name);
+    for (const row of teacherRows) teacherSet.set(row.name, row);
     const entryTeacherRows = await prisma.scheduleEntry.findMany({
       where: { teacher: { not: null } },
       select: { teacher: true },
       distinct: ["teacher"],
     });
     for (const row of entryTeacherRows) {
-      if (row.teacher) teacherSet.add(row.teacher);
+      if (row.teacher && !teacherSet.has(row.teacher)) teacherSet.set(row.teacher, { id: "", name: row.teacher });
     }
   }
 
@@ -114,6 +133,8 @@ export default async function ScheduleBuilderPage({
     lessonType: entry.lessonType,
     subjectRef: entry.subjectRef ? { name: entry.subjectRef.name, color: entry.subjectRef.color } : null,
     teacher: entry.teacher,
+    teacherId: entry.teacherId,
+    teacherRef: entry.teacherRef ? { id: entry.teacherRef.id, name: entry.teacherRef.name } : null,
     room: entry.room,
     parity: entry.parity,
     status: entry.status,
@@ -137,16 +158,18 @@ export default async function ScheduleBuilderPage({
       <ScheduleBuilder
         key={`${selectedGroup.id}-${weekStart}`}
         role={user.role === "ADMIN" ? "ADMIN" : "TEACHER"}
+        userId={user.id}
         userName={user.name}
         groups={groups}
         myGroupIds={myGroupIds}
+        mySubjects={mySubjects}
         selectedGroupId={selectedGroup.id}
         weekStart={weekStart}
         weekParity={weekParity}
         weekNumber={isoWeekNumber(weekStart)}
         entries={entries}
         courses={courses}
-        teacherOptions={Array.from(teacherSet).sort((a, b) => a.localeCompare(b))}
+        teacherOptions={Array.from(teacherSet.values()).sort((a, b) => a.name.localeCompare(b.name))}
         roomOptions={Array.from(roomSet)}
       />
     </>

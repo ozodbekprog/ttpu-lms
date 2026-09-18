@@ -11,6 +11,7 @@ const createSchema = z.object({
   subjectId: z.string().cuid().nullish(),
   lessonType: z.string().max(40).nullish(),
   teacher: z.string().trim().max(200).nullish(),
+  teacherId: z.string().cuid().nullish(),
   room: z.string().trim().max(100).nullish(),
   parity: z.enum(["odd", "even"]).nullish(),
   status: z.enum(["NORMAL", "CHANGED", "MOVED", "CANCELLED"]).optional(),
@@ -41,7 +42,10 @@ export async function GET(request: Request) {
   const entries = await prisma.scheduleEntry.findMany({
     where: { groupId: group.id },
     orderBy: [{ dayOfWeek: "asc" }, { slot: "asc" }],
-    include: { subjectRef: { select: { name: true, color: true } } },
+    include: {
+      subjectRef: { select: { name: true, color: true } },
+      teacherRef: { select: { id: true, name: true } },
+    },
   });
 
   return Response.json({ ok: true, data: { group, entries } });
@@ -68,7 +72,7 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Guruh topilmadi" }, { status: 404 });
   }
 
-  if (!canManageEntry(user, { teacher: data.teacher ?? null })) {
+  if (!canManageEntry(user, { teacherId: data.teacherId ?? null, teacher: data.teacher ?? null })) {
     return Response.json({ ok: false, error: "Bu jadval yozuvini o'zgartirish huquqingiz yo'q" }, { status: 403 });
   }
 
@@ -76,6 +80,13 @@ export async function POST(request: Request) {
     const subject = await prisma.subject.findUnique({ where: { id: data.subjectId }, select: { id: true } });
     if (!subject) {
       return Response.json({ ok: false, error: "Fan topilmadi" }, { status: 400 });
+    }
+  }
+
+  if (data.teacherId) {
+    const teacher = await prisma.user.findUnique({ where: { id: data.teacherId }, select: { id: true } });
+    if (!teacher) {
+      return Response.json({ ok: false, error: "O'qituvchi topilmadi" }, { status: 400 });
     }
   }
 
@@ -102,12 +113,16 @@ export async function POST(request: Request) {
       subjectId: data.subjectId ?? null,
       lessonType: data.lessonType ? data.lessonType : null,
       teacher: data.teacher ? data.teacher : null,
+      teacherId: data.teacherId ?? null,
       room: data.room ? data.room : null,
       parity,
       status: data.status ?? "NORMAL",
       note: data.note ? data.note : null,
     },
-    include: { subjectRef: { select: { name: true, color: true } } },
+    include: {
+      subjectRef: { select: { name: true, color: true } },
+      teacherRef: { select: { id: true, name: true } },
+    },
   });
 
   return Response.json({ ok: true, data: entry }, { status: 201 });

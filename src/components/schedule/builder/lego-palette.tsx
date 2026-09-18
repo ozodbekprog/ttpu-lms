@@ -4,7 +4,7 @@ import type { DragEvent } from "react";
 import { Card, CardBody, CardHeader, Select } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { LegoSurface } from "./lego";
-import type { LegoDragPayload, PaletteBlock } from "./types";
+import type { BuilderTeacherRef, LegoDragPayload, PaletteBlock } from "./types";
 
 export function isLegoDragPayload(value: unknown): value is LegoDragPayload {
   if (typeof value !== "object" || value === null) return false;
@@ -48,10 +48,14 @@ export function LegoPalette({
   isAdmin: boolean;
   teacherValue: string;
   onTeacherChange: (value: string) => void;
-  teacherOptions: string[];
+  teacherOptions: BuilderTeacherRef[];
   resolveTeacher: (block: PaletteBlock) => string | null;
   disabled: boolean;
 }) {
+  const selected = selectedBlockId ? blocks.find((block) => block.id === selectedBlockId) ?? null : null;
+  const teacherChoices =
+    selected && selected.teacherChoices.length > 0 ? selected.teacherChoices : teacherOptions;
+
   return (
     <Card className={cn("overflow-hidden", disabled && "opacity-70")}>
       <CardHeader title={title} subtitle={subtitle} />
@@ -65,10 +69,12 @@ export function LegoPalette({
               onChange={(event) => onTeacherChange(event.target.value)}
               className="h-9 py-0 text-xs"
             >
-              <option value="">{"Kurs o'qituvchisi"}</option>
-              {teacherOptions.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              <option value="">
+                {selected && selected.teacherChoices.length > 0 ? "Fan o'qituvchisi" : "Kurs o'qituvchisi"}
+              </option>
+              {teacherChoices.map((teacher) => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.name}
                 </option>
               ))}
             </Select>

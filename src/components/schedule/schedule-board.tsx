@@ -308,6 +308,8 @@ function toBoardEntry(entry: BuilderEntry, groupName: string): BoardEntry {
     lessonType: entry.lessonType,
     subjectRef: entry.subjectRef,
     teacher: entry.teacher,
+    teacherId: entry.teacherId,
+    teacherRef: entry.teacherRef,
     room: entry.room,
     parity: entry.parity,
     status: entry.status,
@@ -336,6 +338,7 @@ function nextToastId() {
 export function ScheduleBoard({
   canEdit,
   role,
+  userId,
   userName,
   groups,
   selectedGroupId,
@@ -350,6 +353,7 @@ export function ScheduleBoard({
 }: {
   canEdit: boolean;
   role: "ADMIN" | "TEACHER" | "STUDENT";
+  userId: string;
   userName: string;
   groups: GroupItem[];
   selectedGroupId: string | null;
@@ -360,7 +364,7 @@ export function ScheduleBoard({
   todayIso: string;
   nowMinutes: number;
   palette: PaletteBlock[];
-  teacherOptions: string[];
+  teacherOptions: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [entries, setEntries] = useState<BoardEntry[]>(initialEntries);
@@ -375,7 +379,7 @@ export function ScheduleBoard({
   const [snapId, setSnapId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [pending, setPending] = useState(false);
-  const [adminTeacher, setAdminTeacher] = useState("");
+  const [adminTeacherId, setAdminTeacherId] = useState("");
   const actionRef = useRef<(() => void) | null>(null);
   const deletedRef = useRef<BoardEntry | null>(null);
 
@@ -475,13 +479,28 @@ export function ScheduleBoard({
 
   function canManageEntry(entry: BoardEntry) {
     if (isAdmin) return true;
+    if (entry.teacherId) return entry.teacherId === userId;
     if (!entry.teacher) return false;
     return normalizeTeacherName(entry.teacher) === normalizeTeacherName(userName);
   }
 
+  function teacherChoiceName(id: string, block: PaletteBlock) {
+    return (
+      teacherOptions.find((option) => option.id === id)?.name ??
+      block.teacherChoices.find((option) => option.id === id)?.name ??
+      null
+    );
+  }
+
+  function teacherIdForBlock(block: PaletteBlock) {
+    if (!isAdmin) return userId;
+    return adminTeacherId || block.teacherId;
+  }
+
   function teacherForBlock(block: PaletteBlock) {
     if (!isAdmin) return userName || block.teacherName;
-    return adminTeacher.trim() || block.teacherName;
+    if (adminTeacherId) return teacherChoiceName(adminTeacherId, block) ?? block.teacherName;
+    return block.teacherName;
   }
 
   function showToast(tone: ToastMessage["tone"], text: string, actionLabel?: string, action?: () => void) {
@@ -537,6 +556,9 @@ export function ScheduleBoard({
   async function placeBlock(cell: CellRef, data: NewBlockData) {
     if (!selectedGroupId) return;
     setPanelId(null);
+    const source = paletteBlocks.find((block) => block.id === data.blockId) ?? null;
+    const teacher = source ? teacherForBlock(source) : data.teacher;
+    const teacherId = source ? teacherIdForBlock(source) : null;
     const tempId = nextTempId();
     const optimistic: BoardEntry = {
       id: tempId,
@@ -548,7 +570,9 @@ export function ScheduleBoard({
       subjectId: data.subjectId,
       lessonType: data.lessonType,
       subjectRef: { name: data.title, color: data.color },
-      teacher: data.teacher,
+      teacher,
+      teacherId,
+      teacherRef: null,
       room: data.room,
       parity: null,
       status: "NORMAL",
@@ -567,7 +591,8 @@ export function ScheduleBoard({
         subject: data.title,
         subjectId: data.subjectId,
         lessonType: data.lessonType,
-        teacher: data.teacher,
+        teacher,
+        teacherId,
         room: data.room,
         parity: null,
         status: "NORMAL",
@@ -674,6 +699,7 @@ export function ScheduleBoard({
         subjectId: entry.subjectId,
         lessonType: entry.lessonType,
         teacher: entry.teacher,
+        teacherId: entry.teacherId,
         room: entry.room,
         parity: entry.parity === "odd" || entry.parity === "even" ? entry.parity : null,
         status: entry.status,
@@ -808,6 +834,7 @@ export function ScheduleBoard({
   function toggleBlock(block: PaletteBlock) {
     if (!canDrop) return;
     setPanelId(null);
+    if (isAdmin && selectedBlockId !== block.id) setAdminTeacherId("");
     setSelectedBlockId((current) => (current === block.id ? null : block.id));
   }
 
@@ -1426,8 +1453,8 @@ export function ScheduleBoard({
               onDragStart={handlePaletteDragStart}
               onDragEnd={() => setHover(null)}
               isAdmin={isAdmin}
-              teacherValue={adminTeacher}
-              onTeacherChange={setAdminTeacher}
+              teacherValue={adminTeacherId}
+              onTeacherChange={setAdminTeacherId}
               teacherOptions={teacherOptions}
               resolveTeacher={teacherForBlock}
               disabled={!canDrop}

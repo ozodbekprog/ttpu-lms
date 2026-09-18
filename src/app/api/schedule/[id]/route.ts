@@ -11,6 +11,7 @@ const updateSchema = z.object({
   subjectId: z.string().cuid().nullish(),
   lessonType: z.string().max(40).nullish(),
   teacher: z.string().trim().max(200).nullish(),
+  teacherId: z.string().cuid().nullish(),
   room: z.string().trim().max(100).nullish(),
   parity: z.enum(["odd", "even"]).nullish(),
   status: z.enum(["NORMAL", "CHANGED", "MOVED", "CANCELLED"]).optional(),
@@ -65,6 +66,13 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     }
   }
 
+  if (data.teacherId) {
+    const teacher = await prisma.user.findUnique({ where: { id: data.teacherId }, select: { id: true } });
+    if (!teacher) {
+      return Response.json({ ok: false, error: "O'qituvchi topilmadi" }, { status: 400 });
+    }
+  }
+
   const nextDayOfWeek = data.dayOfWeek ?? entry.dayOfWeek;
   const nextSlot = data.slot ?? entry.slot;
   const nextParity = data.parity === undefined ? entry.parity : data.parity;
@@ -92,12 +100,16 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       ...(data.subjectId !== undefined ? { subjectId: data.subjectId ?? null } : {}),
       ...(data.lessonType !== undefined ? { lessonType: data.lessonType ? data.lessonType : null } : {}),
       ...(data.teacher !== undefined ? { teacher: data.teacher ? data.teacher : null } : {}),
+      ...(data.teacherId !== undefined ? { teacherId: data.teacherId ?? null } : {}),
       ...(data.room !== undefined ? { room: data.room ? data.room : null } : {}),
       ...(data.parity !== undefined ? { parity: data.parity ?? null } : {}),
       ...(data.status !== undefined ? { status: data.status } : {}),
       ...(data.note !== undefined ? { note: data.note ? data.note : null } : {}),
     },
-    include: { subjectRef: { select: { name: true, color: true } } },
+    include: {
+      subjectRef: { select: { name: true, color: true } },
+      teacherRef: { select: { id: true, name: true } },
+    },
   });
 
   if (data.status !== undefined && data.status !== entry.status) {
@@ -119,7 +131,10 @@ export async function DELETE(_request: Request, ctx: { params: Promise<{ id: str
   if (guard.error) return guard.error;
 
   const { id } = await ctx.params;
-  const entry = await prisma.scheduleEntry.findUnique({ where: { id }, select: { id: true, teacher: true } });
+  const entry = await prisma.scheduleEntry.findUnique({
+    where: { id },
+    select: { id: true, teacher: true, teacherId: true },
+  });
   if (!entry) {
     return Response.json({ ok: false, error: "Jadval yozuvi topilmadi" }, { status: 404 });
   }

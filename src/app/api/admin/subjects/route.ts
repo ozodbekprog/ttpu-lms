@@ -15,8 +15,23 @@ export async function GET() {
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   if (user.role !== "ADMIN") return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
 
-  const subjects = await prisma.subject.findMany({ orderBy: { name: "asc" } });
-  return Response.json({ ok: true, data: subjects });
+  const subjects = await prisma.subject.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      teachers: {
+        orderBy: { teacher: { name: "asc" } },
+        select: { teacher: { select: { id: true, name: true } } },
+      },
+    },
+  });
+
+  return Response.json({
+    ok: true,
+    data: subjects.map(({ teachers, ...subject }) => ({
+      ...subject,
+      teachers: teachers.map((item) => item.teacher),
+    })),
+  });
 }
 
 export async function POST(request: Request) {

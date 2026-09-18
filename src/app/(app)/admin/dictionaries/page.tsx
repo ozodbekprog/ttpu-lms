@@ -9,7 +9,15 @@ export default async function AdminDictionariesPage() {
   await ensureDictionaryDefaults();
 
   const [subjects, timeSlots, lessonTypes] = await Promise.all([
-    prisma.subject.findMany({ orderBy: { name: "asc" } }),
+    prisma.subject.findMany({
+      orderBy: { name: "asc" },
+      include: {
+        teachers: {
+          orderBy: { teacher: { name: "asc" } },
+          select: { teacher: { select: { id: true, name: true } } },
+        },
+      },
+    }),
     prisma.timeSlot.findMany({ orderBy: { slot: "asc" } }),
     prisma.lessonType.findMany({ orderBy: { name: "asc" } }),
   ]);
@@ -27,6 +35,7 @@ export default async function AdminDictionariesPage() {
           name: subject.name,
           code: subject.code,
           color: subject.color,
+          teachers: subject.teachers.map((item) => item.teacher),
         }))}
         timeSlots={timeSlots}
         lessonTypes={lessonTypes}

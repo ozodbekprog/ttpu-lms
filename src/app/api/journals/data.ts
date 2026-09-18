@@ -53,9 +53,10 @@ export async function getWeeklyJournals(
   const teacherName = normalizeTeacherName(user.name);
   const visibleEntries =
     user.role === "TEACHER"
-      ? entries.filter(
-          (entry) =>
-            entry.teacher !== null && normalizeTeacherName(entry.teacher) === teacherName,
+      ? entries.filter((entry) =>
+          entry.teacherId
+            ? entry.teacherId === user.id
+            : entry.teacher !== null && normalizeTeacherName(entry.teacher) === teacherName,
         )
       : entries;
 

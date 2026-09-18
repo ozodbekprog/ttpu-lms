@@ -74,6 +74,8 @@ model User {
   roomBookings         RoomBooking[]
   orders               Order[]
   courseReviews        CourseReview[]
+  subjectsTaught       TeacherSubject[]
+  scheduleEntriesTaught ScheduleEntry[]   @relation("ScheduleTeacher")
 
   @@index([groupId])
 }
@@ -248,6 +250,7 @@ model ScheduleEntry {
   subjectId  String?
   lessonType String?
   teacher    String?
+  teacherId  String?
   room       String?
   parity     String?
   status     ScheduleStatus @default(NORMAL)
@@ -256,9 +259,11 @@ model ScheduleEntry {
 
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   subjectRef Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  teacherRef User?    @relation("ScheduleTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
 
   @@index([groupId, dayOfWeek])
   @@index([subjectId])
+  @@index([teacherId])
 }
 
 enum ScheduleStatus {
@@ -370,6 +375,20 @@ model Subject {
 
   entries     ScheduleEntry[]
   courses     Course[]
+  teachers    TeacherSubject[]
+}
+
+model TeacherSubject {
+  id        String   @id @default(cuid())
+  teacherId String
+  subjectId String
+  createdAt DateTime @default(now())
+
+  teacher User    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, subjectId])
+  @@index([subjectId])
 }
 
 model TimeSlot {
