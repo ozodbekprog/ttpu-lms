@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/admin/users", label: "Foydalanuvchilar" },
   { href: "/admin/groups", label: "Guruhlar" },
   { href: "/admin/courses", label: "Kurslar" },
+  { href: "/admin/settings", label: "Sozlamalar" },
 ];
 
 export default function AdminNav() {

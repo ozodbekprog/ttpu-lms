@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Avatar, Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -8,6 +8,9 @@ import {
   JOURNAL_STATUS_META,
   JOURNAL_STATUS_ORDER,
   journalDateParts,
+  journalMonthKey,
+  journalMonthKeys,
+  journalMonthLabel,
 } from "@/components/attendance/journal-utils";
 import type {
   JournalStatus,
@@ -32,6 +35,17 @@ const EMPTY_SUMMARY: JournalSummaryRow = {
   eligible: false,
 };
 
+function localToday() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+function subscribeToday() {
+  return () => {};
+}
+
 export function AttendanceJournal({
   courseId,
   attendanceHref,
@@ -53,6 +67,16 @@ export function AttendanceJournal({
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [monthKey, setMonthKey] = useState<string | null>(null);
+  const today = useSyncExternalStore(subscribeToday, localToday, () => null);
+
+  const months = useMemo(() => journalMonthKeys(dates), [dates]);
+  const activeMonth = monthKey && months.includes(monthKey) ? monthKey : months[months.length - 1] ?? null;
+  const monthIndex = activeMonth ? months.indexOf(activeMonth) : -1;
+  const visibleDates = useMemo(
+    () => (activeMonth ? dates.filter((date) => journalMonthKey(date) === activeMonth) : dates),
+    [dates, activeMonth],
+  );
 
   const summary = useMemo(() => {
     const map: Record<string, JournalSummaryRow> = {};
@@ -81,11 +105,11 @@ export function AttendanceJournal({
 
   const totals = useMemo(() => {
     const map: Record<string, { attended: number; total: number }> = {};
-    for (const date of dates) map[date] = { attended: 0, total: 0 };
+    for (const date of visibleDates) map[date] = { attended: 0, total: 0 };
     for (const student of students) {
       const row = records[student.id];
       if (!row) continue;
-      for (const date of dates) {
+      for (const date of visibleDates) {
         const status = row[date];
         if (!status) continue;
         const entry = map[date];
@@ -95,17 +119,17 @@ export function AttendanceJournal({
       }
     }
     return map;
-  }, [records, dates, students]);
+  }, [records, visibleDates, students]);
 
   const overall = useMemo(() => {
     let attended = 0;
     let total = 0;
-    for (const date of dates) {
+    for (const date of visibleDates) {
       attended += totals[date]?.attended ?? 0;
       total += totals[date]?.total ?? 0;
     }
     return { attended, total };
-  }, [dates, totals]);
+  }, [visibleDates, totals]);
 
   useEffect(() => {
     if (!editor) return;
@@ -209,6 +233,33 @@ export function AttendanceJournal({
         <CardHeader
           title="Guruh jurnali"
           subtitle={`${students.length} ta talaba · ${dates.length} ta dars`}
+          action={
+            months.length > 0 ? (
+              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+                <button
+                  type="button"
+                  aria-label="Oldingi oy"
+                  disabled={monthIndex <= 0}
+                  onClick={() => setMonthKey(months[monthIndex - 1] ?? activeMonth)}
+                  className="flex size-7 items-center justify-center rounded-full text-base leading-none text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30"
+                >
+                  ‹
+                </button>
+                <span className="min-w-20 px-1 text-center text-xs font-semibold text-slate-700">
+                  {activeMonth ? journalMonthLabel(activeMonth) : ""}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Keyingi oy"
+                  disabled={monthIndex < 0 || monthIndex >= months.length - 1}
+                  onClick={() => setMonthKey(months[monthIndex + 1] ?? activeMonth)}
+                  className="flex size-7 items-center justify-center rounded-full text-base leading-none text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30"
+                >
+                  ›
+                </button>
+              </div>
+            ) : null
+          }
         />
         {empty ? (
           <div className="px-6 py-6">
@@ -234,21 +285,35 @@ export function AttendanceJournal({
               <table className="w-full border-separate border-spacing-0 text-left text-sm">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 top-0 z-30 min-w-44 border-b border-r border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="sticky left-0 top-0 z-30 min-w-36 border-b border-r border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:min-w-44">
                       Talaba
                     </th>
-                    {dates.map((date) => {
+                    {visibleDates.map((date) => {
                       const parts = journalDateParts(date);
+                      const isToday = date === today;
                       return (
                         <th
                           key={date}
-                          className="sticky top-0 z-20 min-w-11 border-b border-slate-200 bg-slate-50 px-1 py-1.5 text-center align-bottom"
+                          className={cn(
+                            "sticky top-0 z-20 min-w-10 border-b border-slate-200 bg-slate-50 px-1 py-1.5 text-center align-bottom",
+                            isToday && "bg-brand-50",
+                          )}
                         >
-                          <span className="block text-[11px] font-semibold tabular-nums text-slate-700">
+                          <span
+                            className={cn(
+                              "block text-[11px] font-semibold tabular-nums text-slate-700",
+                              isToday && "text-brand-700",
+                            )}
+                          >
                             {parts.label}
                           </span>
-                          <span className="block text-[10px] font-normal text-slate-400">
-                            {parts.weekday}
+                          <span
+                            className={cn(
+                              "block text-[10px] font-normal text-slate-400",
+                              isToday && "text-brand-500",
+                            )}
+                          >
+                            {isToday ? "Bugun" : parts.weekday}
                           </span>
                         </th>
                       );
@@ -280,7 +345,7 @@ export function AttendanceJournal({
                             />
                             <span
                               className={cn(
-                                "truncate text-sm font-medium text-slate-800",
+                                "max-w-24 truncate text-sm font-medium text-slate-800 sm:max-w-none",
                                 isMe && "text-brand-900",
                               )}
                             >
@@ -293,25 +358,36 @@ export function AttendanceJournal({
                             ) : null}
                           </div>
                         </th>
-                        {dates.map((date) => {
+                        {visibleDates.map((date) => {
                           const status = records[student.id]?.[date] ?? null;
                           const meta = status ? JOURNAL_STATUS_META[status] : null;
+                          const isToday = date === today;
                           return (
-                            <td key={date} className="border-b border-slate-100 px-1 py-1.5 text-center">
+                            <td
+                              key={date}
+                              className={cn(
+                                "border-b border-slate-100 px-1 py-1.5 text-center",
+                                isToday && "bg-brand-50/50",
+                              )}
+                            >
                               <button
                                 type="button"
                                 disabled={!canEdit}
                                 title={meta ? meta.label : "Belgilanmagan"}
                                 onClick={(event) => openEditor(event, student.id, date)}
                                 className={cn(
-                                  "mx-auto flex h-7 min-w-7 items-center justify-center rounded-lg px-1 text-[10px] font-semibold transition-all duration-150",
-                                  meta ? meta.chip : "text-slate-300",
+                                  "mx-auto flex size-7 items-center justify-center rounded-full text-[9px] font-semibold leading-none transition-all duration-150",
+                                  meta ? meta.badge : "bg-slate-100",
                                   canEdit
-                                    ? "cursor-pointer hover:ring-2 hover:ring-brand-300/70"
+                                    ? "cursor-pointer hover:scale-110 hover:ring-2 hover:ring-brand-300/70"
                                     : "cursor-default",
                                 )}
                               >
-                                {meta ? meta.short : "·"}
+                                {meta ? (
+                                  meta.short
+                                ) : (
+                                  <span className="size-1.5 rounded-full bg-slate-300" />
+                                )}
                               </button>
                             </td>
                           );
@@ -343,12 +419,15 @@ export function AttendanceJournal({
                     <td className="sticky left-0 z-10 border-r border-slate-100 bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500">
                       Keldi / jami
                     </td>
-                    {dates.map((date) => {
+                    {visibleDates.map((date) => {
                       const totalsForDate = totals[date] ?? { attended: 0, total: 0 };
                       return (
                         <td
                           key={date}
-                          className="bg-slate-50/80 px-1 py-2 text-center text-[10px] font-medium tabular-nums text-slate-500"
+                          className={cn(
+                            "bg-slate-50/80 px-1 py-2 text-center text-[10px] font-medium tabular-nums text-slate-500",
+                            date === today && "bg-brand-50/70 text-brand-600",
+                          )}
                         >
                           {totalsForDate.attended}/{totalsForDate.total}
                         </td>
@@ -361,7 +440,7 @@ export function AttendanceJournal({
                 </tfoot>
               </table>
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 bg-slate-50/60 px-6 py-3 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-500 sm:px-6">
               <span className="font-medium text-slate-600">Legenda:</span>
               {JOURNAL_STATUS_ORDER.map((status) => {
                 const meta = JOURNAL_STATUS_META[status];
@@ -369,8 +448,8 @@ export function AttendanceJournal({
                   <span key={status} className="inline-flex items-center gap-1.5">
                     <span
                       className={cn(
-                        "flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-[9px] font-semibold",
-                        meta.chip,
+                        "flex size-5 items-center justify-center rounded-full text-[9px] font-semibold leading-none",
+                        meta.badge,
                       )}
                     >
                       {meta.short}
@@ -379,7 +458,13 @@ export function AttendanceJournal({
                   </span>
                 );
               })}
-              <span className="ml-auto text-slate-400">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="flex size-5 items-center justify-center rounded-full bg-slate-100">
+                  <span className="size-1.5 rounded-full bg-slate-300" />
+                </span>
+                Belgilanmagan
+              </span>
+              <span className="ml-auto hidden text-slate-400 sm:inline">
                 {canEdit ? "Tahrirlash uchun katak ustiga bosing" : "Faqat ko'rish"}
               </span>
             </div>
@@ -397,7 +482,7 @@ export function AttendanceJournal({
             <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-400">
               {editingStudent?.name ?? ""} · {journalDateParts(editor.date).label}
             </p>
-            <div className="flex gap-1">
+            <div className="flex justify-between gap-1">
               {JOURNAL_STATUS_ORDER.map((status) => {
                 const meta = JOURNAL_STATUS_META[status];
                 return (
@@ -409,9 +494,9 @@ export function AttendanceJournal({
                       void saveStatus(status);
                     }}
                     className={cn(
-                      "flex h-8 flex-1 items-center justify-center rounded-lg text-[10px] font-semibold transition-all duration-150 hover:brightness-95",
-                      meta.chip,
-                      editingStatus === status && "ring-2 ring-brand-400",
+                      "flex size-9 items-center justify-center rounded-full text-[9px] font-semibold leading-none transition-all duration-150 hover:brightness-95",
+                      meta.badge,
+                      editingStatus === status && "ring-2 ring-brand-500 ring-offset-2",
                     )}
                   >
                     {meta.short}
@@ -425,7 +510,7 @@ export function AttendanceJournal({
                 onClick={() => {
                   void clearStatus();
                 }}
-                className="mt-1 w-full rounded-lg px-2 py-1.5 text-xs font-medium text-rose-600 transition-colors hover:bg-rose-50"
+                className="mt-1.5 w-full rounded-lg px-2 py-1.5 text-xs font-medium text-rose-600 transition-colors hover:bg-rose-50"
               >
                 Tozalash
               </button>

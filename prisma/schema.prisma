@@ -342,6 +342,12 @@ model AttendanceSession {
   @@index([courseId, date])
 }
 
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
 model Conversation {
   id             String   @id @default(cuid())
   participantAId String

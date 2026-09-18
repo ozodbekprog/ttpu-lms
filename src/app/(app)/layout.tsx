@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/auth";
+import { getModuleFlags } from "@/server/settings";
 import { Avatar } from "@/components/ui";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UnreadBadge } from "@/components/chat/UnreadBadge";
@@ -12,16 +13,17 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
+  const modules = await getModuleFlags();
 
   const links = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/courses", label: "Kurslar" },
-    { href: "/catalog", label: "Katalog" },
+    ...(modules.catalog ? [{ href: "/catalog", label: "Katalog" }] : []),
     { href: "/schedule", label: "Jadval" },
-    { href: "/calendar", label: "Kalendar" },
+    ...(modules.calendar ? [{ href: "/calendar", label: "Kalendar" }] : []),
     { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholarim" },
-    { href: "/certificates", label: "Sertifikatlar" },
-    { href: "/messages", label: "Xabarlar", badge: <UnreadBadge /> },
+    ...(modules.certificates ? [{ href: "/certificates", label: "Sertifikatlar" }] : []),
+    ...(modules.chat ? [{ href: "/messages", label: "Xabarlar", badge: <UnreadBadge /> }] : []),
     ...(isStaff(user.role) ? [{ href: "/reports", label: "Hisobotlar" }] : []),
     ...(user.role === "ADMIN" ? [{ href: "/admin", label: "Admin panel" }] : []),
   ];

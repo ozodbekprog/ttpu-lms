@@ -1,6 +1,18 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: Jadval 2.0 — raqibdan ustun (Komp 1)
+Oxirgi yangilanish: LEGO konstruktor + Jurnal 2.0 + Modul sozlamalari (Komp 1)
+
+## To'lqin 8 — "LEGO" qurish tizimi
+
+- [x] **Jadval konstruktori** `/schedule/builder` — drag & drop: fan/xona bloklarini
+      katakka sudrab tashlash (yoki mobil: bosib tanlab, katakka bosish); konflikt 409 →
+      toast "Bu vaqt band"; ko'chirish/tahrir/o'chirish; LEGO uslub, snap animatsiyalar;
+      o'qituvchi o'z fanlarini o'zi qo'shadi (o'z fanlari palette'si)
+- [x] **Jurnal 2.0** — rasmdagidek mobil uslub: dumaloq rangli badge'lar (K/Kech/S/Y),
+      avatarlar, oy navigatsiyasi, bugun ustuni; **Reyting** (top 10, medal)
+- [x] **Modul sozlamalari** `/admin/settings` — 6 modulni (chat, sertifikat, kalendar,
+      katalog, forum, QR davomat) o'yindek yoqish/o'chirish; nav avtomatik moslashadi
+- [x] Baza: `AppSetting` modeli
 
 ## Jadval 2.0 (to'lqin 7)
 

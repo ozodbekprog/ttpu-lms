@@ -429,6 +429,11 @@ export function ScheduleBoard({
               <a className={EXPORT_CLASS} href={`/api/schedule/export/ics?${exportQuery}`} target="_blank" rel="noreferrer">
                 Kalendar (.ics)
               </a>
+              {canEdit ? (
+                <a className={EXPORT_CLASS} href={`/schedule/builder?${exportQuery}`}>
+                  Konstruktor
+                </a>
+              ) : null}
               {canEdit && mode === "group" ? (
                 <Button onClick={() => openAdd(today, 1)}>{"Dars qo'shish"}</Button>
               ) : null}

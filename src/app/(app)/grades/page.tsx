@@ -17,12 +17,10 @@ import {
 import { cn, fmtDate, fmtDateTime, gradeColor, scorePercent } from "@/lib/utils";
 import { SubmissionBadge } from "@/components/courses/assignments-status";
 import { getStudentAttendance } from "@/app/api/attendance/summary/data";
-
-function percentTone(pct: number) {
-  if (pct >= 80) return "bg-emerald-50 text-emerald-700";
-  if (pct >= 60) return "bg-amber-50 text-amber-700";
-  return "bg-rose-50 text-rose-700";
-}
+import { GradeBadge } from "@/components/grades/grade-badge";
+import { RatingPanel } from "@/components/grades/rating-panel";
+import { rankRatings } from "@/components/grades/rating";
+import type { RatingEntry } from "@/components/grades/rating";
 
 export default async function GradesPage({
   searchParams,
@@ -32,7 +30,15 @@ export default async function GradesPage({
   const user = await requireUser();
 
   if (user.role === "STUDENT") {
-    const [submissions, attempts, attendance] = await Promise.all([
+    const memberQuery: Promise<{ id: string; name: string; avatarUrl: string | null }[]> =
+      user.groupId
+        ? prisma.user.findMany({
+            where: { groupId: user.groupId, isActive: true },
+            select: { id: true, name: true, avatarUrl: true },
+          })
+        : Promise.resolve([]);
+
+    const [submissions, attempts, attendance, enrollments, groupMembers] = await Promise.all([
       prisma.submission.findMany({
         where: { studentId: user.id },
         include: {
@@ -42,15 +48,31 @@ export default async function GradesPage({
       }),
       prisma.quizAttempt.findMany({
         where: { studentId: user.id },
-        include: { quiz: { include: { course: { select: { title: true } } } } },
+        include: {
+          quiz: {
+            include: {
+              course: { select: { title: true } },
+              questions: { select: { points: true } },
+            },
+          },
+        },
         orderBy: { startedAt: "desc" },
       }),
       getStudentAttendance(user.id),
+      prisma.enrollment.findMany({ where: { userId: user.id }, select: { courseId: true } }),
+      memberQuery,
     ]);
 
     const graded = submissions.filter((submission) => submission.score != null);
-    const scoreSum = graded.reduce((sum, submission) => sum + (submission.score ?? 0), 0);
-    const maxSum = graded.reduce((sum, submission) => sum + submission.assignment.maxScore, 0);
+    let scoreSum = graded.reduce((sum, submission) => sum + (submission.score ?? 0), 0);
+    let maxSum = graded.reduce((sum, submission) => sum + submission.assignment.maxScore, 0);
+    for (const attempt of attempts) {
+      if (attempt.score == null) continue;
+      const quizMax = attempt.quiz.questions.reduce((sum, question) => sum + question.points, 0);
+      if (quizMax <= 0) continue;
+      scoreSum += attempt.score;
+      maxSum += quizMax;
+    }
     const average = maxSum > 0 ? Math.round((scoreSum / maxSum) * 100) : null;
 
     const groupMap = new Map<
@@ -89,6 +111,71 @@ export default async function GradesPage({
     }
 
     const groups = [...groupMap.values()];
+
+    const commonCourseIds = [...new Set(enrollments.map((enrollment) => enrollment.courseId))];
+    const memberIds = groupMembers.map((member) => member.id);
+    let ratingRows: ReturnType<typeof rankRatings> = [];
+
+    if (memberIds.length > 0 && commonCourseIds.length > 0) {
+      const [ratingSubmissions, ratingAttempts] = await Promise.all([
+        prisma.submission.findMany({
+          where: {
+            studentId: { in: memberIds },
+            score: { not: null },
+            assignment: { courseId: { in: commonCourseIds } },
+          },
+          select: {
+            studentId: true,
+            score: true,
+            assignment: { select: { maxScore: true } },
+          },
+        }),
+        prisma.quizAttempt.findMany({
+          where: {
+            studentId: { in: memberIds },
+            finishedAt: { not: null },
+            score: { not: null },
+            quiz: { courseId: { in: commonCourseIds } },
+          },
+          select: {
+            studentId: true,
+            score: true,
+            quiz: { select: { questions: { select: { points: true } } } },
+          },
+        }),
+      ]);
+
+      const ratingTotals = new Map<string, { score: number; max: number }>();
+      const addTotal = (studentId: string, score: number, max: number) => {
+        if (max <= 0) return;
+        const current = ratingTotals.get(studentId) ?? { score: 0, max: 0 };
+        current.score += score;
+        current.max += max;
+        ratingTotals.set(studentId, current);
+      };
+
+      for (const submission of ratingSubmissions) {
+        addTotal(submission.studentId, submission.score ?? 0, submission.assignment.maxScore);
+      }
+      for (const attempt of ratingAttempts) {
+        const quizMax = attempt.quiz.questions.reduce((sum, question) => sum + question.points, 0);
+        addTotal(attempt.studentId, attempt.score ?? 0, quizMax);
+      }
+
+      const entries: RatingEntry[] = [];
+      for (const member of groupMembers) {
+        const total = ratingTotals.get(member.id);
+        if (!total || total.max <= 0) continue;
+        entries.push({
+          studentId: member.id,
+          name: member.name,
+          avatarUrl: member.avatarUrl,
+          percent: Math.round((total.score / total.max) * 100),
+          isMe: member.id === user.id,
+        });
+      }
+      ratingRows = rankRatings(entries);
+    }
 
     return (
       <>
@@ -137,14 +224,14 @@ export default async function GradesPage({
         <Card className="relative overflow-hidden">
           <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
           <CardBody className="grid gap-6 py-6 sm:grid-cols-[minmax(0,15rem)_1fr] sm:items-center">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Umumiy o&apos;rtacha</p>
-              <p className="mt-1.5 text-5xl font-semibold tracking-tight text-brand-900">
-                {average != null ? `${average}%` : "—"}
-              </p>
-              <p className="mt-1 text-xs text-slate-400">
-                {graded.length > 0 ? "Barcha baholangan topshiriqlar asosida" : "Hali baho yo'q"}
-              </p>
+            <div className="flex items-center gap-5">
+              <GradeBadge percent={average} size="xl" className="shadow-md" />
+              <div>
+                <p className="text-sm font-medium text-slate-500">Umumiy o&apos;rtacha</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {maxSum > 0 ? "Baholangan topshiriq va testlar asosida" : "Hali baho yo'q"}
+                </p>
+              </div>
             </div>
             <div className="space-y-3">
               <Progress value={average ?? 0} max={100} className="h-2" />
@@ -164,6 +251,10 @@ export default async function GradesPage({
             </div>
           </CardBody>
         </Card>
+
+        <div className="mt-6">
+          <RatingPanel rows={ratingRows} groupName={user.group?.name ?? null} />
+        </div>
 
         {groups.length === 0 ? (
           <div className="mt-6">
@@ -222,23 +313,14 @@ export default async function GradesPage({
                               <SubmissionBadge status={submission.status} />
                             </td>
                             <td className="px-3 py-3 text-right">
-                              {submission.score != null && pct != null ? (
-                                <span className="inline-flex items-center gap-2.5">
-                                  <span className="text-sm font-medium text-slate-500">
+                              <span className="inline-flex items-center gap-2.5">
+                                {submission.score != null ? (
+                                  <span className="text-xs font-medium tabular-nums text-slate-400">
                                     {submission.score}/{submission.assignment.maxScore}
                                   </span>
-                                  <span
-                                    className={cn(
-                                      "inline-flex min-w-12 justify-center rounded-full px-2 py-0.5 text-xs font-semibold",
-                                      percentTone(pct),
-                                    )}
-                                  >
-                                    {pct}%
-                                  </span>
-                                </span>
-                              ) : (
-                                <span className="text-sm text-slate-300">—</span>
-                              )}
+                                ) : null}
+                                <GradeBadge percent={pct} size="sm" />
+                              </span>
                             </td>
                           </tr>
                         );
@@ -262,27 +344,44 @@ export default async function GradesPage({
                         </tr>
                       </thead>
                       <tbody>
-                        {group.attempts.map((attempt) => (
-                          <tr
-                            key={attempt.id}
-                            className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/70"
-                          >
-                            <td className="py-3 pr-3 text-sm font-medium text-slate-800">
-                              {attempt.quiz.title}
-                            </td>
-                            <td className="px-3 py-3 text-xs text-slate-500">
-                              {fmtDateTime(attempt.finishedAt ?? attempt.startedAt)}
-                            </td>
-                            <td className="px-3 py-3">
-                              <Badge tone={attempt.finishedAt ? "green" : "slate"}>
-                                {attempt.finishedAt ? "Tugallangan" : "Tugallanmagan"}
-                              </Badge>
-                            </td>
-                            <td className="px-3 py-3 text-right text-sm font-semibold text-brand-800">
-                              {attempt.score != null ? attempt.score : "—"}
-                            </td>
-                          </tr>
-                        ))}
+                        {group.attempts.map((attempt) => {
+                          const quizMax = attempt.quiz.questions.reduce(
+                            (sum, question) => sum + question.points,
+                            0,
+                          );
+                          const attemptPercent =
+                            attempt.score != null && quizMax > 0
+                              ? Math.round((attempt.score / quizMax) * 100)
+                              : null;
+                          return (
+                            <tr
+                              key={attempt.id}
+                              className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/70"
+                            >
+                              <td className="py-3 pr-3 text-sm font-medium text-slate-800">
+                                {attempt.quiz.title}
+                              </td>
+                              <td className="px-3 py-3 text-xs text-slate-500">
+                                {fmtDateTime(attempt.finishedAt ?? attempt.startedAt)}
+                              </td>
+                              <td className="px-3 py-3">
+                                <Badge tone={attempt.finishedAt ? "green" : "slate"}>
+                                  {attempt.finishedAt ? "Tugallangan" : "Tugallanmagan"}
+                                </Badge>
+                              </td>
+                              <td className="px-3 py-3 text-right">
+                                <span className="inline-flex items-center gap-2.5">
+                                  {attempt.score != null && quizMax > 0 ? (
+                                    <span className="text-xs font-medium tabular-nums text-slate-400">
+                                      {attempt.score}/{quizMax}
+                                    </span>
+                                  ) : null}
+                                  <GradeBadge percent={attemptPercent} size="sm" />
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </Table>
                   </div>
@@ -442,14 +541,10 @@ export default async function GradesPage({
                           <td key={assignment.id} className="px-3 py-3 text-center text-sm">
                             {submission ? (
                               submission.score != null ? (
-                                <span
-                                  className={cn(
-                                    "font-semibold",
-                                    gradeColor(submission.score, assignment.maxScore),
-                                  )}
-                                >
-                                  {submission.score}
-                                </span>
+                                <GradeBadge
+                                  percent={scorePercent(submission.score, assignment.maxScore)}
+                                  size="sm"
+                                />
                               ) : (
                                 <SubmissionBadge status={submission.status} />
                               )
