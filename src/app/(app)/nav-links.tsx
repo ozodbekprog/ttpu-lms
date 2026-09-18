@@ -34,7 +34,7 @@ export function NavLinks({ links, variant = "side" }: { links: NavLink[]; varian
   }
 
   return (
-    <nav className="flex-1 space-y-0.5 px-3 py-4">
+    <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
       {links.map((l) => {
         const active = pathname === l.href || pathname.startsWith(`${l.href}/`);
         return (

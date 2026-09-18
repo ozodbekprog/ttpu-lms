@@ -10,6 +10,7 @@ export type AdminCourse = {
   title: string;
   slug: string;
   isPublished: boolean;
+  isElective?: boolean;
   createdAt: Date;
   teacher: { id: string; name: string };
   studentCount: number;
@@ -31,6 +32,7 @@ export default function CoursesManager({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [electiveOverrides, setElectiveOverrides] = useState<Record<string, boolean>>({});
 
   const search = query.trim().toLowerCase();
   const filtered = search
@@ -66,10 +68,23 @@ export default function CoursesManager({
     }
   }
 
+  function isElective(course: AdminCourse) {
+    return electiveOverrides[course.id] ?? course.isElective ?? false;
+  }
+
   async function togglePublish(course: AdminCourse) {
     const json = await send(course.id, { isPublished: !course.isPublished });
     if (!json) return;
     setNotice(course.isPublished ? "Kurs yashirildi" : "Kurs e'lon qilindi");
+    router.refresh();
+  }
+
+  async function toggleElective(course: AdminCourse) {
+    const next = !isElective(course);
+    const json = await send(course.id, { isElective: next });
+    if (!json) return;
+    setElectiveOverrides((prev) => ({ ...prev, [course.id]: next }));
+    setNotice(next ? "Kurs tanlov fan sifatida belgilandi" : "Kurs tanlov fanlardan chiqarildi");
     router.refresh();
   }
 
@@ -199,13 +214,24 @@ export default function CoursesManager({
                       <Badge tone="slate">{course.studentCount} ta</Badge>
                     </td>
                     <td className="px-5 py-3">
-                      <Badge tone={course.isPublished ? "green" : "amber"}>
-                        {course.isPublished ? "E'lon qilingan" : "Qoralama"}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge tone={course.isPublished ? "green" : "amber"}>
+                          {course.isPublished ? "E'lon qilingan" : "Qoralama"}
+                        </Badge>
+                        {isElective(course) ? <Badge tone="gold">Tanlov fan</Badge> : null}
+                      </div>
                     </td>
                     <td className="px-5 py-3 text-xs text-slate-500">{fmtDate(course.createdAt)}</td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={busyId === course.id}
+                          onClick={() => toggleElective(course)}
+                        >
+                          {isElective(course) ? "Tanlovdan olish" : "Tanlov fan"}
+                        </Button>
                         <Button
                           size="sm"
                           variant="secondary"

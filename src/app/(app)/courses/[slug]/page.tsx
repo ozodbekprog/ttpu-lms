@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Avatar, Badge, ButtonLink } from "@/components/ui";
 import { CourseMaterials } from "@/components/courses/course-materials";
+import { CourseReviews } from "@/components/courses/course-reviews";
 import { CourseStudents } from "@/components/courses/course-students";
 import { CourseTabs } from "@/components/forum/course-tabs";
 import { getCourseAttendance } from "@/app/api/attendance/summary/data";
@@ -143,6 +144,12 @@ export default async function CoursePage({
       ) : (
         <CourseMaterials courseId={course.id} sections={course.sections} canManage={canManage} />
       )}
+
+      {canManage || isEnrolled ? (
+        <div className="mt-6">
+          <CourseReviews courseId={course.id} isEnrolled={isEnrolled} canManage={canManage} />
+        </div>
+      ) : null}
     </>
   );
 }

@@ -48,6 +48,7 @@ model User {
   avatarUrl    String?
   coverUrl     String?
   bio          String?
+  preferences  Json?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -70,6 +71,9 @@ model User {
   conversationsA       Conversation[]     @relation("ConversationA")
   conversationsB       Conversation[]     @relation("ConversationB")
   messagesSent         Message[]          @relation("MessageSender")
+  roomBookings         RoomBooking[]
+  orders               Order[]
+  courseReviews        CourseReview[]
 
   @@index([groupId])
 }
@@ -89,6 +93,7 @@ model Course {
   description String?
   coverColor  String   @default("#2563eb")
   isPublished Boolean  @default(false)
+  isElective  Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   teacherId String
@@ -104,6 +109,7 @@ model Course {
   forumTopics        ForumTopic[]
   certificates       Certificate[]
   attendanceSessions AttendanceSession[]
+  reviews            CourseReview[]
 
   @@index([teacherId])
 }
@@ -346,6 +352,74 @@ model AppSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  building  String?
+  capacity  Int?
+  equipment String?
+  createdAt DateTime @default(now())
+}
+
+model RoomBooking {
+  id        String   @id @default(cuid())
+  roomName  String
+  date      DateTime
+  slot      Int
+  purpose   String?
+  status    String   @default("ACTIVE")
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([roomName, date])
+  @@index([userId, date])
+}
+
+model Order {
+  id           String   @id @default(cuid())
+  userId       String
+  type         String
+  subject      String?
+  note         String?
+  status       String   @default("NEW")
+  adminComment String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model AcademicEvent {
+  id          String    @id @default(cuid())
+  title       String
+  type        String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+  createdAt   DateTime  @default(now())
+
+  @@index([startDate])
+}
+
+model CourseReview {
+  id        String   @id @default(cuid())
+  courseId  String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
 }
 
 model Conversation {
