@@ -11,6 +11,8 @@ const createSchema = z.object({
   teacher: z.string().trim().max(200).nullish(),
   room: z.string().trim().max(100).nullish(),
   parity: z.enum(["odd", "even"]).nullish(),
+  status: z.enum(["NORMAL", "CHANGED", "MOVED", "CANCELLED"]).optional(),
+  note: z.string().trim().max(300).nullish(),
 });
 
 export async function GET(request: Request) {
@@ -90,6 +92,8 @@ export async function POST(request: Request) {
       teacher: data.teacher ? data.teacher : null,
       room: data.room ? data.room : null,
       parity,
+      status: data.status ?? "NORMAL",
+      note: data.note ? data.note : null,
     },
   });
 

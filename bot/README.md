@@ -41,6 +41,8 @@ faqat `.env` dagi `DATABASE_URL` manzilida PostgreSQL ishlab turishi kerak.
 - email yuborish (masalan `ozodbek@ttpu.uz`) — chatni foydalanuvchiga bog'laydi
 - `/jadval` — bugungi darslar
 - `/ertaga` — ertangi darslar
+- `/hafta` — haftalik jadval: kunlar bo'yicha guruhlangan, bugungi kun belgilanadi,
+  har bir darsda holat (masalan `(Bekor qilindi)`) ko'rsatiladi
 - `/davomat` — o'qituvchi uchun bugungi darslari (par vaqti, fan, xona, guruh) va
   har bir dars uchun davomat sahifasi havolasi. Talaba yuborsa, bugungi jadvali qaytadi.
 - `/help` — buyruqlar ro'yxati

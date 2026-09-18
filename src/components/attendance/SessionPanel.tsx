@@ -58,8 +58,7 @@ export function SessionPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [origin, setOrigin] = useState("");
-  const [qr, setQr] = useState<string | null>(null);
+  const [qr, setQr] = useState<{ code: string; url: string } | null>(null);
 
   const refresh = useCallback(async () => {
     const response = await fetch(
@@ -77,11 +76,11 @@ export function SessionPanel({
   }, [courseId]);
 
   useEffect(() => {
-    void refresh();
+    const timer = window.setTimeout(() => void refresh(), 0);
+    return () => window.clearTimeout(timer);
   }, [refresh]);
 
   useEffect(() => {
-    setOrigin(window.location.origin);
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
@@ -99,15 +98,12 @@ export function SessionPanel({
 
   const latestCode = latest?.code ?? null;
   useEffect(() => {
-    if (!latestCode) {
-      setQr(null);
-      return;
-    }
+    if (!latestCode) return;
     let cancelled = false;
-    const checkInUrl = `${origin}/attendance/check-in?code=${latestCode}`;
+    const checkInUrl = `${window.location.origin}/attendance/check-in?code=${latestCode}`;
     QRCode.toDataURL(checkInUrl, { width: 512, margin: 1 })
       .then((url) => {
-        if (!cancelled) setQr(url);
+        if (!cancelled) setQr({ code: latestCode, url });
       })
       .catch(() => {
         if (!cancelled) setQr(null);
@@ -115,7 +111,7 @@ export function SessionPanel({
     return () => {
       cancelled = true;
     };
-  }, [latestCode, origin]);
+  }, [latestCode]);
 
   const remainingMs = useMemo(() => {
     if (!latest) return 0;
@@ -224,9 +220,9 @@ export function SessionPanel({
           <div className="grid gap-6 lg:grid-cols-[minmax(0,16rem)_1fr]">
             <div className="mx-auto w-full max-w-64">
               <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                {qr ? (
+                {qr && latest && qr.code === latest.code ? (
                   <img
-                    src={qr}
+                    src={qr.url}
                     alt="Davomat uchun QR kod"
                     className="aspect-square w-full rounded-xl"
                   />

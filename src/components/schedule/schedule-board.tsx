@@ -18,25 +18,26 @@ import {
 } from "@/components/ui";
 import { cn, dayName } from "@/lib/utils";
 import {
-  isoForWeekday,
+  SLOT_TIMES,
   matchCourseSlug,
   normalizeTeacherName,
 } from "@/components/attendance/lesson-utils";
 import type { CourseOption } from "@/components/attendance/lesson-utils";
-
-export type ScheduleEntryItem = {
-  id: string;
-  groupId: string;
-  dayOfWeek: number;
-  slot: number;
-  subject: string;
-  teacher: string | null;
-  room: string | null;
-  parity: string | null;
-};
+import { NowLesson } from "./now-lesson";
+import type { ScheduleEntryItem, ScheduleStatus } from "./types";
+import {
+  dayIsoInWeek,
+  formatDayShort,
+  formatWeekRange,
+  isoWeekNumber,
+  resolveWeekStart,
+  shiftWeek,
+  weekParityOf,
+} from "./week-utils";
 
 type GroupItem = { id: string; name: string };
-
+type ViewMode = "grid" | "list";
+type StaffMode = "group" | "teacher" | "room";
 type ApiResponse = { ok: true; data: unknown } | { ok: false; error: string };
 
 type FormState = {
@@ -47,26 +48,34 @@ type FormState = {
   teacher: string;
   room: string;
   parity: "" | "odd" | "even";
+  status: ScheduleStatus;
+  note: string;
 };
 
 const DAYS = [1, 2, 3, 4, 5, 6];
 const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const SLOT_TIMES: Record<number, string> = {
-  1: "09:00–10:20",
-  2: "10:30–11:50",
-  3: "12:00–13:20",
-  4: "14:20–15:40",
-  5: "15:50–17:10",
-  6: "17:20–18:40",
-  7: "18:50–20:10",
-  8: "20:20–21:40",
-};
-
 const PARITY_LABEL: Record<string, string> = {
   odd: "Toq hafta",
   even: "Juft hafta",
 };
+
+const STATUS_META: Record<ScheduleStatus, { label: string; tone: "amber" | "blue" | "rose" } | null> = {
+  NORMAL: null,
+  CHANGED: { label: "O'zgargan", tone: "amber" },
+  MOVED: { label: "Ko'chirilgan", tone: "blue" },
+  CANCELLED: { label: "Bekor qilindi", tone: "rose" },
+};
+
+const ATTENDANCE_CLASS = "border border-slate-200 text-brand-700! hover:border-brand-300! hover:bg-brand-50!";
+const EDIT_CLASS = "text-brand-700! hover:bg-brand-50!";
+const DELETE_CLASS = "text-slate-400! hover:bg-rose-50! hover:text-rose-600!";
+const EXPORT_CLASS =
+  "inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-all duration-150 hover:border-slate-400 hover:bg-slate-50";
+
+function toStatus(value: string): ScheduleStatus {
+  return value === "CHANGED" || value === "MOVED" || value === "CANCELLED" ? value : "NORMAL";
+}
 
 export function ScheduleBoard({
   canEdit,
@@ -74,18 +83,30 @@ export function ScheduleBoard({
   selectedGroupId,
   entries,
   today,
+  isCurrentWeek,
+  weekStart,
+  todayIso,
+  nowMinutes,
 }: {
   canEdit: boolean;
   groups: GroupItem[];
   selectedGroupId: string | null;
   entries: ScheduleEntryItem[];
   today: number;
+  isCurrentWeek: boolean;
+  weekStart: string;
+  todayIso: string;
+  nowMinutes: number;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [teacher, setTeacher] = useState<{ name: string; courses: CourseOption[] } | null>(null);
+  const [mode, setMode] = useState<StaffMode>("group");
+  const [teacherFilter, setTeacherFilter] = useState("");
+  const [roomQuery, setRoomQuery] = useState("");
+  const [view, setView] = useState<ViewMode>("grid");
 
   useEffect(() => {
     if (!canEdit) return;
@@ -122,26 +143,77 @@ export function ScheduleBoard({
     };
   }, [canEdit]);
 
+  const selectedGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
+  const selectedGroupName = selectedGroup?.name ?? null;
+
+  const weekNumber = isoWeekNumber(weekStart);
+  const parity = weekParityOf(weekStart);
+  const parityLabel = parity === "even" ? "Juft hafta" : "Toq hafta";
+
+  const teacherOptions = (() => {
+    const map = new Map<string, string>();
+    for (const entry of entries) {
+      if (!entry.teacher) continue;
+      const key = normalizeTeacherName(entry.teacher);
+      if (!map.has(key)) map.set(key, entry.teacher);
+    }
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
+  })();
+
+  const parityEntries = entries.filter((entry) => entry.parity === null || entry.parity === parity);
+  const teacherKey = teacherFilter ? normalizeTeacherName(teacherFilter) : null;
+  const roomNeedle = roomQuery.trim().toLowerCase();
+
+  const visibleEntries =
+    !canEdit || mode === "group"
+      ? parityEntries.filter((entry) => entry.groupId === selectedGroupId)
+      : mode === "teacher"
+        ? teacherKey
+          ? parityEntries.filter(
+              (entry) => entry.teacher !== null && normalizeTeacherName(entry.teacher) === teacherKey,
+            )
+          : []
+        : roomNeedle
+          ? parityEntries.filter((entry) => (entry.room ?? "").toLowerCase().includes(roomNeedle))
+          : [];
+
+  const exportQuery = `groupId=${encodeURIComponent(selectedGroupId ?? "")}&week=${weekStart}`;
+
   function attendanceHref(entry: ScheduleEntryItem): string | null {
     if (!teacher || !entry.teacher) return null;
     if (normalizeTeacherName(entry.teacher) !== normalizeTeacherName(teacher.name)) return null;
-    if (entry.dayOfWeek > today) return null;
+    const date = dayIsoInWeek(weekStart, entry.dayOfWeek);
+    if (date > todayIso) return null;
     const slug = matchCourseSlug(entry.subject, teacher.courses) ?? teacher.courses[0]?.slug;
     if (!slug) return null;
-    return `/courses/${slug}/attendance/lesson?date=${isoForWeekday(entry.dayOfWeek, today)}&slot=${entry.slot}`;
+    return `/courses/${slug}/attendance/lesson?date=${date}&slot=${entry.slot}`;
   }
 
-  const selectedGroup = groups.find((g) => g.id === selectedGroupId) ?? null;
-  const selectedGroupName = selectedGroup?.name ?? null;
+  function goWeek(week: string) {
+    const query = new URLSearchParams();
+    if (selectedGroupId) query.set("groupId", selectedGroupId);
+    query.set("week", week);
+    router.push(`/schedule?${query.toString()}`);
+  }
 
   function changeGroup(groupId: string) {
     if (!canEdit) return;
-    router.push(groupId ? `/schedule?groupId=${encodeURIComponent(groupId)}` : "/schedule");
+    const query = new URLSearchParams();
+    if (groupId) query.set("groupId", groupId);
+    if (weekStart) query.set("week", weekStart);
+    router.push(`/schedule?${query.toString()}`);
+  }
+
+  function changeMode(next: StaffMode) {
+    setMode(next);
+    if (next === "teacher" && !teacherFilter && teacherOptions[0]) {
+      setTeacherFilter(teacherOptions[0]);
+    }
   }
 
   function openAdd(day: number, slot: number) {
     setError(null);
-    setForm({ id: null, dayOfWeek: day, slot, subject: "", teacher: "", room: "", parity: "" });
+    setForm({ id: null, dayOfWeek: day, slot, subject: "", teacher: "", room: "", parity: "", status: "NORMAL", note: "" });
   }
 
   function openEdit(entry: ScheduleEntryItem) {
@@ -154,6 +226,8 @@ export function ScheduleBoard({
       teacher: entry.teacher ?? "",
       room: entry.room ?? "",
       parity: entry.parity === "odd" || entry.parity === "even" ? entry.parity : "",
+      status: entry.status,
+      note: entry.note ?? "",
     });
   }
 
@@ -169,6 +243,8 @@ export function ScheduleBoard({
       teacher: form.teacher.trim() || null,
       room: form.room.trim() || null,
       parity: form.parity || null,
+      status: form.status,
+      note: form.note.trim() || null,
     };
     try {
       const response = form.id
@@ -216,7 +292,14 @@ export function ScheduleBoard({
   }
 
   function entriesAt(day: number, slot: number) {
-    return entries.filter((entry) => entry.dayOfWeek === day && entry.slot === slot);
+    return visibleEntries.filter((entry) => entry.dayOfWeek === day && entry.slot === slot);
+  }
+
+  function entriesForDay(day: number) {
+    return visibleEntries
+      .filter((entry) => entry.dayOfWeek === day)
+      .slice()
+      .sort((a, b) => a.slot - b.slot);
   }
 
   if (groups.length === 0 || !selectedGroupId) {
@@ -230,28 +313,127 @@ export function ScheduleBoard({
 
   return (
     <div className="space-y-4">
+      <NowLesson entries={visibleEntries} today={today} isCurrentWeek={isCurrentWeek} nowMinutes={nowMinutes} />
+
       <Card>
-        <CardBody className="flex flex-wrap items-end gap-3">
-          <div className="w-full sm:w-64">
-            <Label>Guruh</Label>
-            <Select
-              value={selectedGroupId}
-              onChange={(event) => changeGroup(event.target.value)}
-              disabled={!canEdit}
-            >
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
-            </Select>
+        <CardBody className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={() => goWeek(shiftWeek(weekStart, -1))}>
+                ← Oldingi
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => goWeek(resolveWeekStart(null))}
+                disabled={isCurrentWeek}
+              >
+                Bugun
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => goWeek(shiftWeek(weekStart, 1))}>
+                Keyingi →
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-slate-900">{formatWeekRange(weekStart)}</p>
+              <Badge tone={parity === "even" ? "blue" : "slate"}>
+                {`${parityLabel} · #${weekNumber}`}
+              </Badge>
+              <Badge tone="slate">{visibleEntries.length} ta dars</Badge>
+            </div>
           </div>
-          {canEdit ? (
-            <Button onClick={() => openAdd(today, 1)}>{"Dars qo'shish"}</Button>
-          ) : null}
-          <Badge tone="slate" className="mb-2 self-end sm:ml-auto">
-            {entries.length} ta yozuv
-          </Badge>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-full sm:w-52">
+              <Label>Guruh</Label>
+              <Select value={selectedGroupId ?? ""} onChange={(event) => changeGroup(event.target.value)} disabled={!canEdit}>
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {canEdit ? (
+              <div className="w-full sm:w-40">
+                <Label>Rejim</Label>
+                <Select
+                  value={mode}
+                  onChange={(event) =>
+                    changeMode(
+                      event.target.value === "teacher" || event.target.value === "room"
+                        ? event.target.value
+                        : "group",
+                    )
+                  }
+                >
+                  <option value="group">Guruh</option>
+                  <option value="teacher">{"O'qituvchi"}</option>
+                  <option value="room">Xona</option>
+                </Select>
+              </div>
+            ) : null}
+
+            {canEdit && mode === "teacher" ? (
+              <div className="w-full sm:w-56">
+                <Label>{"O'qituvchi"}</Label>
+                <Select value={teacherFilter} onChange={(event) => setTeacherFilter(event.target.value)}>
+                  <option value="">Tanlang</option>
+                  {teacherOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            ) : null}
+
+            {canEdit && mode === "room" ? (
+              <div className="w-full sm:w-56">
+                <Label>Xona</Label>
+                <Input
+                  value={roomQuery}
+                  onChange={(event) => setRoomQuery(event.target.value)}
+                  placeholder="Masalan: 205"
+                />
+              </div>
+            ) : null}
+
+            <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+              <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setView("grid")}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150",
+                    view === "grid" ? "bg-white text-brand-800 shadow-sm" : "text-slate-500 hover:text-slate-700",
+                  )}
+                >
+                  Jadval
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("list")}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150",
+                    view === "list" ? "bg-white text-brand-800 shadow-sm" : "text-slate-500 hover:text-slate-700",
+                  )}
+                >
+                  {"Ro'yxat"}
+                </button>
+              </div>
+              <a className={EXPORT_CLASS} href={`/schedule/print?${exportQuery}`} target="_blank" rel="noreferrer">
+                Chop etish
+              </a>
+              <a className={EXPORT_CLASS} href={`/api/schedule/export/ics?${exportQuery}`} target="_blank" rel="noreferrer">
+                Kalendar (.ics)
+              </a>
+              {canEdit && mode === "group" ? (
+                <Button onClick={() => openAdd(today, 1)}>{"Dars qo'shish"}</Button>
+              ) : null}
+            </div>
+          </div>
         </CardBody>
       </Card>
 
@@ -334,6 +516,26 @@ export function ScheduleBoard({
                   <option value="even">Juft hafta</option>
                 </Select>
               </div>
+              <div>
+                <Label>Holat</Label>
+                <Select
+                  value={form.status}
+                  onChange={(event) => setForm({ ...form, status: toStatus(event.target.value) })}
+                >
+                  <option value="NORMAL">{"O'zgarishsiz"}</option>
+                  <option value="CHANGED">{"O'zgargan"}</option>
+                  <option value="MOVED">{"Ko'chirilgan"}</option>
+                  <option value="CANCELLED">Bekor qilindi</option>
+                </Select>
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Izoh (ixtiyoriy)</Label>
+                <Input
+                  value={form.note}
+                  onChange={(event) => setForm({ ...form, note: event.target.value })}
+                  placeholder="Masalan: xona o'zgardi"
+                />
+              </div>
               <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-3">
                 <Button type="submit" disabled={saving}>
                   {form.id ? "Saqlash" : "Qo'shish"}
@@ -347,7 +549,7 @@ export function ScheduleBoard({
         </Card>
       ) : null}
 
-      <Card>
+      <Card className={cn(view === "list" && "hidden")}>
         <CardHeader title="Haftalik jadval" subtitle={selectedGroupName ?? undefined} />
         <CardBody>
           <Table className="[&>table]:min-w-[900px]">
@@ -356,25 +558,26 @@ export function ScheduleBoard({
                 <th className="w-28 px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Vaqt
                 </th>
-                {DAYS.map((day) => (
-                  <th
-                    key={day}
-                    className={cn(
-                      "relative px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide",
-                      day === today ? "bg-brand-50 text-brand-800" : "text-slate-400",
-                    )}
-                  >
-                    {day === today ? (
-                      <span className="absolute inset-x-0 top-0 h-0.5 bg-gold-400" />
-                    ) : null}
-                    {dayName(day)}
-                    {day === today ? (
-                      <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold normal-case text-brand-700">
-                        bugun
-                      </span>
-                    ) : null}
-                  </th>
-                ))}
+                {DAYS.map((day) => {
+                  const isToday = isCurrentWeek && day === today;
+                  return (
+                    <th
+                      key={day}
+                      className={cn(
+                        "relative px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide",
+                        isToday ? "bg-brand-50 text-brand-800" : "text-slate-400",
+                      )}
+                    >
+                      {isToday ? <span className="absolute inset-x-0 top-0 h-0.5 bg-gold-400" /> : null}
+                      {`${dayName(day)} ${formatDayShort(dayIsoInWeek(weekStart, day))}`}
+                      {isToday ? (
+                        <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold normal-case text-brand-700">
+                          bugun
+                        </span>
+                      ) : null}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -386,43 +589,50 @@ export function ScheduleBoard({
                   </td>
                   {DAYS.map((day) => {
                     const cellEntries = entriesAt(day, slot);
+                    const isToday = isCurrentWeek && day === today;
                     return (
-                      <td
-                        key={day}
-                        className={cn("px-2 py-2.5", day === today && "bg-brand-50/60")}
-                      >
+                      <td key={day} className={cn("px-2 py-2.5", isToday && "bg-brand-50/60")}>
                         <div className="space-y-2">
                           {cellEntries.map((entry) => {
                             const href = attendanceHref(entry);
+                            const meta = STATUS_META[entry.status];
+                            const cancelled = entry.status === "CANCELLED";
                             return (
                               <div
                                 key={entry.id}
-                                className="group rounded-xl border border-slate-200/70 bg-white px-3 py-2.5 transition-all duration-150 hover:border-brand-200 hover:shadow-card"
+                                title={entry.note ?? undefined}
+                                className={cn(
+                                  "group rounded-xl border bg-white px-3 py-2.5 transition-all duration-150",
+                                  cancelled
+                                    ? "border-rose-200/70 opacity-60"
+                                    : "border-slate-200/70 hover:border-brand-200 hover:shadow-card",
+                                )}
                               >
-                                <p className="text-sm font-semibold leading-snug text-slate-900">
+                                <p
+                                  className={cn(
+                                    "text-sm font-semibold leading-snug text-slate-900",
+                                    cancelled && "text-slate-500 line-through",
+                                  )}
+                                >
                                   {entry.subject}
                                 </p>
                                 {entry.teacher ? (
                                   <p className="mt-0.5 text-xs text-slate-500">{entry.teacher}</p>
                                 ) : null}
-                                {entry.room || entry.parity ? (
-                                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                    {entry.room ? <Badge tone="slate">{entry.room}</Badge> : null}
-                                    {entry.parity ? (
-                                      <Badge tone="amber">
-                                        {PARITY_LABEL[entry.parity] ?? entry.parity}
-                                      </Badge>
-                                    ) : null}
-                                  </div>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                  {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
+                                  {entry.room ? <Badge tone="slate">{entry.room}</Badge> : null}
+                                  {entry.parity ? (
+                                    <Badge tone="amber">{PARITY_LABEL[entry.parity] ?? entry.parity}</Badge>
+                                  ) : null}
+                                  {meta ? <Badge tone={meta.tone}>{meta.label}</Badge> : null}
+                                </div>
+                                {entry.note ? (
+                                  <p className="mt-1.5 text-[11px] leading-snug text-slate-500">{entry.note}</p>
                                 ) : null}
                                 {href ? (
                                   <div className="mt-2 flex">
-                                    <ButtonLink
-                                      size="sm"
-                                      variant="ghost"
-                                      href={href}
-                                      className="border border-slate-200 text-brand-700! hover:border-brand-300! hover:bg-brand-50!"
-                                    >
+                                    <ButtonLink size="sm" variant="ghost" href={href} className={ATTENDANCE_CLASS}>
                                       Davomat
                                     </ButtonLink>
                                   </div>
@@ -432,7 +642,7 @@ export function ScheduleBoard({
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      className="text-brand-700! hover:bg-brand-50!"
+                                      className={EDIT_CLASS}
                                       onClick={() => openEdit(entry)}
                                       disabled={saving}
                                     >
@@ -441,7 +651,7 @@ export function ScheduleBoard({
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      className="text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
+                                      className={DELETE_CLASS}
                                       onClick={() => remove(entry)}
                                       disabled={saving}
                                     >
@@ -452,7 +662,7 @@ export function ScheduleBoard({
                               </div>
                             );
                           })}
-                          {canEdit && cellEntries.length === 0 ? (
+                          {canEdit && mode === "group" && cellEntries.length === 0 ? (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -474,6 +684,107 @@ export function ScheduleBoard({
               ))}
             </tbody>
           </Table>
+        </CardBody>
+      </Card>
+
+      <Card className={cn(view === "grid" && "hidden")}>
+        <CardHeader title="Kunlik agenda" subtitle={selectedGroupName ?? undefined} />
+        <CardBody className="space-y-4">
+          {DAYS.map((day) => {
+            const dayEntries = entriesForDay(day);
+            const isToday = isCurrentWeek && day === today;
+            return (
+              <div key={day} className="overflow-hidden rounded-2xl border border-slate-200/70">
+                <div
+                  className={cn(
+                    "flex items-center justify-between gap-3 border-b px-4 py-2.5",
+                    isToday ? "border-brand-100 bg-brand-50" : "border-slate-100 bg-slate-50/70",
+                  )}
+                >
+                  <p className={cn("text-sm font-semibold", isToday ? "text-brand-800" : "text-slate-700")}>
+                    {`${dayName(day)} ${formatDayShort(dayIsoInWeek(weekStart, day))}`}
+                  </p>
+                  {isToday ? (
+                    <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-700">
+                      bugun
+                    </span>
+                  ) : null}
+                </div>
+                {dayEntries.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-slate-400">{"Darslar yo'q"}</p>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {dayEntries.map((entry) => {
+                      const href = attendanceHref(entry);
+                      const meta = STATUS_META[entry.status];
+                      const cancelled = entry.status === "CANCELLED";
+                      return (
+                        <div
+                          key={entry.id}
+                          title={entry.note ?? undefined}
+                          className={cn("flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3", cancelled && "opacity-60")}
+                        >
+                          <span className="w-24 shrink-0 text-xs font-medium text-slate-500">
+                            {SLOT_TIMES[entry.slot]}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className={cn(
+                                "truncate text-sm font-semibold text-slate-900",
+                                cancelled && "text-slate-500 line-through",
+                              )}
+                            >
+                              {entry.subject}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              {[entry.room, entry.teacher].filter(Boolean).join(" · ") || "—"}
+                            </p>
+                            {entry.note ? (
+                              <p className="mt-0.5 text-[11px] text-slate-400">{entry.note}</p>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
+                            {entry.parity ? (
+                              <Badge tone="slate">{PARITY_LABEL[entry.parity] ?? entry.parity}</Badge>
+                            ) : null}
+                            {meta ? <Badge tone={meta.tone}>{meta.label}</Badge> : null}
+                            {href ? (
+                              <ButtonLink size="sm" variant="ghost" href={href} className={ATTENDANCE_CLASS}>
+                                Davomat
+                              </ButtonLink>
+                            ) : null}
+                            {canEdit ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className={EDIT_CLASS}
+                                  onClick={() => openEdit(entry)}
+                                  disabled={saving}
+                                >
+                                  Tahrir
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className={DELETE_CLASS}
+                                  onClick={() => remove(entry)}
+                                  disabled={saving}
+                                >
+                                  {"O'chirish"}
+                                </Button>
+                              </>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </CardBody>
       </Card>
     </div>

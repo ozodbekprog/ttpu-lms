@@ -1,12 +1,24 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: Davomat oqimi + 80% qoidasi (Komp 1)
+Oxirgi yangilanish: Jadval 2.0 — raqibdan ustun (Komp 1)
 
-## To'lqin 5
+## Jadval 2.0 (to'lqin 7)
+
+- [x] **Hafta navigatsiyasi** — ← Bugun →, hafta sanalari, juft/toq hafta (#raqam) avtomatik
+- [x] **Hozir / Keyingi dars** banner — jonli countdown bilan
+- [x] **Jadval / Ro'yxat** ko'rinishlari (mobil uchun agenda)
+- [x] **Guruh / O'qituvchi / Xona** rejimlari (staff uchun qidiruv)
+- [x] **Dars holatlari** — O'zgargan / Ko'chirilgan / Bekor qilindi + izoh;
+      bekor qilinganda guruhga **avtomatik xabarnoma**; tiklanganda ham
+- [x] **Eksport** — `.ics` (Google/Apple Calendar import, paritet va bekor bilan),
+      **Chop etish** sahifasi (A4, logo bilan)
+- [x] **Bot** — yangi `/hafta` buyrug'i (kun-kun, bugun belgisi, holatlar)
+
+## Davomat oqimi + 80% qoidasi (to'lqin 5)
 
 - [x] **Dars-davomat oqimi** — o'qituvchi dashboard'da "Bugungi darslarim" (jadval bo'yicha):
       har darsda davomat holati (X/Y) + "Davomat belgilash" → talabalar ro'yxati K/Y/Kech/S,
-      "Hammasi keldi", saqlash; jadvaldan ham bir bosishда
+      "Hammasi keldi", saqlash; jadvaldan ham bir bosishda
 - [x] **80% qoidasi** — `/api/attendance/summary`, grades va kurs sahifasida
       "Imtihonga ruxsat" / "Ruxsat yo'q" badge; CSV eksportda yangi ustunlar
 - [x] **Bot** — yangi `/davomat` buyrug'i o'qituvchi uchun (havolalar bilan);

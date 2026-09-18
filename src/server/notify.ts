@@ -26,6 +26,25 @@ export async function notifyCourseStudents(courseId: string, input: NotifyInput)
   } catch {}
 }
 
+export async function notifyGroupStudents(groupId: string, input: NotifyInput) {
+  try {
+    const students = await prisma.user.findMany({
+      where: { groupId, role: "STUDENT" },
+      select: { id: true },
+    });
+    if (students.length === 0) return;
+
+    await prisma.notification.createMany({
+      data: students.map((student) => ({
+        userId: student.id,
+        title: input.title,
+        body: input.body ?? null,
+        link: input.link ?? null,
+      })),
+    });
+  } catch {}
+}
+
 export async function notifyUser(userId: string, input: NotifyInput) {
   try {
     await prisma.notification.create({

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { notifyGroupStudents } from "@/server/notify";
 import { canManageEntry } from "../_helpers";
 
 const updateSchema = z.object({
@@ -10,7 +11,18 @@ const updateSchema = z.object({
   teacher: z.string().trim().max(200).nullish(),
   room: z.string().trim().max(100).nullish(),
   parity: z.enum(["odd", "even"]).nullish(),
+  status: z.enum(["NORMAL", "CHANGED", "MOVED", "CANCELLED"]).optional(),
+  note: z.string().trim().max(300).nullish(),
 });
+
+const STATUS_TITLES = {
+  NORMAL: "Dars tiklandi",
+  CHANGED: "Dars o'zgardi",
+  MOVED: "Dars ko'chirildi",
+  CANCELLED: "Dars bekor qilindi",
+} as const;
+
+const DAY_NAMES = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba"];
 
 async function requireStaff() {
   const user = await getCurrentUser();
@@ -71,8 +83,21 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       ...(data.teacher !== undefined ? { teacher: data.teacher ? data.teacher : null } : {}),
       ...(data.room !== undefined ? { room: data.room ? data.room : null } : {}),
       ...(data.parity !== undefined ? { parity: data.parity ?? null } : {}),
+      ...(data.status !== undefined ? { status: data.status } : {}),
+      ...(data.note !== undefined ? { note: data.note ? data.note : null } : {}),
     },
   });
+
+  if (data.status !== undefined && data.status !== entry.status) {
+    const parts: string[] = [];
+    if (updated.note) parts.push(updated.note);
+    parts.push(`${DAY_NAMES[updated.dayOfWeek - 1]}, ${updated.slot}-par`);
+    await notifyGroupStudents(updated.groupId, {
+      title: `${STATUS_TITLES[data.status]}: ${updated.subject}`,
+      body: data.status === "CANCELLED" ? parts.join(" · ") : undefined,
+      link: "/schedule",
+    });
+  }
 
   return Response.json({ ok: true, data: updated });
 }

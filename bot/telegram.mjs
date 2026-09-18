@@ -101,6 +101,55 @@ export function formatEntries(entries) {
   return entries.map((entry) => formatLesson(entry)).join("\n");
 }
 
+const STATUS_LABELS = {
+  NORMAL: "",
+  CHANGED: "O'zgartirilgan",
+  MOVED: "Ko'chirilgan",
+  CANCELLED: "Bekor qilindi",
+};
+
+export function formatWeekLesson(entry) {
+  const parts = [formatLesson(entry)];
+  const label = STATUS_LABELS[entry.status] ?? "";
+  if (label) parts.push(`(${label})`);
+  return `• ${parts.join(" — ")}`;
+}
+
+function mondayDate(date) {
+  const copy = new Date(date);
+  const offset = (copy.getDay() + 6) % 7;
+  copy.setDate(copy.getDate() - offset);
+  return copy;
+}
+
+function shortDate(date) {
+  return `${pad2(date.getDate())}.${pad2(date.getMonth() + 1)}`;
+}
+
+function weekRange(date) {
+  const monday = mondayDate(date);
+  const saturday = new Date(monday);
+  saturday.setDate(monday.getDate() + 5);
+  return `${shortDate(monday)} – ${shortDate(saturday)}.${saturday.getFullYear()}`;
+}
+
+export function weekText(groupName, entries, today) {
+  const lines = [`Haftalik jadval — ${groupName}`, weekRange(new Date()), ""];
+  if (entries.length === 0) {
+    lines.push("Bu hafta darslar yo'q.");
+    return lines.join("\n");
+  }
+  for (let day = 1; day <= 6; day += 1) {
+    const dayEntries = entries.filter((entry) => entry.dayOfWeek === day);
+    if (dayEntries.length === 0) continue;
+    const name = DAY_NAMES[day];
+    lines.push(`${name[0].toUpperCase()}${name.slice(1)}${day === today ? " (bugun)" : ""}:`);
+    for (const entry of dayEntries) lines.push(formatWeekLesson(entry));
+    lines.push("");
+  }
+  return lines.join("\n").trimEnd();
+}
+
 const APP_BASE_URL = "http://localhost:3000";
 
 export function normalizeTeacher(name) {
@@ -315,6 +364,7 @@ const HELP_TEXT = [
   "/start — boshlash va emailni bog'lash",
   "/jadval — bugungi darslar",
   "/ertaga — ertangi darslar",
+  "/hafta — haftalik jadval (kun-kun)",
   "/davomat — o'qituvchilar uchun bugungi darslar va davomat havolalari",
   "/help — shu yordam",
   "",
@@ -394,6 +444,31 @@ async function sendSchedule(chatId, dayOffset) {
   await sendMessage(chatId, `${header}\n\n${formatEntries(entries)}`);
 }
 
+async function sendWeek(chatId) {
+  const email = links[String(chatId)];
+  if (!email) {
+    await sendMessage(chatId, "Avval email manzilingizni yuboring (masalan: ozodbek@ttpu.uz).");
+    return;
+  }
+  const user = await getPrisma().user.findUnique({ where: { email }, include: { group: true } });
+  if (!user) {
+    delete links[String(chatId)];
+    saveData();
+    await sendMessage(chatId, "Bog'langan foydalanuvchi bazadan topilmadi. Emailni qayta yuboring.");
+    return;
+  }
+  if (!user.group) {
+    await sendMessage(chatId, "Sizga guruh biriktirilmagan, jadval mavjud emas.");
+    return;
+  }
+
+  const entries = await getPrisma().scheduleEntry.findMany({
+    where: { groupId: user.groupId, dayOfWeek: { gte: 1, lte: 6 } },
+    orderBy: [{ dayOfWeek: "asc" }, { slot: "asc" }],
+  });
+  await sendMessage(chatId, weekText(user.group.name, entries, new Date().getDay()));
+}
+
 async function sendAttendance(chatId) {
   const email = links[String(chatId)];
   if (!email) {
@@ -449,6 +524,10 @@ async function handleMessage(message) {
   }
   if (command === "ertaga") {
     await sendSchedule(chatId, 1);
+    return;
+  }
+  if (command === "hafta") {
+    await sendWeek(chatId);
     return;
   }
   if (command === "davomat") {

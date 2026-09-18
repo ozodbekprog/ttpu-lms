@@ -239,10 +239,20 @@ model ScheduleEntry {
   teacher   String?
   room      String?
   parity    String?
+  status    ScheduleStatus @default(NORMAL)
+  note      String?
+  updatedAt DateTime       @default(now()) @updatedAt
 
   group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId, dayOfWeek])
+}
+
+enum ScheduleStatus {
+  NORMAL
+  CHANGED
+  MOVED
+  CANCELLED
 }
 
 model Notification {
