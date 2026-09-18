@@ -1,0 +1,8 @@
+* @ozodbekprog
+
+/prisma/schema.prisma @ozodbekprog
+/src/lib/ @ozodbekprog
+/src/components/ui.tsx @ozodbekprog
+/src/app/(app)/layout.tsx @ozodbekprog
+/src/app/layout.tsx @ozodbekprog
+/src/app/globals.css @ozodbekprog

@@ -25,6 +25,14 @@
    va nav'da `getModuleFlags()` bilan filtrga tushirish (Komp 1 bilan kelishilgan).
 7. Test/yaroqsiz ma'lumotlar bazada qoldirilmaydi (yoki `db:reset` bilan tiklanadi).
 
+### GitHub kirish (har kim o'z akkaunti bilan)
+
+1. Repo egasi sizni **collaborator** qilib qo'shadi — emailga invite keladi, **Accept** qiling.
+2. O'z kompyuteringizda: `gh auth login` (o'z GitHub akkauntingiz bilan) yoki git uchun token sozlanadi.
+3. Clone/push'da **o'z akkauntingiz** ishlatiladi — umumiy akkaunt ishlatilmaydi.
+4. PR ochish: `gh pr create` yoki GitHub saytida (shablon avtomatik chiqadi).
+5. `main` ga to'g'ridan-to'g'ri push qilinmaydi — faqat PR orqali (CI: tsc + build).
+
 ### Git ish tartibi
 
 ```bash
