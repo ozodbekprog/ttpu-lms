@@ -73,6 +73,7 @@ Bot long polling bilan ishlaydi; `TELEGRAM_BOT_TOKEN` loyiha ildizidagi `.env` d
 
 ## Hujjatlar
 
+- `ONBOARDING.md` — **jamoaga qo'shilish: 5 qadamda ishni boshlash**
 - `AGENTS.md` — agentlar uchun ishlash qoidalari
 - `CONTRACT.md` — API/DB shartnoma va papka egaligi
 - `TEAM-TASKS.md` — **jamoa uchun topshiriqlar taqsimoti** (T01–T15, agent promptlari bilan)
