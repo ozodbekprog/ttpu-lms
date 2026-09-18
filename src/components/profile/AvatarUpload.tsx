@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
-const MAX_SIZE = 2 * 1024 * 1024;
+const MAX_SIZE = 30 * 1024 * 1024;
 const ACCEPT = "image/png,image/jpeg,image/webp";
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
@@ -37,7 +37,7 @@ export function AvatarUpload({
       return;
     }
     if (file.size > MAX_SIZE) {
-      setError("Rasm hajmi 2MB dan oshmasligi kerak");
+      setError("Rasm hajmi 30MB dan oshmasligi kerak");
       return;
     }
 

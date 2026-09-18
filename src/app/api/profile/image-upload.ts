@@ -1,6 +1,7 @@
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
+import sharp from "sharp";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -75,13 +76,26 @@ export async function handleProfileImageUpload(
     return Response.json({ ok: false, error: "Fayl mazmuni rasmga mos emas" }, { status: 400 });
   }
 
-  const fileName = `${randomUUID().replace(/-/g, "")}.${extension}`;
+  const processed = await sharp(buffer)
+    .resize(
+      options.field === "avatarUrl"
+        ? { width: 512, height: 512, fit: "cover" }
+        : { width: 1920, fit: "inside", withoutEnlargement: true },
+    )
+    .webp({ quality: 82 })
+    .toBuffer()
+    .catch(() => null);
+  if (!processed) {
+    return Response.json({ ok: false, error: "Rasmni qayta ishlashda xatolik" }, { status: 400 });
+  }
+
+  const fileName = `${randomUUID().replace(/-/g, "")}.webp`;
   const baseDir = process.env.UPLOAD_DIR
     ? path.resolve(process.env.UPLOAD_DIR)
     : path.join(process.cwd(), "public", "uploads");
   const uploadDir = path.join(baseDir, options.subdir);
   await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), buffer);
+  await writeFile(path.join(uploadDir, fileName), processed);
 
   const url = `/uploads/${options.subdir}/${fileName}`;
   if (options.field === "avatarUrl") {

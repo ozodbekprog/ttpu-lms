@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_SIZE = 30 * 1024 * 1024;
 const ACCEPT = "image/png,image/jpeg,image/webp";
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
@@ -26,7 +26,7 @@ export function CoverUpload({ className }: { className?: string }) {
       return;
     }
     if (file.size > MAX_SIZE) {
-      setError("Rasm hajmi 5MB dan oshmasligi kerak");
+      setError("Rasm hajmi 30MB dan oshmasligi kerak");
       return;
     }
 
@@ -74,7 +74,7 @@ export function CoverUpload({ className }: { className?: string }) {
           <span className="block text-sm font-medium text-slate-700 transition-colors duration-150 group-hover:text-brand-800">
             {busy ? "Yuklanmoqda..." : "Muqovani almashtirish"}
           </span>
-          <span className="mt-0.5 block text-xs text-slate-400">PNG, JPG yoki WebP · 5 MB gacha</span>
+          <span className="mt-0.5 block text-xs text-slate-400">PNG, JPG yoki WebP · 30 MB gacha (avtomatik siqiladi)</span>
         </span>
       </button>
       <input ref={inputRef} type="file" accept={ACCEPT} className="hidden" onChange={onFileChange} />
