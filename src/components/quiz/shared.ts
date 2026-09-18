@@ -31,6 +31,30 @@ export const QUESTION_TYPE_LABEL: Record<QuestionType, string> = {
   TEXT: "Matnli javob (qo'lda)",
 };
 
+export const QUESTION_TYPE_TONE: Record<QuestionType, "brand" | "purple" | "amber"> = {
+  SINGLE: "brand",
+  MULTIPLE: "purple",
+  TEXT: "amber",
+};
+
+export const QUESTION_TYPE_ACCENT: Record<QuestionType, string> = {
+  SINGLE: "bg-brand-500",
+  MULTIPLE: "bg-purple-500",
+  TEXT: "bg-amber-500",
+};
+
+export const QUESTION_TYPE_SOFT: Record<QuestionType, string> = {
+  SINGLE: "bg-brand-50 text-brand-800",
+  MULTIPLE: "bg-purple-50 text-purple-700",
+  TEXT: "bg-amber-50 text-amber-700",
+};
+
+export const QUESTION_TYPE_ICON: Record<QuestionType, string> = {
+  SINGLE: "M9 12.75 11.25 15 15 9.75",
+  MULTIPLE: "M4.5 12.75l6 6 9-13.5",
+  TEXT: "M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12",
+};
+
 export function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string");

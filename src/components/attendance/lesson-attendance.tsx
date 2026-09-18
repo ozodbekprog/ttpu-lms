@@ -15,12 +15,88 @@ export type LessonStudent = {
   groupName: string | null;
 };
 
-const OPTIONS: { value: LessonStatus; short: string; label: string; active: string }[] = [
-  { value: "PRESENT", short: "K", label: "Keldi", active: "bg-emerald-500 text-white shadow-sm" },
-  { value: "ABSENT", short: "Y", label: "Yo'q", active: "bg-rose-500 text-white shadow-sm" },
-  { value: "LATE", short: "Kech", label: "Kechikkan", active: "bg-amber-500 text-white shadow-sm" },
-  { value: "EXCUSED", short: "S", label: "Sababli", active: "bg-slate-500 text-white shadow-sm" },
+const OPTIONS: {
+  value: LessonStatus;
+  short: string;
+  label: string;
+  active: string;
+  idle: string;
+  dot: string;
+}[] = [
+  {
+    value: "PRESENT",
+    short: "K",
+    label: "Keldi",
+    active: "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-1 ring-emerald-400/60",
+    idle: "text-emerald-700 hover:bg-emerald-50",
+    dot: "bg-emerald-500",
+  },
+  {
+    value: "ABSENT",
+    short: "Y",
+    label: "Yo'q",
+    active: "bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-1 ring-rose-400/60",
+    idle: "text-rose-700 hover:bg-rose-50",
+    dot: "bg-rose-500",
+  },
+  {
+    value: "LATE",
+    short: "Kech",
+    label: "Kechikkan",
+    active: "bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-1 ring-amber-400/60",
+    idle: "text-amber-700 hover:bg-amber-50",
+    dot: "bg-amber-500",
+  },
+  {
+    value: "EXCUSED",
+    short: "S",
+    label: "Sababli",
+    active: "bg-slate-500 text-white shadow-md shadow-slate-500/30 ring-1 ring-slate-400/60",
+    idle: "text-slate-600 hover:bg-slate-100",
+    dot: "bg-slate-400",
+  },
 ];
+
+function StatusGlyph({ status, size = 13 }: { status: LessonStatus; size?: number }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2.4,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  } as const;
+  if (status === "PRESENT") {
+    return (
+      <svg {...common}>
+        <path d="m5 13 4 4L19 7" />
+      </svg>
+    );
+  }
+  if (status === "ABSENT") {
+    return (
+      <svg {...common}>
+        <path d="M6 6l12 12M18 6 6 18" />
+      </svg>
+    );
+  }
+  if (status === "LATE") {
+    return (
+      <svg {...common} strokeWidth={2}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common} strokeWidth={2}>
+      <path d="M6 3h9l4 4v14H6z" />
+      <path d="M14 3v5h5" />
+    </svg>
+  );
+}
 
 export function LessonAttendance({
   courseId,
@@ -116,100 +192,139 @@ export function LessonAttendance({
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader
-        title="Talabalar"
-        subtitle={`${students.length} ta · ${counts.PRESENT} keldi · ${counts.LATE} kech · ${counts.ABSENT} yo'q · ${counts.EXCUSED} sababli`}
-        action={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={markAllPresent}
-              disabled={saving || students.length === 0}
-            >
-              Hammasi keldi
-            </Button>
-            <Button
-              onClick={() => {
-                void save();
-              }}
-              disabled={saving || students.length === 0}
-            >
-              {saving ? "Saqlanmoqda..." : "Saqlash"}
-            </Button>
-          </div>
-        }
-      />
-      <CardBody className="space-y-5">
-        {courses.length > 1 ? (
-          <div className="max-w-sm">
-            <Label>Kurs</Label>
-            <Select value={selectedSlug} onChange={(event) => switchCourse(event.target.value)}>
-              {courses.map((course) => (
-                <option key={course.slug} value={course.slug}>
-                  {course.title}
-                </option>
-              ))}
-            </Select>
-          </div>
-        ) : null}
+    <>
+      <Card className="animate-fade-up">
+        <CardHeader
+          title="Talabalar"
+          subtitle={`${students.length} ta talaba · holatni belgilang`}
+        />
+        <CardBody className="space-y-5">
+          {courses.length > 1 ? (
+            <div className="max-w-sm">
+              <Label>Kurs</Label>
+              <Select value={selectedSlug} onChange={(event) => switchCourse(event.target.value)}>
+                {courses.map((course) => (
+                  <option key={course.slug} value={course.slug}>
+                    {course.title}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : null}
 
-        {students.length === 0 ? (
-          <p className="text-sm text-slate-500">Kursda talaba yo&apos;q.</p>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-slate-200">
-            {students.map((student) => {
-              const status = statuses[student.id] ?? "PRESENT";
-              return (
-                <div
-                  key={student.id}
-                  className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-3 py-3 transition-colors duration-150 last:border-0 hover:bg-slate-50/70 sm:px-4"
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <Avatar name={student.name} src={student.avatarUrl} className="size-8! text-[10px]" />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-800">{student.name}</p>
-                      {student.groupName ? (
-                        <p className="text-xs text-slate-400">{student.groupName}</p>
-                      ) : null}
+          {students.length === 0 ? (
+            <p className="text-sm text-slate-500">Kursda talaba yo&apos;q.</p>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-slate-200">
+              {students.map((student) => {
+                const status = statuses[student.id] ?? "PRESENT";
+                const activeOption = OPTIONS.find((option) => option.value === status);
+                return (
+                  <div
+                    key={student.id}
+                    className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-3 py-3 transition-colors duration-150 last:border-0 hover:bg-slate-50/70 sm:px-4"
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Avatar name={student.name} src={student.avatarUrl} className="size-8! text-[10px]" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-800">{student.name}</p>
+                        <p className="flex items-center gap-1.5 text-xs text-slate-400">
+                          <span className={cn("size-1.5 rounded-full", activeOption?.dot)} />
+                          {student.groupName ?? activeOption?.label}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="inline-flex shrink-0 items-center gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
+                      {OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          title={option.label}
+                          onClick={() => setStatus(student.id, option.value)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-semibold transition-all duration-150 sm:px-2.5",
+                            status === option.value
+                              ? option.active
+                              : cn("hover:shadow-sm", option.idle),
+                          )}
+                        >
+                          <StatusGlyph status={option.value} />
+                          <span>{option.short}</span>
+                          <span className="hidden md:inline">{option.label}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div className="inline-flex shrink-0 items-center gap-0.5 rounded-xl border border-slate-200 bg-slate-50 p-0.5">
-                    {OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        title={option.label}
-                        onClick={() => setStatus(student.id, option.value)}
-                        className={cn(
-                          "rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 sm:px-3",
-                          status === option.value
-                            ? option.active
-                            : "text-slate-500 hover:bg-white hover:text-slate-700",
-                        )}
-                      >
-                        {option.short}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          )}
+
+          {error ? (
+            <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+          ) : null}
+          {message ? (
+            <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>
+          ) : null}
+
+          <p className="text-xs text-slate-400">
+            QR orqali belgilanganlar avtomatik &quot;Keldi&quot; bo&apos;lib turadi.
+          </p>
+        </CardBody>
+      </Card>
+
+      {students.length > 0 ? (
+        <div className="sticky bottom-4 z-20 mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lift backdrop-blur">
+            <div className="flex flex-wrap items-center gap-2">
+              {OPTIONS.map((option) => (
+                <span
+                  key={option.value}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-100 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600"
+                >
+                  <span className={cn("size-1.5 rounded-full", option.dot)} />
+                  <span className="font-semibold tabular-nums text-slate-800">
+                    {counts[option.value]}
+                  </span>
+                  {option.label}
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={markAllPresent}
+                disabled={saving || students.length === 0}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m3 13 3 3L15 7" />
+                  <path d="m11 15 2 2 8-8" />
+                </svg>
+                Hammasi keldi
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => {
+                  void save();
+                }}
+                disabled={saving || students.length === 0}
+              >
+                {saving ? "Saqlanmoqda..." : "Saqlash"}
+              </Button>
+            </div>
           </div>
-        )}
-
-        {error ? (
-          <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
-        ) : null}
-        {message ? (
-          <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>
-        ) : null}
-
-        <p className="text-xs text-slate-400">
-          QR orqali belgilanganlar avtomatik &quot;Keldi&quot; bo&apos;lib turadi.
-        </p>
-      </CardBody>
-    </Card>
+        </div>
+      ) : null}
+    </>
   );
 }

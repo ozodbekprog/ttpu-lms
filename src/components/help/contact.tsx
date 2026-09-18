@@ -9,6 +9,7 @@ type ContactChannel = {
   value: string;
   href?: string;
   hint: string;
+  tone: string;
 };
 
 const CONTACTS: ContactChannel[] = [
@@ -18,12 +19,14 @@ const CONTACTS: ContactChannel[] = [
     value: "academic.department@polito.uz",
     href: "mailto:academic.department@polito.uz",
     hint: "Parol, sertifikat, transkript va o'quv jarayoni bo'yicha murojaatlar",
+    tone: "bg-brand-50 text-brand-700 ring-brand-100",
   },
   {
     icon: "mapPin",
     title: "Tyutor",
     value: "103-xona",
     hint: "Davomat, jadval va kundalik masalalar bo'yicha jonli yordam",
+    tone: "bg-emerald-50 text-emerald-700 ring-emerald-100",
   },
 ];
 
@@ -45,9 +48,9 @@ export function ContactCards() {
         {CONTACTS.map((channel) => (
           <Card
             key={channel.title}
-            className="flex flex-col p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift"
+            className="flex flex-col p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lift"
           >
-            <span className="inline-flex size-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+            <span className={`inline-flex size-10 items-center justify-center rounded-xl ring-1 ${channel.tone}`}>
               <HelpIcon name={channel.icon} size={19} />
             </span>
             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
@@ -56,9 +59,14 @@ export function ContactCards() {
             {channel.href ? (
               <a
                 href={channel.href}
-                className="mt-1 font-semibold tracking-tight text-brand-800 break-all transition-colors hover:text-brand-950 hover:underline"
+                className="group/link mt-1 inline-flex items-center gap-1 font-semibold tracking-tight text-brand-800 transition-colors hover:text-brand-950"
               >
-                {channel.value}
+                <span className="break-all">{channel.value}</span>
+                <HelpIcon
+                  name="arrowRight"
+                  size={14}
+                  className="shrink-0 -translate-x-1 opacity-0 transition-all duration-200 group-hover/link:translate-x-0 group-hover/link:opacity-100"
+                />
               </a>
             ) : (
               <p className="mt-1 font-semibold tracking-tight text-brand-800">{channel.value}</p>

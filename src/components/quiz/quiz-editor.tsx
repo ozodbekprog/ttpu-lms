@@ -6,10 +6,13 @@ import { Badge, Button, Card, CardBody, CardHeader, EmptyState, Input, Label, Se
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/components/quiz/api";
 import {
+  QUESTION_TYPE_ACCENT,
+  QUESTION_TYPE_ICON,
   QUESTION_TYPE_LABEL,
+  QUESTION_TYPE_SOFT,
+  QUESTION_TYPE_TONE,
   type QuestionDraft,
   type QuestionFull,
-  type QuestionType,
 } from "@/components/quiz/shared";
 import { QuestionForm } from "@/components/quiz/question-form";
 
@@ -29,11 +32,9 @@ export type EditableQuiz = {
 
 const NEW_QUESTION_ID = "__new__";
 
-const TYPE_TONE: Record<QuestionType, string> = {
-  SINGLE: "brand",
-  MULTIPLE: "purple",
-  TEXT: "amber",
-};
+function letterOf(index: number): string {
+  return String.fromCharCode(65 + index);
+}
 
 function toDateTimeLocal(value: string | null | undefined): string {
   if (!value) return "";
@@ -196,6 +197,7 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
   }
 
   const editingQuestion = questions.find((question) => question.id === editingId) ?? undefined;
+  const questionsTotal = questions.reduce((sum, question) => sum + question.points, 0);
 
   return (
     <div className="space-y-6">
@@ -289,9 +291,18 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
 
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-            Savollar <span className="text-sm font-normal text-slate-500">({questions.length} ta)</span>
-          </h2>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">Savollar</h2>
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+              {questions.length} ta
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-300/25 px-3 py-1 text-xs font-semibold text-gold-600">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.35 6.2 20.4l1.1-6.45-4.7-4.6 6.5-.95L12 2.5z" />
+              </svg>
+              {questionsTotal} ball
+            </span>
+          </div>
           <Button
             variant="secondary"
             onClick={() => setEditingId(NEW_QUESTION_ID)}
@@ -323,49 +334,68 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
             ) : (
               <Card
                 key={question.id}
-                className="transition-shadow duration-150 hover:shadow-lift"
+                className="group relative overflow-hidden transition-all duration-150 hover:shadow-lift"
               >
-                <CardBody className="flex flex-wrap items-start justify-between gap-4">
+                <span className={cn("absolute inset-y-0 left-0 w-1", QUESTION_TYPE_ACCENT[question.type])} />
+                <CardBody className="flex flex-wrap items-start justify-between gap-4 pl-7">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex size-6 items-center justify-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-800">
+                      <span
+                        className={cn(
+                          "inline-flex size-7 items-center justify-center rounded-lg text-xs font-bold",
+                          QUESTION_TYPE_SOFT[question.type],
+                        )}
+                      >
                         {question.position}
                       </span>
-                      <Badge tone={TYPE_TONE[question.type]}>
+                      <Badge tone={QUESTION_TYPE_TONE[question.type]} className="gap-1.5">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <path d={QUESTION_TYPE_ICON[question.type]} />
+                        </svg>
                         {QUESTION_TYPE_LABEL[question.type]}
                       </Badge>
                       <Badge tone="gold">{question.points} ball</Badge>
                     </div>
-                    <p className="mt-2 text-sm font-medium text-slate-900">{question.text}</p>
+                    <p className="mt-2.5 text-sm font-medium text-slate-900">{question.text}</p>
                     {question.type !== "TEXT" ? (
-                      <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+                      <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                         {question.options.map((option, index) => {
                           const isCorrect = question.correct.includes(index);
                           return (
                             <li
                               key={index}
                               className={cn(
-                                "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs",
+                                "flex items-center gap-2.5 rounded-xl border px-3 py-2 text-xs transition-colors duration-150",
                                 isCorrect
-                                  ? "bg-emerald-50 font-medium text-emerald-800"
-                                  : "text-slate-500",
+                                  ? "border-emerald-300 bg-emerald-50/80 font-medium text-emerald-900 ring-2 ring-emerald-400/30"
+                                  : "border-slate-200 bg-white text-slate-600",
                               )}
                             >
-                              {isCorrect ? (
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M20 6 9 17l-5-5" />
-                                </svg>
-                              ) : (
-                                <span className="inline-block size-1.5 shrink-0 rounded-full bg-slate-300" />
-                              )}
+                              <span
+                                className={cn(
+                                  "inline-flex size-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold",
+                                  isCorrect ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500",
+                                )}
+                              >
+                                {isCorrect ? (
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M20 6 9 17l-5-5" />
+                                  </svg>
+                                ) : (
+                                  letterOf(index)
+                                )}
+                              </span>
                               <span className="truncate">{option}</span>
                             </li>
                           );
                         })}
                       </ul>
                     ) : (
-                      <p className="mt-2 text-xs text-slate-400">
-                        Matnli savol — javob o&apos;qituvchi tomonidan qo&apos;lda baholanadi.
+                      <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 8v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                        </svg>
+                        Matnli javob qo&apos;lda baholanadi
                       </p>
                     )}
                   </div>
@@ -400,31 +430,74 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
       </div>
 
       <div className="sticky bottom-4 z-20">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-3 shadow-lift backdrop-blur">
-          <div className="min-w-0 text-sm">
-            {error ? (
-              <p className="text-rose-600">{error}</p>
-            ) : message ? (
-              <p className="text-emerald-600">{message}</p>
-            ) : (
-              <p className="text-slate-500">
-                {quiz
-                  ? "O'zgarishlarni saqlashni unutmang"
-                  : questions.length > 0
-                    ? `${questions.length} ta savol tayyor`
-                    : "Savollarni qo'shib, testni yaratishni yakunlang"}
-              </p>
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-3 shadow-lift backdrop-blur">
+          <span
+            className={cn(
+              "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r",
+              error
+                ? "from-rose-300 via-rose-500 to-rose-300"
+                : message
+                  ? "from-emerald-300 via-emerald-500 to-emerald-300"
+                  : "from-brand-900 via-brand-500 to-gold-400",
             )}
-          </div>
-          <div className="flex items-center gap-2">
-            {quiz ? (
-              <Button variant="danger" size="sm" onClick={() => void deleteQuiz()} disabled={saving}>
-                Testni o&apos;chirish
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span
+                className={cn(
+                  "inline-flex size-8 shrink-0 items-center justify-center rounded-full",
+                  error
+                    ? "bg-rose-50 text-rose-600"
+                    : message
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-brand-50 text-brand-700",
+                )}
+              >
+                {error ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 8v4m0 4h.01" />
+                  </svg>
+                ) : message ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 16v-4m0-4h.01" />
+                    <circle cx="12" cy="12" r="9" />
+                  </svg>
+                )}
+              </span>
+              <div className="min-w-0 text-sm">
+                {error ? (
+                  <p className="text-rose-600">{error}</p>
+                ) : message ? (
+                  <p className="animate-fade-in text-emerald-600">{message}</p>
+                ) : (
+                  <p className="text-slate-500">
+                    {quiz
+                      ? "O'zgarishlarni saqlashni unutmang"
+                      : questions.length > 0
+                        ? `${questions.length} ta savol tayyor`
+                        : "Savollarni qo'shib, testni yaratishni yakunlang"}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="hidden rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-500 sm:inline-flex">
+                {questions.length} savol · {questionsTotal} ball
+              </span>
+              {quiz ? (
+                <Button variant="danger" size="sm" onClick={() => void deleteQuiz()} disabled={saving}>
+                  Testni o&apos;chirish
+                </Button>
+              ) : null}
+              <Button onClick={() => void saveMeta()} disabled={saving || courses.length === 0}>
+                {saving ? "Saqlanmoqda..." : quiz ? "Saqlash" : "Testni yaratish"}
               </Button>
-            ) : null}
-            <Button onClick={() => void saveMeta()} disabled={saving || courses.length === 0}>
-              {saving ? "Saqlanmoqda..." : quiz ? "Saqlash" : "Testni yaratish"}
-            </Button>
+            </div>
           </div>
         </div>
       </div>

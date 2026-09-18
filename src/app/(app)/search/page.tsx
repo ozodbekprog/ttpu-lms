@@ -1,7 +1,8 @@
 import { requireUser } from "@/lib/auth";
-import { EmptyState, PageHeader } from "@/components/ui";
+import { PageHeader } from "@/components/ui";
 import { SearchForm } from "@/components/search/search-form";
 import { SearchResultsView } from "@/components/search/search-results";
+import { SearchEmpty } from "@/components/search/search-empty";
 import { SEARCH_MIN_LENGTH, searchAll } from "@/components/search/search-data";
 
 export default async function SearchPage({
@@ -26,7 +27,7 @@ export default async function SearchPage({
       {active ? (
         <SearchResultsView query={query} data={data} />
       ) : (
-        <EmptyState
+        <SearchEmpty
           title={query ? "So'rov juda qisqa" : "Nimani qidiramiz?"}
           description={
             query

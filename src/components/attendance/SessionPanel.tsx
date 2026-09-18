@@ -39,6 +39,9 @@ const STATUS_TONES: Record<AttendanceStatusValue, "green" | "rose" | "amber" | "
 
 const MINUTE_OPTIONS = [5, 10, 15, 30, 60];
 
+const TIMER_RADIUS = 23;
+const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+
 function formatRemaining(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
   const minutes = Math.floor(total / 60);
@@ -118,6 +121,12 @@ export function SessionPanel({
     return new Date(latest.expiresAt).getTime() - now;
   }, [latest, now]);
   const latestActive = Boolean(latest && remainingMs > 0);
+  const remainingRatio = useMemo(() => {
+    if (!latest) return 0;
+    const total = new Date(latest.expiresAt).getTime() - new Date(latest.createdAt).getTime();
+    if (total <= 0) return 0;
+    return Math.max(0, Math.min(1, remainingMs / total));
+  }, [latest, remainingMs]);
 
   async function startSession() {
     setBusy(true);
@@ -219,46 +228,62 @@ export function SessionPanel({
         {latest ? (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,16rem)_1fr]">
             <div className="mx-auto w-full max-w-64">
-              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                {qr && latest && qr.code === latest.code ? (
-                  <img
-                    src={qr.url}
-                    alt="Davomat uchun QR kod"
-                    className="aspect-square w-full rounded-xl"
-                  />
-                ) : (
-                  <div className="aspect-square w-full animate-pulse rounded-xl bg-slate-100" />
-                )}
+              <div className="rounded-3xl border border-slate-100 bg-white p-3 shadow-lift ring-1 ring-slate-900/5">
+                <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-2">
+                  {qr && latest && qr.code === latest.code ? (
+                    <img
+                      src={qr.url}
+                      alt="Davomat uchun QR kod"
+                      className="aspect-square w-full rounded-xl"
+                    />
+                  ) : (
+                    <div className="aspect-square w-full animate-pulse rounded-xl bg-slate-100" />
+                  )}
+                </div>
               </div>
-              <p className="mt-4 text-center font-mono text-4xl font-semibold tracking-[0.3em] text-brand-900">
+              <p className="mt-5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Sessiya kodi
+              </p>
+              <p className="mt-1 text-center font-mono text-4xl font-semibold tracking-[0.3em] text-brand-950 sm:text-5xl sm:tracking-[0.2em]">
                 {latest.code}
               </p>
-              <p className="mt-1 text-center text-xs text-slate-400">/attendance/check-in</p>
+              <p className="mt-2 text-center text-xs text-slate-400">/attendance/check-in</p>
             </div>
 
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
                 {latestActive ? (
-                  <Badge tone="green">Faol</Badge>
+                  <Badge tone="green" className="shadow-sm shadow-emerald-500/20">
+                    Faol
+                  </Badge>
                 ) : (
                   <Badge tone="slate">Yopilgan</Badge>
                 )}
                 {latestActive ? (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-gold-300/20 px-3 py-1 font-mono text-sm font-semibold text-gold-600">
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 7v5l3 2" />
+                  <span className="relative inline-flex size-16 items-center justify-center">
+                    <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r={TIMER_RADIUS}
+                        fill="none"
+                        strokeWidth="3.5"
+                        className="stroke-gold-300/35"
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r={TIMER_RADIUS}
+                        fill="none"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeDasharray={`${remainingRatio * TIMER_CIRCUMFERENCE} ${TIMER_CIRCUMFERENCE}`}
+                        className="stroke-gold-400 drop-shadow-[0_0_6px_rgba(212,175,55,0.45)]"
+                      />
                     </svg>
-                    {formatRemaining(remainingMs)}
+                    <span className="font-mono text-[11px] font-semibold tabular-nums text-gold-600">
+                      {formatRemaining(remainingMs)}
+                    </span>
                   </span>
                 ) : (
                   <span className="text-sm text-slate-500">
@@ -283,7 +308,10 @@ export function SessionPanel({
                   <ul className="mt-2.5 flex max-h-48 flex-wrap gap-2 overflow-y-auto">
                     {latest.marked.map((mark) => (
                       <li key={mark.studentId}>
-                        <Badge tone={STATUS_TONES[mark.status]}>
+                        <Badge
+                          tone={STATUS_TONES[mark.status]}
+                          className="px-2.5 py-1 shadow-sm ring-1 ring-black/[0.03]"
+                        >
                           {mark.name} · {STATUS_LABELS[mark.status]}
                         </Badge>
                       </li>
@@ -323,8 +351,10 @@ export function SessionPanel({
                     key={session.id}
                     className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/70"
                   >
-                    <td className="py-2.5 pr-3 font-mono text-xs tracking-wider text-slate-700">
-                      {session.code}
+                    <td className="py-2.5 pr-3">
+                      <span className="rounded-lg bg-slate-100 px-2 py-0.5 font-mono text-xs tracking-wider text-slate-700">
+                        {session.code}
+                      </span>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-slate-500">
                       {fmtDateTime(session.createdAt)}

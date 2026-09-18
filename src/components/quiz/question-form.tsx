@@ -1,14 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card, CardBody, CardHeader, Input, Label, Select, Textarea } from "@/components/ui";
+import { Button, Card, CardBody, CardHeader, Input, Label, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
+  QUESTION_TYPE_ICON,
   QUESTION_TYPE_LABEL,
   type QuestionDraft,
   type QuestionFull,
   type QuestionType,
 } from "@/components/quiz/shared";
+
+const TYPE_SHORT: Record<QuestionType, string> = {
+  SINGLE: "Bitta javob",
+  MULTIPLE: "Bir nechta",
+  TEXT: "Matnli",
+};
+
+const TYPE_ACTIVE: Record<QuestionType, string> = {
+  SINGLE: "bg-brand-700",
+  MULTIPLE: "bg-purple-600",
+  TEXT: "bg-amber-500",
+};
+
+function letterOf(index: number): string {
+  return String.fromCharCode(65 + index);
+}
 
 export function QuestionForm({
   initial,
@@ -112,16 +129,39 @@ export function QuestionForm({
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-[1.6fr_1fr]">
           <div>
             <Label>Savol turi</Label>
-            <Select value={type} onChange={(event) => changeType(event.target.value as QuestionType)}>
-              {(Object.keys(QUESTION_TYPE_LABEL) as QuestionType[]).map((value) => (
-                <option key={value} value={value}>
-                  {QUESTION_TYPE_LABEL[value]}
-                </option>
-              ))}
-            </Select>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.keys(QUESTION_TYPE_LABEL) as QuestionType[]).map((value) => {
+                const active = type === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => changeType(value)}
+                    className={cn(
+                      "flex flex-col items-start gap-1.5 rounded-xl border px-3 py-2.5 text-left text-xs font-medium transition-all duration-150",
+                      active
+                        ? cn("border-transparent text-white shadow-sm", TYPE_ACTIVE[value])
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-flex size-6 items-center justify-center rounded-lg",
+                        active ? "bg-white/20" : "bg-slate-100",
+                      )}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d={QUESTION_TYPE_ICON[value]} />
+                      </svg>
+                    </span>
+                    {TYPE_SHORT[value]}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div>
             <Label>Ball</Label>
@@ -153,9 +193,9 @@ export function QuestionForm({
                 <div
                   key={index}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl border px-3 py-2 transition-colors duration-150",
+                    "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-150",
                     checked
-                      ? "border-emerald-300 bg-emerald-50/70"
+                      ? "border-emerald-300 bg-emerald-50/70 ring-2 ring-emerald-400/40"
                       : "border-slate-200 bg-white hover:border-slate-300",
                   )}
                 >
@@ -166,6 +206,20 @@ export function QuestionForm({
                     onChange={() => toggleCorrect(index)}
                     className="size-4 shrink-0 accent-emerald-600"
                   />
+                  <span
+                    className={cn(
+                      "inline-flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold",
+                      checked ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500",
+                    )}
+                  >
+                    {checked ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6 9 17l-5-5" />
+                      </svg>
+                    ) : (
+                      letterOf(index)
+                    )}
+                  </span>
                   <Input
                     value={option}
                     onChange={(event) => changeOption(index, event.target.value)}

@@ -15,31 +15,57 @@ export default async function AppLayout({
   const user = await requireUser();
   const modules = await getModuleFlags();
 
-  const links = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/courses", label: "Kurslar" },
-    ...(modules.catalog ? [{ href: "/catalog", label: "Katalog" }] : []),
-    { href: "/electives", label: "Tanlov fanlar" },
-    { href: "/schedule", label: "Jadval" },
-    ...(modules.calendar ? [{ href: "/calendar", label: "Kalendar" }] : []),
-    { href: "/academic-calendar", label: "O'quv kalendari" },
-    { href: "/exams", label: "Imtihonlar" },
-    { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholarim" },
-    { href: "/gpa", label: "GPA" },
-    { href: "/transcript", label: "Transkript" },
-    { href: "/attendance", label: "Davomat" },
-    ...(modules.certificates ? [{ href: "/certificates", label: "Sertifikatlar" }] : []),
-    ...(modules.chat ? [{ href: "/messages", label: "Xabarlar", badge: <UnreadBadge /> }] : []),
-    { href: "/orders", label: "Arizalar" },
-    { href: "/bookings", label: "Xona broni" },
-    { href: "/rooms", label: "Xonalar" },
-    { href: "/search", label: "Qidiruv" },
-    { href: "/help", label: "Yordam" },
-    { href: "/settings", label: "Sozlamalar" },
-    ...(isStaff(user.role) ? [{ href: "/reports", label: "Hisobotlar" }] : []),
-    ...(isStaff(user.role) ? [{ href: "/workload", label: "Yuklama" }] : []),
-    ...(user.role === "ADMIN" ? [{ href: "/admin", label: "Admin panel" }] : []),
-  ];
+  const groups = [
+    {
+      label: "Asosiy",
+      links: [
+        { href: "/dashboard", label: "Dashboard" },
+        { href: "/courses", label: "Kurslar" },
+        ...(modules.catalog ? [{ href: "/catalog", label: "Katalog" }] : []),
+        { href: "/electives", label: "Tanlov fanlar" },
+        { href: "/schedule", label: "Jadval" },
+        ...(modules.calendar ? [{ href: "/calendar", label: "Kalendar" }] : []),
+        { href: "/academic-calendar", label: "O'quv kalendari" },
+      ],
+    },
+    {
+      label: "O'qish",
+      links: [
+        { href: "/exams", label: "Imtihonlar" },
+        { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholarim" },
+        { href: "/gpa", label: "GPA" },
+        { href: "/transcript", label: "Transkript" },
+        { href: "/attendance", label: "Davomat" },
+        ...(modules.certificates ? [{ href: "/certificates", label: "Sertifikatlar" }] : []),
+        ...(isStaff(user.role) ? [{ href: "/journals", label: "Kundaliklar" }] : []),
+      ],
+    },
+    {
+      label: "Muloqot",
+      links: [
+        ...(modules.chat ? [{ href: "/messages", label: "Xabarlar", badge: <UnreadBadge /> }] : []),
+        { href: "/orders", label: "Arizalar" },
+        { href: "/bookings", label: "Xona broni" },
+        { href: "/rooms", label: "Xonalar" },
+      ],
+    },
+    {
+      label: "Xizmatlar",
+      links: [
+        { href: "/search", label: "Qidiruv" },
+        { href: "/help", label: "Yordam" },
+        { href: "/settings", label: "Sozlamalar" },
+      ],
+    },
+    {
+      label: "Boshqaruv",
+      links: [
+        ...(isStaff(user.role) ? [{ href: "/reports", label: "Hisobotlar" }] : []),
+        ...(isStaff(user.role) ? [{ href: "/workload", label: "Yuklama" }] : []),
+        ...(user.role === "ADMIN" ? [{ href: "/admin", label: "Admin panel" }] : []),
+      ],
+    },
+  ].filter((group) => group.links.length > 0);
 
   const roleLabel =
     user.role === "ADMIN"
@@ -57,7 +83,7 @@ export default async function AppLayout({
           </Link>
           <NotificationBell />
         </div>
-        <NavLinks links={links} />
+        <NavLinks groups={groups} />
         <div className="border-t border-slate-100 p-3">
           <Link
             href="/profile"
@@ -89,7 +115,7 @@ export default async function AppLayout({
           <Link href="/dashboard">
             <Logo size={30} withText={false} />
           </Link>
-          <NavLinks links={links} variant="top" />
+          <NavLinks groups={groups} variant="top" />
           <NotificationBell />
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>

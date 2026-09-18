@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Card, CardBody, Label, Select } from "@/components/ui";
@@ -8,6 +8,7 @@ import { normalizeTeacherName } from "@/components/attendance/lesson-utils";
 import { formatWeekRange, shiftWeek } from "@/components/schedule/week-utils";
 import type { ScheduleStatus } from "@/components/schedule/types";
 import { BlockPanel } from "./block-panel";
+import { fallbackLessonTypes, fallbackSubjects, findCourseForSubject, parseDictionaries } from "./dictionaries";
 import { BuilderGrid } from "./grid";
 import { BuilderPalette } from "./palette";
 import { BuilderStats } from "./stats";
@@ -16,21 +17,24 @@ import type {
   BuilderCourse,
   BuilderEntry,
   BuilderGroup,
+  BuilderLessonType,
+  BuilderSubject,
   CellRef,
   DragPayload,
   Selection,
   ToastMessage,
 } from "./types";
 
-type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: string };
+type ApiResponse<T> = { ok: true; data: T } | { ok: false; error: string; status?: number };
 
 async function apiRequest<T>(url: string, init?: RequestInit): Promise<ApiResponse<T>> {
   try {
     const response = await fetch(url, init);
     const payload = (await response.json().catch(() => null)) as ApiResponse<T> | null;
     if (!payload) return { ok: false, error: "Server bilan aloqa xatosi" };
-    if (!payload.ok && response.status === 409) return { ok: false, error: "Bu vaqt band" };
-    return payload;
+    if (payload.ok) return payload;
+    if (response.status === 409) return { ok: false, error: "Bu vaqt band", status: 409 };
+    return { ok: false, error: payload.error, status: response.status };
   } catch {
     return { ok: false, error: "Server bilan aloqa xatosi" };
   }
@@ -38,16 +42,24 @@ async function apiRequest<T>(url: string, init?: RequestInit): Promise<ApiRespon
 
 function isDragPayload(value: unknown): value is DragPayload {
   if (typeof value !== "object" || value === null) return false;
-  const record = value as { kind?: unknown; id?: unknown; subject?: unknown };
+  const record = value as { kind?: unknown; id?: unknown; subject?: unknown; subjectId?: unknown };
   if (record.kind === "move") return typeof record.id === "string" && typeof record.subject === "string";
-  if (record.kind === "new") return typeof record.subject === "string";
+  if (record.kind === "new") {
+    if (typeof record.subject !== "string") return false;
+    return record.subjectId === undefined || record.subjectId === null || typeof record.subjectId === "string";
+  }
   return false;
+}
+
+function mergeEntry(current: BuilderEntry, incoming: BuilderEntry): BuilderEntry {
+  return { ...current, ...incoming, subjectRef: incoming.subjectRef ?? current.subjectRef };
 }
 
 export function ScheduleBuilder({
   role,
   userName,
   groups,
+  myGroupIds,
   selectedGroupId,
   weekStart,
   weekParity,
@@ -60,6 +72,7 @@ export function ScheduleBuilder({
   role: "TEACHER" | "ADMIN";
   userName: string;
   groups: BuilderGroup[];
+  myGroupIds: string[];
   selectedGroupId: string;
   weekStart: string;
   weekParity: "odd" | "even";
@@ -79,8 +92,47 @@ export function ScheduleBuilder({
   const [room, setRoom] = useState("");
   const [parity, setParity] = useState<"" | "odd" | "even">(weekParity);
   const [teacherInput, setTeacherInput] = useState("");
+  const [subjects, setSubjects] = useState<BuilderSubject[] | null>(null);
+  const [lessonTypes, setLessonTypes] = useState<BuilderLessonType[] | null>(null);
+  const [lessonType, setLessonType] = useState("Ma'ruza");
+  const autoTeacherRef = useRef<string | null>(null);
 
   const dismissToast = useCallback(() => setToast(null), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDictionaries() {
+      const response = await fetch("/api/dictionaries").catch(() => null);
+      if (!response || !response.ok) return;
+      const payload: unknown = await response.json().catch(() => null);
+      if (cancelled) return;
+      const parsed = parseDictionaries(payload);
+      if (!parsed) return;
+      if (parsed.subjects.length > 0) setSubjects(parsed.subjects);
+      if (parsed.lessonTypes.length > 0) {
+        setLessonTypes(parsed.lessonTypes);
+        setLessonType((current) =>
+          parsed.lessonTypes.some((item) => item.name === current) ? current : parsed.lessonTypes[0]?.name ?? current,
+        );
+      }
+    }
+    void loadDictionaries();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const subjectOptions = useMemo(
+    () => (subjects && subjects.length > 0 ? subjects : fallbackSubjects(courses)),
+    [subjects, courses],
+  );
+  const lessonTypeOptions = useMemo(
+    () => (lessonTypes && lessonTypes.length > 0 ? lessonTypes : fallbackLessonTypes()),
+    [lessonTypes],
+  );
+  const myGroupIdSet = useMemo(() => new Set(myGroupIds), [myGroupIds]);
+  const myGroups = useMemo(() => groups.filter((group) => myGroupIdSet.has(group.id)), [groups, myGroupIdSet]);
+  const otherGroups = useMemo(() => groups.filter((group) => !myGroupIdSet.has(group.id)), [groups, myGroupIdSet]);
 
   const visibleEntries = useMemo(
     () => entries.filter((entry) => entry.parity === null || entry.parity === weekParity),
@@ -101,32 +153,73 @@ export function ScheduleBuilder({
 
   function flashSnap(id: string) {
     setSnapId(id);
-    window.setTimeout(() => setSnapId((current) => (current === id ? null : current)), 180);
+    window.setTimeout(() => setSnapId((current) => (current === id ? null : current)), 220);
   }
 
-  async function createEntry(cell: CellRef, subject: string) {
+  function groupOption(group: BuilderGroup) {
+    return (
+      <option key={group.id} value={group.id}>
+        {group.name}
+      </option>
+    );
+  }
+
+  function selectSubject(subject: BuilderSubject) {
+    setSelection((prev) =>
+      prev && prev.kind === "new" && prev.subject === subject.name
+        ? null
+        : { kind: "new", subject: subject.name, subjectId: subject.id },
+    );
+    const linked = findCourseForSubject(subject, courses);
+    if (role === "ADMIN" && linked?.teacherName && (teacherInput.trim() === "" || teacherInput === autoTeacherRef.current)) {
+      autoTeacherRef.current = linked.teacherName;
+      setTeacherInput(linked.teacherName);
+    }
+  }
+
+  async function createEntry(cell: CellRef, subject: string, subjectId: string | null) {
     setPending(true);
-    const result = await apiRequest<BuilderEntry>("/api/schedule", {
+    const baseBody = {
+      groupId: selectedGroupId,
+      dayOfWeek: cell.day,
+      slot: cell.slot,
+      subject,
+      teacher: teacher || null,
+      room: room || null,
+      parity: parity || null,
+      status: "NORMAL" as const,
+    };
+    const richBody = { ...baseBody, lessonType: lessonType || null, ...(subjectId ? { subjectId } : {}) };
+    let result = await apiRequest<BuilderEntry>("/api/schedule", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        groupId: selectedGroupId,
-        dayOfWeek: cell.day,
-        slot: cell.slot,
-        subject,
-        teacher: teacher || null,
-        room: room || null,
-        parity: parity || null,
-        status: "NORMAL",
-      }),
+      body: JSON.stringify(richBody),
     });
+    if (!result.ok && result.status === 400) {
+      result = await apiRequest<BuilderEntry>("/api/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(baseBody),
+      });
+    }
     setPending(false);
     if (!result.ok) {
       showToast("error", result.error);
       return;
     }
-    setEntries((prev) => [...prev, result.data]);
-    flashSnap(result.data.id);
+    const created = result.data;
+    const color =
+      subjectOptions.find((item) => (subjectId ? item.id === subjectId : item.name === subject))?.color ?? null;
+    setEntries((prev) => [
+      ...prev,
+      {
+        ...created,
+        subjectId: created.subjectId ?? subjectId,
+        lessonType: created.lessonType ?? (lessonType || null),
+        subjectRef: created.subjectRef ?? { name: subject, color },
+      },
+    ]);
+    flashSnap(created.id);
     showToast("success", `${subject} qo'yildi`);
   }
 
@@ -150,7 +243,7 @@ export function ScheduleBuilder({
       showToast("error", result.error);
       return;
     }
-    setEntries((prev) => prev.map((entry) => (entry.id === id ? result.data : entry)));
+    setEntries((prev) => prev.map((entry) => (entry.id === id ? mergeEntry(entry, result.data) : entry)));
     showToast("success", "Dars ko'chirildi");
   }
 
@@ -166,7 +259,7 @@ export function ScheduleBuilder({
       showToast("error", result.error);
       return;
     }
-    setEntries((prev) => prev.map((entry) => (entry.id === id ? result.data : entry)));
+    setEntries((prev) => prev.map((entry) => (entry.id === id ? mergeEntry(entry, result.data) : entry)));
     showToast("success", "Xona yangilandi");
   }
 
@@ -182,7 +275,7 @@ export function ScheduleBuilder({
       showToast("error", result.error);
       return;
     }
-    setEntries((prev) => prev.map((entry) => (entry.id === id ? result.data : entry)));
+    setEntries((prev) => prev.map((entry) => (entry.id === id ? mergeEntry(entry, result.data) : entry)));
     showToast("success", "Holat yangilandi");
   }
 
@@ -243,7 +336,7 @@ export function ScheduleBuilder({
       void moveEntry(parsed.id, cell);
       return;
     }
-    void createEntry(cell, parsed.subject);
+    void createEntry(cell, parsed.subject, parsed.subjectId);
   }
 
   function handleSelectEntry(event: MouseEvent<HTMLElement>, entry: BuilderEntry) {
@@ -264,7 +357,7 @@ export function ScheduleBuilder({
       setSelection(null);
       return;
     }
-    void createEntry(cell, selection.subject);
+    void createEntry(cell, selection.subject, selection.subjectId);
     setSelection(null);
   }
 
@@ -287,11 +380,16 @@ export function ScheduleBuilder({
           <div className="w-full sm:w-52">
             <Label>Guruh</Label>
             <Select value={selectedGroupId} onChange={(event) => changeGroup(event.target.value)}>
-              {groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))}
+              {role === "TEACHER" && myGroups.length > 0 ? (
+                <>
+                  <optgroup label="Mening guruhlarim">{myGroups.map(groupOption)}</optgroup>
+                  {otherGroups.length > 0 ? (
+                    <optgroup label="Boshqa guruhlar">{otherGroups.map(groupOption)}</optgroup>
+                  ) : null}
+                </>
+              ) : (
+                groups.map(groupOption)
+              )}
             </Select>
           </div>
 
@@ -321,15 +419,15 @@ export function ScheduleBuilder({
       <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-4">
           <BuilderPalette
+            subjects={subjectOptions}
             courses={courses}
             selectedSubject={selectedSubject}
-            onSelectSubject={(subject) =>
-              setSelection((prev) =>
-                prev && prev.kind === "new" && prev.subject === subject ? null : { kind: "new", subject },
-              )
-            }
+            onSelectSubject={selectSubject}
             onDragStart={handleDragStart}
             onDragEnd={() => setHover(null)}
+            lessonTypes={lessonTypeOptions}
+            lessonType={lessonType}
+            onLessonType={setLessonType}
             rooms={roomOptions}
             room={room}
             onRoom={setRoom}

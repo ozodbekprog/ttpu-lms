@@ -73,6 +73,7 @@ export function AttendanceJournal({
   const months = useMemo(() => journalMonthKeys(dates), [dates]);
   const activeMonth = monthKey && months.includes(monthKey) ? monthKey : months[months.length - 1] ?? null;
   const monthIndex = activeMonth ? months.indexOf(activeMonth) : -1;
+  const todayMonth = today ? journalMonthKey(today) : null;
   const visibleDates = useMemo(
     () => (activeMonth ? dates.filter((date) => journalMonthKey(date) === activeMonth) : dates),
     [dates, activeMonth],
@@ -235,28 +236,61 @@ export function AttendanceJournal({
           subtitle={`${students.length} ta talaba · ${dates.length} ta dars`}
           action={
             months.length > 0 ? (
-              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-                <button
-                  type="button"
-                  aria-label="Oldingi oy"
-                  disabled={monthIndex <= 0}
-                  onClick={() => setMonthKey(months[monthIndex - 1] ?? activeMonth)}
-                  className="flex size-7 items-center justify-center rounded-full text-base leading-none text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30"
-                >
-                  ‹
-                </button>
-                <span className="min-w-20 px-1 text-center text-xs font-semibold text-slate-700">
-                  {activeMonth ? journalMonthLabel(activeMonth) : ""}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Keyingi oy"
-                  disabled={monthIndex < 0 || monthIndex >= months.length - 1}
-                  onClick={() => setMonthKey(months[monthIndex + 1] ?? activeMonth)}
-                  className="flex size-7 items-center justify-center rounded-full text-base leading-none text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30"
-                >
-                  ›
-                </button>
+              <div className="flex items-center gap-2">
+                {todayMonth && months.includes(todayMonth) && activeMonth !== todayMonth ? (
+                  <button
+                    type="button"
+                    onClick={() => setMonthKey(todayMonth)}
+                    className="rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-colors duration-150 hover:bg-brand-100"
+                  >
+                    Bugun
+                  </button>
+                ) : null}
+                <div className="flex items-center gap-1 rounded-full border border-slate-200/80 bg-white p-1 shadow-[0_2px_8px_-4px_rgba(29,52,96,0.25)]">
+                  <button
+                    type="button"
+                    aria-label="Oldingi oy"
+                    disabled={monthIndex <= 0}
+                    onClick={() => setMonthKey(months[monthIndex - 1] ?? activeMonth)}
+                    className="flex size-7 items-center justify-center rounded-full text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m14 6-6 6 6 6" />
+                    </svg>
+                  </button>
+                  <span className="min-w-24 px-1 text-center text-xs font-semibold text-slate-700">
+                    {activeMonth ? journalMonthLabel(activeMonth) : ""}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Keyingi oy"
+                    disabled={monthIndex < 0 || monthIndex >= months.length - 1}
+                    onClick={() => setMonthKey(months[monthIndex + 1] ?? activeMonth)}
+                    className="flex size-7 items-center justify-center rounded-full text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-800 disabled:opacity-30"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m10 6 6 6-6 6" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             ) : null
           }
@@ -285,7 +319,7 @@ export function AttendanceJournal({
               <table className="w-full border-separate border-spacing-0 text-left text-sm">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 top-0 z-30 min-w-36 border-b border-r border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 sm:min-w-44">
+                    <th className="sticky left-0 top-0 z-30 min-w-36 border-b border-r border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[2px_0_10px_-8px_rgba(15,23,42,0.45)] sm:min-w-44">
                       Talaba
                     </th>
                     {visibleDates.map((date) => {
@@ -295,8 +329,9 @@ export function AttendanceJournal({
                         <th
                           key={date}
                           className={cn(
-                            "sticky top-0 z-20 min-w-10 border-b border-slate-200 bg-slate-50 px-1 py-1.5 text-center align-bottom",
-                            isToday && "bg-brand-50",
+                            "sticky top-0 z-20 min-w-10 border-b border-slate-200 bg-slate-50 px-1 py-2 text-center align-bottom",
+                            isToday &&
+                              "border-x border-brand-100 bg-gradient-to-b from-brand-100/70 to-brand-50",
                           )}
                         >
                           <span
@@ -310,7 +345,7 @@ export function AttendanceJournal({
                           <span
                             className={cn(
                               "block text-[10px] font-normal text-slate-400",
-                              isToday && "text-brand-500",
+                              isToday && "font-semibold text-brand-500",
                             )}
                           >
                             {isToday ? "Bugun" : parts.weekday}
@@ -318,7 +353,7 @@ export function AttendanceJournal({
                         </th>
                       );
                     })}
-                    <th className="sticky right-0 top-0 z-30 min-w-28 border-b border-l border-slate-200 bg-slate-50 px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="sticky right-0 top-0 z-30 min-w-28 border-b border-l border-slate-200 bg-slate-50 px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.45)]">
                       Keldi %
                     </th>
                   </tr>
@@ -333,7 +368,7 @@ export function AttendanceJournal({
                         <th
                           scope="row"
                           className={cn(
-                            "sticky left-0 z-10 border-b border-r border-slate-100 px-3 py-1.5 text-left font-normal transition-colors duration-150",
+                            "sticky left-0 z-10 border-b border-r border-slate-100 px-3 py-1.5 text-left font-normal shadow-[2px_0_10px_-8px_rgba(15,23,42,0.35)] transition-colors duration-150",
                             rowBg,
                           )}
                         >
@@ -367,7 +402,7 @@ export function AttendanceJournal({
                               key={date}
                               className={cn(
                                 "border-b border-slate-100 px-1 py-1.5 text-center",
-                                isToday && "bg-brand-50/50",
+                                isToday && "border-x border-brand-100/70 bg-gradient-to-b from-brand-50/70 to-brand-50/30",
                               )}
                             >
                               <button
@@ -376,10 +411,10 @@ export function AttendanceJournal({
                                 title={meta ? meta.label : "Belgilanmagan"}
                                 onClick={(event) => openEditor(event, student.id, date)}
                                 className={cn(
-                                  "mx-auto flex size-7 items-center justify-center rounded-full text-[9px] font-semibold leading-none transition-all duration-150",
-                                  meta ? meta.badge : "bg-slate-100",
+                                  "mx-auto flex size-8 items-center justify-center rounded-full text-[9px] font-semibold leading-none transition-all duration-150",
+                                  meta ? meta.badge : "bg-slate-100 shadow-inner",
                                   canEdit
-                                    ? "cursor-pointer hover:scale-110 hover:ring-2 hover:ring-brand-300/70"
+                                    ? "cursor-pointer hover:scale-110 hover:shadow-md hover:ring-2 hover:ring-brand-300/70 hover:ring-offset-1 active:scale-95"
                                     : "cursor-default",
                                 )}
                               >
@@ -394,7 +429,7 @@ export function AttendanceJournal({
                         })}
                         <td
                           className={cn(
-                            "sticky right-0 z-10 border-b border-l border-slate-100 px-3 py-1.5 transition-colors duration-150",
+                            "sticky right-0 z-10 border-b border-l border-slate-100 px-3 py-1.5 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)] transition-colors duration-150",
                             rowBg,
                           )}
                         >
@@ -416,7 +451,7 @@ export function AttendanceJournal({
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td className="sticky left-0 z-10 border-r border-slate-100 bg-slate-50 px-3 py-2 text-[11px] font-medium text-slate-500">
+                    <td className="sticky left-0 z-10 border-r border-slate-100 bg-slate-50 px-3 py-2.5 text-[11px] font-medium text-slate-500 shadow-[2px_0_10px_-8px_rgba(15,23,42,0.35)]">
                       Keldi / jami
                     </td>
                     {visibleDates.map((date) => {
@@ -426,14 +461,15 @@ export function AttendanceJournal({
                           key={date}
                           className={cn(
                             "bg-slate-50/80 px-1 py-2 text-center text-[10px] font-medium tabular-nums text-slate-500",
-                            date === today && "bg-brand-50/70 text-brand-600",
+                            date === today &&
+                              "border-x border-brand-100/70 bg-brand-50/80 font-semibold text-brand-700",
                           )}
                         >
                           {totalsForDate.attended}/{totalsForDate.total}
                         </td>
                       );
                     })}
-                    <td className="sticky right-0 z-10 border-l border-slate-100 bg-slate-50 px-3 py-2 text-right text-[10px] font-semibold tabular-nums text-slate-500">
+                    <td className="sticky right-0 z-10 border-l border-slate-100 bg-slate-50 px-3 py-2.5 text-right text-[10px] font-semibold tabular-nums text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)]">
                       {overall.attended}/{overall.total}
                     </td>
                   </tr>
@@ -448,7 +484,7 @@ export function AttendanceJournal({
                   <span key={status} className="inline-flex items-center gap-1.5">
                     <span
                       className={cn(
-                        "flex size-5 items-center justify-center rounded-full text-[9px] font-semibold leading-none",
+                        "flex size-6 items-center justify-center rounded-full text-[10px] font-semibold leading-none",
                         meta.badge,
                       )}
                     >
@@ -459,7 +495,7 @@ export function AttendanceJournal({
                 );
               })}
               <span className="inline-flex items-center gap-1.5">
-                <span className="flex size-5 items-center justify-center rounded-full bg-slate-100">
+                <span className="flex size-6 items-center justify-center rounded-full bg-slate-100 shadow-inner">
                   <span className="size-1.5 rounded-full bg-slate-300" />
                 </span>
                 Belgilanmagan
@@ -476,7 +512,7 @@ export function AttendanceJournal({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setEditor(null)} />
           <div
-            className="fixed z-50 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+            className="animate-fade-up fixed z-50 w-48 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur"
             style={{ top: editor.top, left: editor.left }}
           >
             <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-400">
@@ -494,7 +530,7 @@ export function AttendanceJournal({
                       void saveStatus(status);
                     }}
                     className={cn(
-                      "flex size-9 items-center justify-center rounded-full text-[9px] font-semibold leading-none transition-all duration-150 hover:brightness-95",
+                      "flex size-10 items-center justify-center rounded-full text-[10px] font-semibold leading-none transition-all duration-150 hover:scale-105 hover:brightness-95 active:scale-95",
                       meta.badge,
                       editingStatus === status && "ring-2 ring-brand-500 ring-offset-2",
                     )}

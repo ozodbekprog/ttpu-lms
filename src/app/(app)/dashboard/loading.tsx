@@ -20,7 +20,28 @@ function CourseRow() {
 export default function DashboardLoading() {
   return (
     <div>
-      <div className="mb-6 h-32 animate-pulse rounded-2xl bg-slate-200 md:h-36" />
+      <div className="mb-6 rounded-2xl bg-slate-200 p-6 md:p-8">
+        <div className="flex animate-pulse items-center gap-4">
+          <div className="size-14 shrink-0 rounded-full bg-slate-300" />
+          <div className="min-w-0 flex-1">
+            <Bar className="h-6 w-48 bg-slate-300" />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Bar className="h-5 w-28 rounded-full bg-slate-300" />
+              <Bar className="h-5 w-40 rounded-full bg-slate-300" />
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 flex animate-pulse flex-wrap gap-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Bar key={index} className="h-9 w-28 rounded-xl bg-slate-300" />
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <Bar className="h-6 w-40" />
+        <Bar className="mt-2 h-3 w-56" />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
@@ -37,7 +58,7 @@ export default function DashboardLoading() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>
           <div className="border-b border-slate-100 px-6 py-4">
             <Bar className="h-5 w-28" />

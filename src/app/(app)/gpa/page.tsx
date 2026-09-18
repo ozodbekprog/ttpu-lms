@@ -1,7 +1,8 @@
 import { requireUser } from "@/lib/auth";
-import { ButtonLink, EmptyState, PageHeader } from "@/components/ui";
+import { ButtonLink, PageHeader } from "@/components/ui";
 import { getStudentGpa } from "@/app/api/gpa/data";
 import { GpaCourseTable } from "@/components/gpa/gpa-course-table";
+import { GpaEmpty } from "@/components/gpa/gpa-empty";
 import { GpaHero } from "@/components/gpa/gpa-hero";
 import { GpaScale } from "@/components/gpa/gpa-scale";
 
@@ -11,8 +12,8 @@ export default async function GpaPage() {
   if (user.role !== "STUDENT") {
     return (
       <>
-        <PageHeader title="GPA" subtitle="4.0 baholash tizimi" />
-        <EmptyState
+        <PageHeader title="GPA" subtitle="4.0 baholash tizimi" eyebrow="Akademik natija" />
+        <GpaEmpty
           title="Talaba hisobi kerak"
           description="GPA bo'limi talaba hisobida to'liq ko'rinadi: kurslar kesimida o'rtacha foiz, harf baho va umumiy GPA."
         />
@@ -25,8 +26,12 @@ export default async function GpaPage() {
   if (data.gpa == null || data.courses.length === 0) {
     return (
       <>
-        <PageHeader title="GPA" subtitle={`${user.group?.name ?? "Talaba"} · 4.0 baholash tizimi`} />
-        <EmptyState
+        <PageHeader
+          title="GPA"
+          subtitle={`${user.group?.name ?? "Talaba"} · 4.0 baholash tizimi`}
+          eyebrow="Akademik natija"
+        />
+        <GpaEmpty
           title="GPA hali hisoblanmagan"
           description="Baholangan topshiriq yoki testlar paydo bo'lgach, GPA shu yerda avtomatik hisoblanadi."
           action={<ButtonLink href="/courses">Kurslarni ko&apos;rish</ButtonLink>}

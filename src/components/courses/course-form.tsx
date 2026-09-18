@@ -59,11 +59,39 @@ export function CourseForm({ course }: { course?: CourseFormData }) {
         subtitle="Maydonlarni to'ldiring va saqlang"
       />
       <CardBody>
+        <div
+          className="relative mb-7 overflow-hidden rounded-2xl px-5 py-4 text-white shadow-card"
+          style={{ background: `linear-gradient(125deg, ${coverColor} 0%, #131f3c 92%)` }}
+        >
+          <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_-20%,rgba(255,255,255,0.25),transparent_55%)]" />
+          <span className="pointer-events-none absolute -right-8 -top-12 size-32 rounded-full bg-white/10 blur-2xl" />
+          <p className="relative text-[10px] font-semibold uppercase tracking-[0.18em] text-white/65">
+            Ko&apos;rinish
+          </p>
+          <p className="relative mt-1 font-semibold tracking-tight">
+            {title.trim() ? title : "Kurs nomi"}
+          </p>
+          <p className="relative mt-1 text-xs text-white/70">
+            {isPublished ? "E'lon qilingan" : "Qoralama"}
+          </p>
+        </div>
         <form onSubmit={onSubmit} className="space-y-7">
           <section className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-700">
-                1
+              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-800 to-brand-950 text-white shadow-sm">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
               </span>
               <h3 className="text-sm font-semibold text-brand-950">Asosiy ma&apos;lumotlar</h3>
             </div>
@@ -93,8 +121,19 @@ export function CourseForm({ course }: { course?: CourseFormData }) {
 
           <section className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-700">
-                2
+              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-800 to-brand-950 text-white shadow-sm">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 22a7 7 0 0 0 7-7c0-4-7-13-7-13S5 11 5 15a7 7 0 0 0 7 7z" />
+                </svg>
               </span>
               <h3 className="text-sm font-semibold text-brand-950">Ko&apos;rinish</h3>
             </div>
@@ -108,8 +147,10 @@ export function CourseForm({ course }: { course?: CourseFormData }) {
                     aria-label={color}
                     onClick={() => setCoverColor(color)}
                     className={cn(
-                      "relative inline-flex size-9 items-center justify-center rounded-full ring-2 ring-offset-2 transition-all duration-150",
-                      coverColor === color ? "ring-brand-900" : "ring-transparent hover:ring-slate-300",
+                      "relative inline-flex size-9 items-center justify-center rounded-full shadow-sm ring-2 ring-offset-2 transition-all duration-150",
+                      coverColor === color
+                        ? "scale-105 ring-brand-900"
+                        : "ring-transparent hover:scale-105 hover:ring-slate-300",
                     )}
                     style={{ backgroundColor: color }}
                   >
@@ -144,25 +185,59 @@ export function CourseForm({ course }: { course?: CourseFormData }) {
 
           <section className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-700">
-                3
+              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-800 to-brand-950 text-white shadow-sm">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </span>
               <h3 className="text-sm font-semibold text-brand-950">Holat</h3>
             </div>
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-4 transition-colors duration-150 hover:bg-slate-50">
-              <input
-                type="checkbox"
-                checked={isPublished}
-                onChange={(e) => setIsPublished(e.target.checked)}
-                className="mt-0.5 size-4 rounded border-slate-300 accent-brand-900"
-              />
-              <span>
-                <span className="block text-sm font-medium text-slate-800">
-                  Kursni e&apos;lon qilish
+            <label className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition-all duration-150 hover:border-brand-200 hover:bg-white">
+              <span className="flex items-start gap-3">
+                <span className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-brand-700 ring-1 ring-inset ring-slate-200">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M3 12h18" />
+                    <path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z" />
+                  </svg>
                 </span>
-                <span className="mt-0.5 block text-xs text-slate-500">
-                  E&apos;lon qilinganda talabalar kursni ko&apos;radi.
+                <span>
+                  <span className="block text-sm font-medium text-slate-800">
+                    Kursni e&apos;lon qilish
+                  </span>
+                  <span className="mt-0.5 block text-xs text-slate-500">
+                    E&apos;lon qilinganda talabalar kursni ko&apos;radi.
+                  </span>
                 </span>
+              </span>
+              <span className="relative inline-flex shrink-0">
+                <input
+                  type="checkbox"
+                  checked={isPublished}
+                  onChange={(e) => setIsPublished(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <span className="h-6 w-11 rounded-full bg-slate-200 transition-colors duration-200 peer-checked:bg-brand-900 peer-focus-visible:ring-4 peer-focus-visible:ring-brand-500/20" />
+                <span className="absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform duration-200 peer-checked:translate-x-5" />
               </span>
             </label>
           </section>

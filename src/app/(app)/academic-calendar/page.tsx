@@ -7,6 +7,7 @@ export default async function AcademicCalendarPage() {
   return (
     <>
       <PageHeader
+        eyebrow="O'quv jarayoni"
         title="O'quv kalendari"
         subtitle={
           isStaff(user.role)

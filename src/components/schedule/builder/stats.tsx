@@ -41,7 +41,9 @@ export function BuilderStats({ entries, weekParity }: { entries: BuilderEntry[];
                 <span className="w-16 shrink-0 font-medium text-slate-500">
                   {`${dayName(entry.dayOfWeek).slice(0, 3)} · ${entry.slot}-par`}
                 </span>
-                <span className="min-w-0 flex-1 truncate font-medium text-slate-700">{entry.subject}</span>
+                <span className="min-w-0 flex-1 truncate font-medium text-slate-700">
+                  {entry.subjectRef?.name ?? entry.subject}
+                </span>
                 {entry.room ? <span className="shrink-0 text-slate-400">{entry.room}</span> : null}
               </div>
             ))

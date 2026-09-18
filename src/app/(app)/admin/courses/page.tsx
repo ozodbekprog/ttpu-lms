@@ -26,6 +26,7 @@ export default async function AdminCoursesPage() {
     title: course.title,
     slug: course.slug,
     isPublished: course.isPublished,
+    isElective: course.isElective,
     createdAt: course.createdAt,
     teacher: course.teacher,
     studentCount: course._count.enrollments,

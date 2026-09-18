@@ -18,9 +18,11 @@ export default async function AdminGroupsPage() {
     userCount: group._count.users,
   }));
 
+  const totalUsers = data.reduce((sum, group) => sum + group.userCount, 0);
+
   return (
     <>
-      <PageHeader title="Guruhlar" subtitle={`${data.length} ta guruh`} />
+      <PageHeader title="Guruhlar" subtitle={`${data.length} ta guruh · ${totalUsers} a'zo`} />
       <GroupsManager groups={data} />
     </>
   );

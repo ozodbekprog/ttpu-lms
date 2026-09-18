@@ -235,14 +235,21 @@ export default function HelpPage() {
         subtitle="TTPU LMS bo'yicha qo'llanmalar, savol-javoblar va aloqa ma'lumotlari"
       />
 
-      <section className="relative mb-12 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 px-5 py-7 shadow-lift md:px-8">
+      <section className="relative mb-12 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 px-5 py-8 shadow-lift md:px-8 md:py-10">
         <span className="pointer-events-none absolute -right-16 -top-24 size-64 rounded-full bg-brand-500/25 blur-3xl" />
         <span className="pointer-events-none absolute -bottom-24 left-1/3 size-56 rounded-full bg-gold-400/10 blur-3xl" />
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-300">
-            Tezkor havolalar
+            TTPU LMS qo&apos;llanmasi
           </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="mt-2 max-w-2xl text-2xl font-semibold tracking-tight text-white md:text-3xl">
+            Kerakli javob bir necha bosishda
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-brand-200">
+            Qo&apos;llanmalar, ko&apos;p so&apos;raladigan savollar, bot buyruqlari va aloqa
+            ma&apos;lumotlari — barchasi shu sahifada.
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {QUICK_LINKS.map((link) => (
               <a
                 key={link.href}

@@ -2,14 +2,16 @@ import { notFound } from "next/navigation";
 import { isStaff, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn, fmtDateTime, gradeColor, scorePercent } from "@/lib/utils";
-import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, Stat, Table } from "@/components/ui";
+import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, Progress, Stat, Table } from "@/components/ui";
 import { GradeForm } from "@/components/quiz/grade-form";
+import { ScoreRing } from "@/components/quiz/score-ring";
 import {
   asAnswers,
   autoScore,
   formatAnswer,
   isAnswerCorrect,
   QUESTION_TYPE_LABEL,
+  QUESTION_TYPE_TONE,
   toQuestionFull,
   totalPoints,
 } from "@/components/quiz/shared";
@@ -19,6 +21,10 @@ function percentTone(pct: number | null): "green" | "amber" | "rose" | "slate" {
   if (pct >= 80) return "green";
   if (pct >= 60) return "amber";
   return "rose";
+}
+
+function letterOf(index: number): string {
+  return String.fromCharCode(65 + index);
 }
 
 export default async function QuizResultsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -78,23 +84,33 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
         />
       ) : (
         <>
-          <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <div className="mb-6 grid gap-4 lg:grid-cols-3">
             <Card className="relative overflow-hidden p-5">
               <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
-              <p className="text-sm font-medium text-slate-500">
-                {staff ? "O'rtacha ball" : "Eng yaxshi natija"}
-              </p>
-              <p
-                className={cn(
-                  "mt-1.5 text-5xl font-semibold tracking-tight tabular-nums",
-                  gradeColor(heroScore, maxScore),
-                )}
-              >
-                {heroScore ?? "—"}
-              </p>
-              <p className="mt-1 text-xs text-slate-400">
-                {maxScore} balldan{heroPercent != null ? ` · ${heroPercent}%` : ""}
-              </p>
+              <div className="flex items-center gap-5">
+                <ScoreRing score={heroScore} max={maxScore} size={148} strokeWidth={12} className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-500">
+                    {staff ? "O'rtacha natija" : "Eng yaxshi natija"}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-4xl font-semibold tracking-tight tabular-nums",
+                      gradeColor(heroScore, maxScore),
+                    )}
+                  >
+                    {heroScore ?? "—"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">{maxScore} balldan</p>
+                  <div className="mt-3">
+                    {heroPercent != null ? (
+                      <Badge tone={percentTone(heroPercent)}>{heroPercent}% o&apos;zlashtirish</Badge>
+                    ) : (
+                      <Badge tone="slate">Ball yo&apos;q</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
             </Card>
             <Stat
               label="Topshirilgan urinishlar"
@@ -106,14 +122,18 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
               value={
                 <span className={gradeColor(secondScore, maxScore)}>{secondScore ?? "—"}</span>
               }
-              hint={`${maxScore} balldan`}
+              hint={
+                staff
+                  ? `Guruhdagi eng yaxshi · ${maxScore} balldan`
+                  : `Eng yaxshi: ${best ?? "—"} · ${maxScore} balldan`
+              }
             />
           </div>
 
           <Card>
             <CardHeader
               title={staff ? "Barcha urinishlar" : "Urinishlar tarixi"}
-              subtitle={`Jami ball: ${maxScore}`}
+              subtitle={`Jami ball: ${maxScore} · ${attempts.length} ta urinish`}
             />
             <CardBody>
               <Table>
@@ -129,6 +149,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                 <tbody>
                   {attempts.map((attempt) => {
                     const percent = attempt.score != null ? scorePercent(attempt.score, maxScore) : null;
+                    const isBest = attempt.finishedAt !== null && attempt.score != null && attempt.score === best;
                     return (
                       <tr
                         key={attempt.id}
@@ -155,17 +176,25 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                         </td>
                         <td className="py-3">
                           {attempt.finishedAt ? (
-                            <span className="flex items-baseline gap-1.5">
-                              <span
-                                className={cn(
-                                  "text-xl font-semibold tabular-nums",
-                                  gradeColor(attempt.score, maxScore),
-                                )}
-                              >
-                                {attempt.score ?? "—"}
+                            <div className="flex items-center gap-3">
+                              <span className="flex items-baseline gap-1.5">
+                                <span
+                                  className={cn(
+                                    "text-xl font-semibold tabular-nums",
+                                    gradeColor(attempt.score, maxScore),
+                                  )}
+                                >
+                                  {attempt.score ?? "—"}
+                                </span>
+                                <span className="text-xs text-slate-400">/ {maxScore}</span>
                               </span>
-                              <span className="text-xs text-slate-400">/ {maxScore}</span>
-                            </span>
+                              {attempt.score != null ? (
+                                <Progress value={attempt.score} max={maxScore} className="hidden w-24 sm:block" />
+                              ) : null}
+                              {isBest && !staff ? (
+                                <Badge tone="gold" className="hidden sm:inline-flex">Eng yaxshi</Badge>
+                              ) : null}
+                            </div>
                           ) : (
                             <span className="text-slate-400">—</span>
                           )}
@@ -215,12 +244,16 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                     </div>
 
                     {questions.map((question) => {
-                      const correct = isAnswerCorrect(question, answers[question.id]);
+                      const answer = answers[question.id];
+                      const correct = isAnswerCorrect(question, answer);
+                      const selectedIndexes = new Set(
+                        typeof answer === "number" ? [answer] : Array.isArray(answer) ? answer : [],
+                      );
                       return (
                         <div
                           key={question.id}
                           className={cn(
-                            "rounded-xl border p-3.5",
+                            "rounded-2xl border p-3.5",
                             question.type === "TEXT"
                               ? "border-amber-200 bg-amber-50/40"
                               : correct
@@ -229,10 +262,13 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                           )}
                         >
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium text-slate-800">
-                              {question.position}. {question.text}
+                            <span className="inline-flex size-6 items-center justify-center rounded-lg bg-white text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                              {question.position}
                             </span>
-                            <Badge tone="slate">{QUESTION_TYPE_LABEL[question.type]}</Badge>
+                            <span className="text-sm font-medium text-slate-800">{question.text}</span>
+                            <Badge tone={QUESTION_TYPE_TONE[question.type]}>
+                              {QUESTION_TYPE_LABEL[question.type]}
+                            </Badge>
                             {question.type !== "TEXT" ? (
                               <Badge tone={correct ? "green" : "rose"}>
                                 {correct ? "To'g'ri" : "Noto'g'ri"}
@@ -240,10 +276,67 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                             ) : (
                               <Badge tone="amber">Qo&apos;lda baholanadi</Badge>
                             )}
+                            <span className="ml-auto text-xs text-slate-400">{question.points} ball</span>
                           </div>
-                          <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
-                            Javob: {formatAnswer(question, answers[question.id])}
-                          </p>
+
+                          {question.type === "TEXT" ? (
+                            <p className="mt-3 whitespace-pre-wrap rounded-xl bg-white/80 px-3.5 py-2.5 text-sm text-slate-600 ring-1 ring-amber-100">
+                              {formatAnswer(question, answer)}
+                            </p>
+                          ) : (
+                            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                              {question.options.map((option, index) => {
+                                const isCorrect = question.correct.includes(index);
+                                const isSelected = selectedIndexes.has(index);
+                                return (
+                                  <li
+                                    key={index}
+                                    className={cn(
+                                      "flex items-center gap-2.5 rounded-xl border px-3 py-2 text-sm",
+                                      isCorrect
+                                        ? "border-emerald-300 bg-emerald-50/80 font-medium text-emerald-900 ring-1 ring-emerald-300"
+                                        : isSelected
+                                          ? "border-rose-300 bg-rose-50/70 text-rose-800"
+                                          : "border-slate-200 bg-white text-slate-500",
+                                    )}
+                                  >
+                                    <span
+                                      className={cn(
+                                        "inline-flex size-5 shrink-0 items-center justify-center rounded-md text-[10px] font-bold",
+                                        isCorrect
+                                          ? "bg-emerald-500 text-white"
+                                          : isSelected
+                                            ? "bg-rose-500 text-white"
+                                            : "bg-slate-100 text-slate-500",
+                                      )}
+                                    >
+                                      {isCorrect ? (
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M20 6 9 17l-5-5" />
+                                        </svg>
+                                      ) : isSelected ? (
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M18 6 6 18M6 6l12 12" />
+                                        </svg>
+                                      ) : (
+                                        letterOf(index)
+                                      )}
+                                    </span>
+                                    <span className="min-w-0 flex-1 truncate">{option}</span>
+                                    {isCorrect ? (
+                                      <span className="shrink-0 text-[11px] font-semibold text-emerald-700">
+                                        {isSelected ? "Tanlandi" : "To'g'ri javob"}
+                                      </span>
+                                    ) : isSelected ? (
+                                      <span className="shrink-0 text-[11px] font-semibold text-rose-600">
+                                        Xato tanlov
+                                      </span>
+                                    ) : null}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
                         </div>
                       );
                     })}

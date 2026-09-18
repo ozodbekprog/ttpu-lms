@@ -4,15 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn, fmtDateTime } from "@/lib/utils";
-
-type NotificationItem = {
-  id: string;
-  title: string;
-  body: string | null;
-  link: string | null;
-  isRead: boolean;
-  createdAt: string;
-};
+import type { NotificationItem } from "./shared";
+import { NotificationIcon, notificationKind, notificationStyle } from "./shared";
 
 type NotificationsResponse = {
   ok: boolean;
@@ -85,6 +78,11 @@ export function NotificationBell() {
     }
   }
 
+  const sections = [
+    { key: "unread", label: "Yangi", entries: items.filter((n) => !n.isRead).slice(0, 4) },
+    { key: "read", label: "O'qilgan", entries: items.filter((n) => n.isRead).slice(0, 4) },
+  ].filter((section) => section.entries.length > 0);
+
   return (
     <div ref={boxRef} className="relative">
       <button
@@ -119,70 +117,106 @@ export function NotificationBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_2px_6px_rgba(16,24,40,0.05),0_16px_36px_-16px_rgba(29,52,96,0.22)]">
+        <div className="animate-fade-up absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lift">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <p className="text-sm font-semibold text-brand-950">Bildirishnomalar</p>
             {unreadCount > 0 ? (
               <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">
                 {unreadCount} ta yangi
               </span>
-            ) : null}
+            ) : (
+              <span className="text-[11px] text-slate-400">Hammasi o&apos;qilgan</span>
+            )}
           </div>
 
           {items.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-              <span className="inline-flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <div className="animate-fade-up flex flex-col items-center gap-2.5 px-4 py-10 text-center">
+              <span className="inline-flex size-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
                   <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
                 </svg>
               </span>
-              <p className="text-sm text-slate-500">Bildirishnomalar yo&apos;q</p>
+              <div>
+                <p className="text-sm font-medium text-slate-700">Bildirishnomalar yo&apos;q</p>
+                <p className="mt-0.5 text-xs text-slate-400">Yangi xabarlar shu yerda ko&apos;rinadi</p>
+              </div>
             </div>
           ) : (
-            <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto">
-              {items.slice(0, 5).map((n) => (
-                <li key={n.id}>
-                  <button
-                    type="button"
-                    onClick={() => void onItemClick(n)}
-                    className={cn(
-                      "block w-full px-4 py-3 text-left transition-colors duration-150",
-                      n.isRead ? "bg-white hover:bg-slate-50" : "bg-brand-50/50 hover:bg-brand-50",
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "size-2 shrink-0 rounded-full",
-                          n.isRead ? "bg-slate-200" : "bg-brand-900",
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          "min-w-0 flex-1 truncate text-sm",
-                          n.isRead ? "font-medium text-slate-600" : "font-semibold text-brand-950",
-                        )}
-                      >
-                        {n.title}
-                      </span>
-                    </span>
-                    {n.body ? (
-                      <span className="mt-0.5 block truncate text-xs text-slate-500">{n.body}</span>
-                    ) : null}
-                    <span className="mt-1 block text-[11px] text-slate-400">{fmtDateTime(n.createdAt)}</span>
-                  </button>
-                </li>
+            <div className="max-h-96 overflow-y-auto">
+              {sections.map((section, sectionIndex) => (
+                <div key={section.key} className={cn(sectionIndex > 0 && "border-t border-slate-100")}>
+                  <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    {section.label}
+                  </p>
+                  <ul className="divide-y divide-slate-100">
+                    {section.entries.map((n, index) => {
+                      const kind = notificationKind(n);
+                      const style = notificationStyle(kind);
+                      return (
+                        <li
+                          key={n.id}
+                          className="animate-fade-up"
+                          style={{ animationDelay: `${Math.min(sectionIndex * 4 + index, 8) * 30}ms` }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => void onItemClick(n)}
+                            className={cn(
+                              "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-150",
+                              n.isRead ? "hover:bg-slate-50" : "bg-brand-50/40 hover:bg-brand-50/70",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-xl ring-1",
+                                style.wrap,
+                              )}
+                            >
+                              <NotificationIcon kind={kind} />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className={cn(
+                                    "min-w-0 flex-1 truncate text-sm",
+                                    n.isRead ? "font-medium text-slate-600" : "font-semibold text-brand-950",
+                                  )}
+                                >
+                                  {n.title}
+                                </span>
+                                {n.isRead ? null : (
+                                  <span className="size-1.5 shrink-0 rounded-full bg-brand-900" />
+                                )}
+                              </span>
+                              {n.body ? (
+                                <span className="mt-0.5 block truncate text-xs text-slate-500">
+                                  {n.body}
+                                </span>
+                              ) : null}
+                              <span className="mt-1 block text-[11px] text-slate-400">
+                                {fmtDateTime(n.createdAt)}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
 
           <Link
             href="/notifications"
             onClick={() => setOpen(false)}
-            className="block border-t border-slate-100 px-4 py-2.5 text-center text-sm font-medium text-brand-700 transition-colors duration-150 hover:bg-brand-50 hover:text-brand-900"
+            className="flex items-center justify-center gap-1 border-t border-slate-100 px-4 py-2.5 text-sm font-medium text-brand-700 transition-colors duration-150 hover:bg-brand-50 hover:text-brand-900"
           >
             Barchasini ko&apos;rish
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m9 18 6-6-6-6" />
+            </svg>
           </Link>
         </div>
       ) : null}

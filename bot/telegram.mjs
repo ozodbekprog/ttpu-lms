@@ -21,6 +21,8 @@ const SLOT_TIMES = {
 };
 
 const DAY_NAMES = ["yakshanba", "dushanba", "seshanba", "chorshanba", "payshanba", "juma", "shanba"];
+const DAY_TITLES = ["Yakshanba", "Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba"];
+const SEPARATOR = "━━━━━━━━━━━━━━━━━━";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -90,29 +92,36 @@ export function slotTime(slot) {
 
 export function formatLesson(entry) {
   const time = SLOT_TIMES[entry.slot];
-  const head = time ? `${entry.slot}-par ${time}` : `${entry.slot}-par`;
-  const parts = [head, entry.subject];
-  if (entry.teacher) parts.push(entry.teacher);
-  if (entry.room) parts.push(entry.room);
+  const head = `🕘 ${entry.slot}-par${time ? ` ${time}` : ""}`;
+  const parts = [head, `📚 ${entry.subject}`];
+  if (entry.room) parts.push(`🚪 ${entry.room}`);
+  if (entry.teacher) parts.push(`👨‍🏫 ${entry.teacher}`);
   return parts.join(" | ");
 }
 
 export function formatEntries(entries) {
-  return entries.map((entry) => formatLesson(entry)).join("\n");
+  return entries
+    .map((entry) => {
+      const lines = [formatLesson(entry)];
+      const label = STATUS_LABELS[entry.status] ?? "";
+      if (label) lines.push(label);
+      return lines.join("\n");
+    })
+    .join("\n\n");
 }
 
 const STATUS_LABELS = {
   NORMAL: "",
-  CHANGED: "O'zgartirilgan",
-  MOVED: "Ko'chirilgan",
-  CANCELLED: "Bekor qilindi",
+  CHANGED: "🔄 O'zgartirilgan",
+  MOVED: "➡️ Ko'chirilgan",
+  CANCELLED: "❌ Bekor qilindi",
 };
 
 export function formatWeekLesson(entry) {
-  const parts = [formatLesson(entry)];
+  const lines = [`• ${formatLesson(entry)}`];
   const label = STATUS_LABELS[entry.status] ?? "";
-  if (label) parts.push(`(${label})`);
-  return `• ${parts.join(" — ")}`;
+  if (label) lines.push(`   ${label}`);
+  return lines.join("\n");
 }
 
 function mondayDate(date) {
@@ -134,16 +143,15 @@ function weekRange(date) {
 }
 
 export function weekText(groupName, entries, today) {
-  const lines = [`Haftalik jadval — ${groupName}`, weekRange(new Date()), ""];
+  const lines = [`📅 Haftalik jadval — ${groupName}`, `🗓 ${weekRange(new Date())}`, SEPARATOR, ""];
   if (entries.length === 0) {
-    lines.push("Bu hafta darslar yo'q.");
+    lines.push("📭 Bu hafta darslar yo'q.");
     return lines.join("\n");
   }
   for (let day = 1; day <= 6; day += 1) {
     const dayEntries = entries.filter((entry) => entry.dayOfWeek === day);
     if (dayEntries.length === 0) continue;
-    const name = DAY_NAMES[day];
-    lines.push(`${name[0].toUpperCase()}${name.slice(1)}${day === today ? " (bugun)" : ""}:`);
+    lines.push(`📌 ${DAY_TITLES[day]}${day === today ? " (bugun)" : ""}`);
     for (const entry of dayEntries) lines.push(formatWeekLesson(entry));
     lines.push("");
   }
@@ -286,37 +294,39 @@ async function collectTeacherLessons(user, dayOfWeek) {
 
 function teacherLessonText(item, date) {
   const time = SLOT_TIMES[item.entry.slot];
-  const head = time ? `${item.entry.slot}-par ${time}` : `${item.entry.slot}-par`;
-  const parts = [head, item.entry.subject];
-  if (item.entry.room) parts.push(item.entry.room);
-  if (item.groupName) parts.push(item.groupName);
+  const head = `🕘 ${item.entry.slot}-par${time ? ` ${time}` : ""}`;
+  const parts = [head, `📚 ${item.entry.subject}`];
+  if (item.entry.room) parts.push(`🚪 ${item.entry.room}`);
+  if (item.groupName) parts.push(`👥 ${item.groupName}`);
   const lines = [`• ${parts.join(" | ")}`];
-  if (item.slug) lines.push(`  ${attendanceUrl(item.slug, date, item.entry.slot)}`);
+  if (item.slug) lines.push(`  🔗 ${attendanceUrl(item.slug, date, item.entry.slot)}`);
   return lines.join("\n");
 }
 
 export function reminderText(user, day, lessons, deadlines, teacherLessons = []) {
-  const lines = [`Eslatma — bugun, ${DAY_NAMES[day.getDay()]}, ${dateKey(day)}`];
-  if (user.group) lines.push(`Guruh: ${user.group.name}`);
-  lines.push("");
-  lines.push("Darslar:");
+  const lines = [`🌟 Eslatma — bugun, ${DAY_NAMES[day.getDay()]}, ${dateKey(day)}`];
+  if (user.group) lines.push(`👥 Guruh: ${user.group.name}`);
+  lines.push(SEPARATOR, "");
+  lines.push("📌 Darslar:");
   if (user.role === "TEACHER" && teacherLessons.length > 0) {
-    for (const item of teacherLessons) lines.push(teacherLessonText(item, dateKey(day)));
-    lines.push("");
-    lines.push("Davomatni belgilashni unutmang.");
+    for (const item of teacherLessons) {
+      lines.push(teacherLessonText(item, dateKey(day)));
+      lines.push("");
+    }
+    lines.push("⏰ Davomatni belgilashni unutmang.");
     const first = teacherLessons.find((item) => item.slug);
     if (first) {
-      lines.push(`Birinchi dars havolasi: ${attendanceUrl(first.slug, dateKey(day), first.entry.slot)}`);
+      lines.push(`🔗 Birinchi dars havolasi: ${attendanceUrl(first.slug, dateKey(day), first.entry.slot)}`);
     }
   } else {
-    lines.push(lessons.length > 0 ? formatEntries(lessons) : "Bugun darslar yo'q.");
+    lines.push(lessons.length > 0 ? formatEntries(lessons) : "📭 Bugun darslar yo'q.");
   }
   lines.push("");
-  lines.push("Bugungi muddatlar:");
+  lines.push("⏰ Bugungi muddatlar:");
   if (deadlines.length === 0) {
-    lines.push("Bugun deadline yo'q.");
+    lines.push("📌 Bugun deadline yo'q.");
   } else {
-    for (const item of deadlines) lines.push(`• ${item.text} (${timeText(item.dueAt)})`);
+    for (const item of deadlines) lines.push(`• 📌 ${item.text} (${timeText(item.dueAt)})`);
   }
   return lines.join("\n");
 }
@@ -360,24 +370,30 @@ function startReminderLoop() {
 }
 
 const HELP_TEXT = [
-  "Buyruqlar:",
-  "/start — boshlash va emailni bog'lash",
-  "/jadval — bugungi darslar",
-  "/ertaga — ertangi darslar",
-  "/hafta — haftalik jadval (kun-kun)",
-  "/davomat — o'qituvchilar uchun bugungi darslar va davomat havolalari",
-  "/help — shu yordam",
+  "📋 Buyruqlar:",
+  "• /start — boshlash va emailni bog'lash",
+  "• /jadval — bugungi darslar",
+  "• /ertaga — ertangi darslar",
+  "• /hafta — haftalik jadval (kun-kun)",
+  "• /davomat — o'qituvchilar uchun bugungi darslar va davomat havolalari",
+  "• /help — shu yordam",
   "",
-  "Email manzilingizni yuborsangiz (masalan: ozodbek@ttpu.uz), jadval guruhingizga bog'lanadi.",
+  "📧 Email manzilingizni yuborsangiz (masalan: ozodbek@ttpu.uz), jadval guruhingizga bog'lanadi.",
 ].join("\n");
 
 function startText(name) {
   return [
-    `Salom${name ? `, ${name}` : ""}! TTPU LMS jadval botiga xush kelibsiz.`,
+    `👋 Salom${name ? `, ${name}` : ""}! Men TTPU LMS jadval botiman.`,
+    "📚 Guruh jadvali, haftalik darslar va o'qituvchilar uchun davomat — hammasi shu yerda.",
     "",
-    "Guruhingiz jadvalini olish uchun email manzilingizni yuboring (masalan: ozodbek@ttpu.uz).",
+    "Nimalar qila olaman:",
+    "• /jadval — bugungi darslar",
+    "• /ertaga — ertangi darslar",
+    "• /hafta — haftalik jadval",
+    "• /davomat — o'qituvchilar uchun davomat havolalari",
+    "• /help — yordam",
     "",
-    HELP_TEXT,
+    "📧 Boshlash uchun email manzilingizni yuboring (masalan: ozodbek@ttpu.uz).",
   ].join("\n");
 }
 
@@ -426,10 +442,10 @@ async function sendSchedule(chatId, dayOffset) {
   target.setDate(target.getDate() + dayOffset);
   const dayOfWeek = target.getDay();
   const label = dayOffset === 0 ? "Bugun" : "Ertaga";
-  const header = `${label}, ${DAY_NAMES[dayOfWeek]} — ${user.group.name}`;
+  const header = `📅 ${label} — ${DAY_TITLES[dayOfWeek]}, ${dateKey(target)}\n👥 Guruh: ${user.group.name}`;
 
   if (dayOfWeek === 0) {
-    await sendMessage(chatId, `${header}\nYakshanba — dam kuni, darslar yo'q.`);
+    await sendMessage(chatId, `${header}\n\n🎉 Dam kuni — darslar yo'q.`);
     return;
   }
 
@@ -438,10 +454,10 @@ async function sendSchedule(chatId, dayOffset) {
     orderBy: { slot: "asc" },
   });
   if (entries.length === 0) {
-    await sendMessage(chatId, `${header}\nDarslar yo'q.`);
+    await sendMessage(chatId, `${header}\n\n📭 Darslar yo'q.`);
     return;
   }
-  await sendMessage(chatId, `${header}\n\n${formatEntries(entries)}`);
+  await sendMessage(chatId, `${header}\n${SEPARATOR}\n\n${formatEntries(entries)}`);
 }
 
 async function sendWeek(chatId) {
@@ -483,7 +499,7 @@ async function sendAttendance(chatId) {
     return;
   }
   if (user.role !== "TEACHER") {
-    await sendMessage(chatId, "Bu buyruq o'qituvchilar uchun. Bugungi jadvalingiz:");
+    await sendMessage(chatId, "ℹ️ Bu buyruq o'qituvchilar uchun. Bugungi jadvalingiz:");
     await sendSchedule(chatId, 0);
     return;
   }
@@ -491,16 +507,18 @@ async function sendAttendance(chatId) {
   const today = new Date();
   const dayOfWeek = today.getDay();
   const date = dateKey(today);
-  const header = `Davomat — bugun, ${DAY_NAMES[dayOfWeek]}, ${date}`;
+  const header = `🔔 Davomat — bugun, ${DAY_NAMES[dayOfWeek]}, ${date}`;
   const items = await collectTeacherLessons(user, dayOfWeek);
   if (items.length === 0) {
-    await sendMessage(chatId, `${header}\nBugun darslaringiz yo'q.`);
+    await sendMessage(chatId, `${header}\n\n📭 Bugun darslaringiz yo'q.`);
     return;
   }
-  const lines = [header, ""];
-  for (const item of items) lines.push(teacherLessonText(item, date));
-  lines.push("");
-  lines.push("Davomatni belgilashni unutmang.");
+  const lines = [header, SEPARATOR, ""];
+  for (const item of items) {
+    lines.push(teacherLessonText(item, date));
+    lines.push("");
+  }
+  lines.push("⏰ Davomatni belgilashni unutmang!");
   await sendMessage(chatId, lines.join("\n"));
 }
 

@@ -94,7 +94,10 @@ model Course {
   coverColor  String   @default("#2563eb")
   isPublished Boolean  @default(false)
   isElective  Boolean  @default(false)
+  subjectId   String?
   createdAt   DateTime @default(now())
+
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
 
   teacherId String
   teacher   User   @relation("CourseTeacher", fields: [teacherId], references: [id])
@@ -237,21 +240,25 @@ model QuizAttempt {
 }
 
 model ScheduleEntry {
-  id        String  @id @default(cuid())
-  groupId   String
-  dayOfWeek Int
-  slot      Int
-  subject   String
-  teacher   String?
-  room      String?
-  parity    String?
-  status    ScheduleStatus @default(NORMAL)
-  note      String?
-  updatedAt DateTime       @default(now()) @updatedAt
+  id         String  @id @default(cuid())
+  groupId    String
+  dayOfWeek  Int
+  slot       Int
+  subject    String
+  subjectId  String?
+  lessonType String?
+  teacher    String?
+  room       String?
+  parity     String?
+  status     ScheduleStatus @default(NORMAL)
+  note       String?
+  updatedAt  DateTime       @default(now()) @updatedAt
 
-  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  subjectRef Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
 
   @@index([groupId, dayOfWeek])
+  @@index([subjectId])
 }
 
 enum ScheduleStatus {
@@ -352,6 +359,30 @@ model AppSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String?
+  color     String   @default("#3f5a9d")
+  createdAt DateTime @default(now())
+
+  entries     ScheduleEntry[]
+  courses     Course[]
+}
+
+model TimeSlot {
+  id        String @id @default(cuid())
+  slot      Int    @unique
+  startTime String
+  endTime   String
+}
+
+model LessonType {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  color String  @default("#5373b8")
 }
 
 model Room {

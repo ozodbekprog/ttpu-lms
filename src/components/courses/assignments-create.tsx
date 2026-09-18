@@ -50,15 +50,53 @@ export function AssignmentsCreate({ courseId }: { courseId: string }) {
 
   if (!open) {
     return (
-      <div className="mb-4 flex justify-end">
-        <Button onClick={() => setOpen(true)}>Yangi topshiriq</Button>
+      <div className="mb-5 flex justify-end">
+        <Button onClick={() => setOpen(true)} size="lg">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Yangi topshiriq
+        </Button>
       </div>
     );
   }
 
   return (
-    <Card className="mb-6 overflow-hidden">
-      <CardHeader title="Yangi topshiriq" subtitle="Shartlarni to'ldirib e'lon qiling" />
+    <Card className="animate-fade-up mb-6">
+      <CardHeader
+        title="Yangi topshiriq"
+        subtitle="Shartlarni to'ldirib e'lon qiling"
+        action={
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Yopish"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        }
+      />
       <CardBody>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -79,6 +117,7 @@ export function AssignmentsCreate({ courseId }: { courseId: string }) {
                 onChange={(event) => setDescription(event.target.value)}
                 rows={3}
                 placeholder="Topshiriq sharti..."
+                className="resize-y"
               />
             </div>
             <div>
@@ -101,7 +140,9 @@ export function AssignmentsCreate({ courseId }: { courseId: string }) {
               />
             </div>
           </div>
-          {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
+          {error ? (
+            <p className="mt-3 rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">{error}</p>
+          ) : null}
           <div className="mt-5 flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setOpen(false)}>
               Bekor qilish

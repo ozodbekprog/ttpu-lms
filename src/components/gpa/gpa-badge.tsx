@@ -7,12 +7,41 @@ const BADGE_SIZES = {
   lg: "size-12 text-base",
 };
 
-const LETTER_TONES: Record<GpaLetter, string> = {
-  A: "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30",
-  B: "bg-brand-500 text-white shadow-sm shadow-brand-500/30",
-  C: "bg-gold-400 text-white shadow-sm shadow-gold-500/30",
-  D: "bg-amber-500 text-white shadow-sm shadow-amber-500/30",
-  F: "bg-rose-500 text-white shadow-sm shadow-rose-500/30",
+export const LETTER_META: Record<
+  GpaLetter,
+  { label: string; gradient: string; soft: string; bar: string }
+> = {
+  A: {
+    label: "A'lo",
+    gradient:
+      "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-emerald-500/30",
+    soft: "border-emerald-200/70 bg-emerald-50 text-emerald-700",
+    bar: "bg-emerald-400",
+  },
+  B: {
+    label: "Yaxshi",
+    gradient: "bg-gradient-to-br from-brand-400 to-brand-700 text-white shadow-brand-500/30",
+    soft: "border-brand-200/70 bg-brand-50 text-brand-700",
+    bar: "bg-brand-400",
+  },
+  C: {
+    label: "Qoniqarli",
+    gradient: "bg-gradient-to-br from-gold-300 to-gold-600 text-white shadow-gold-500/30",
+    soft: "border-gold-300/70 bg-gold-300/15 text-gold-600",
+    bar: "bg-gold-400",
+  },
+  D: {
+    label: "O'tish",
+    gradient: "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-amber-500/30",
+    soft: "border-amber-200/70 bg-amber-50 text-amber-700",
+    bar: "bg-amber-400",
+  },
+  F: {
+    label: "Qoniqarsiz",
+    gradient: "bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-rose-500/30",
+    soft: "border-rose-200/70 bg-rose-50 text-rose-700",
+    bar: "bg-rose-400",
+  },
 };
 
 export function LetterBadge({
@@ -27,9 +56,9 @@ export function LetterBadge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full font-bold",
+        "inline-flex shrink-0 items-center justify-center rounded-full font-bold shadow-sm",
         BADGE_SIZES[size],
-        LETTER_TONES[letter],
+        LETTER_META[letter].gradient,
         className,
       )}
     >
@@ -39,11 +68,11 @@ export function LetterBadge({
 }
 
 export function gpaPointsTone(points: number) {
-  if (points >= 3.7) return "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30";
-  if (points >= 3.0) return "bg-brand-500 text-white shadow-sm shadow-brand-500/30";
-  if (points >= 2.5) return "bg-gold-400 text-white shadow-sm shadow-gold-500/30";
-  if (points >= 2.0) return "bg-amber-500 text-white shadow-sm shadow-amber-500/30";
-  return "bg-rose-500 text-white shadow-sm shadow-rose-500/30";
+  if (points >= 4) return LETTER_META.A.gradient;
+  if (points >= 3.3) return LETTER_META.B.gradient;
+  if (points >= 2.7) return LETTER_META.C.gradient;
+  if (points >= 2) return LETTER_META.D.gradient;
+  return LETTER_META.F.gradient;
 }
 
 export function GpaPointsBadge({
@@ -60,7 +89,7 @@ export function GpaPointsBadge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold tabular-nums",
+        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold tabular-nums shadow-sm",
         BADGE_SIZES[size],
         gpaPointsTone(points),
         className,

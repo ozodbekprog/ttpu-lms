@@ -2,11 +2,9 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Button, ButtonLink, Card, CardBody, EmptyState, Input, PageHeader } from "@/components/ui";
-import {
-  CatalogCourseCard,
-  type CatalogCourse,
-} from "@/components/catalog/catalog-course-card";
+import { Button, ButtonLink, EmptyState, Input, PageHeader } from "@/components/ui";
+import { type CatalogCourse } from "@/components/catalog/catalog-course-card";
+import { CourseBrowser } from "@/components/catalog/course-browser";
 
 export default async function CatalogPage({
   searchParams,
@@ -51,6 +49,81 @@ export default async function CatalogPage({
     isEnrolled: course.enrollments.length > 0,
   }));
 
+  const searchForm = (
+    <form action="/catalog" method="get" className="flex w-full flex-wrap items-center gap-2">
+      <div className="relative w-full sm:w-96">
+        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+        </span>
+        <Input
+          name="q"
+          defaultValue={query}
+          placeholder="Kurs yoki o'qituvchi nomi bo'yicha qidirish"
+          aria-label="Kurslarni qidirish"
+          className="pl-9"
+        />
+      </div>
+      <Button type="submit" variant="secondary">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        Qidirish
+      </Button>
+      {query ? (
+        <Link
+          href="/catalog"
+          className="text-sm font-medium text-slate-500 transition-colors duration-150 hover:text-brand-800"
+        >
+          Tozalash
+        </Link>
+      ) : null}
+    </form>
+  );
+
+  const empty = (
+    <EmptyState
+      title={query ? "Hech narsa topilmadi" : "Kurslar yo'q"}
+      description={
+        query
+          ? `"${query}" bo'yicha e'lon qilingan kurs topilmadi. Boshqa kalit so'z bilan urinib ko'ring.`
+          : "Hozircha katalogda e'lon qilingan kurslar yo'q. Tez orada yangi kurslar qo'shiladi."
+      }
+      action={
+        query ? (
+          <ButtonLink href="/catalog" variant="secondary" size="sm">
+            Barcha kurslar
+          </ButtonLink>
+        ) : staff ? (
+          <ButtonLink href="/courses/new" size="sm">
+            Kurs yaratish
+          </ButtonLink>
+        ) : undefined
+      }
+    />
+  );
+
   return (
     <>
       <PageHeader
@@ -63,61 +136,13 @@ export default async function CatalogPage({
         }
       />
 
-      <form action="/catalog" method="get" className="mb-6">
-        <Card>
-          <CardBody className="flex flex-wrap items-center gap-2">
-            <div className="relative w-full sm:w-96">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.5-3.5" />
-                </svg>
-              </span>
-              <Input
-                name="q"
-                defaultValue={query}
-                placeholder="Kurs yoki o'qituvchi nomi bo'yicha qidirish"
-                className="pl-9"
-              />
-            </div>
-            <Button type="submit" variant="secondary">
-              Qidirish
-            </Button>
-            {query ? (
-              <Link
-                href="/catalog"
-                className="text-sm font-medium text-slate-500 transition-colors duration-150 hover:text-brand-800"
-              >
-                Tozalash
-              </Link>
-            ) : null}
-          </CardBody>
-        </Card>
-      </form>
-
-      {items.length === 0 ? (
-        <EmptyState
-          title={query ? "Hech narsa topilmadi" : "Kurslar yo'q"}
-          description={
-            query
-              ? `"${query}" bo'yicha e'lon qilingan kurs topilmadi.`
-              : "Hozircha katalogda e'lon qilingan kurslar yo'q."
-          }
-          action={
-            query ? (
-              <ButtonLink href="/catalog" variant="secondary" size="sm">
-                Barcha kurslar
-              </ButtonLink>
-            ) : undefined
-          }
-        />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((course) => (
-            <CatalogCourseCard key={course.id} course={course} staff={staff} />
-          ))}
-        </div>
-      )}
+      <CourseBrowser
+        items={items}
+        staff={staff}
+        variant="catalog"
+        search={searchForm}
+        empty={empty}
+      />
     </>
   );
 }

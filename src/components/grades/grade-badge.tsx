@@ -9,9 +9,11 @@ const BADGE_SIZES = {
 
 export function gradeBadgeTone(percent: number | null) {
   if (percent == null) return "bg-slate-100 text-slate-300 ring-1 ring-slate-200/70";
-  if (percent >= 80) return "bg-emerald-500 text-white shadow-sm shadow-emerald-500/30";
-  if (percent >= 60) return "bg-amber-500 text-white shadow-sm shadow-amber-500/30";
-  return "bg-rose-500 text-white shadow-sm shadow-rose-500/30";
+  if (percent >= 80)
+    return "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-sm shadow-emerald-500/30";
+  if (percent >= 60)
+    return "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm shadow-amber-500/30";
+  return "bg-gradient-to-br from-rose-400 to-rose-600 text-white shadow-sm shadow-rose-500/30";
 }
 
 export function GradeBadge({
@@ -26,7 +28,7 @@ export function GradeBadge({
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold tabular-nums",
+        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold leading-none tabular-nums transition-transform duration-150 hover:scale-105",
         BADGE_SIZES[size],
         gradeBadgeTone(percent),
         className,

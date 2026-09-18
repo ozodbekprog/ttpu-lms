@@ -49,29 +49,36 @@ function BuilderBlock({
 }) {
   const meta = STATUS_META[entry.status];
   const cancelled = entry.status === "CANCELLED";
+  const title = entry.subjectRef?.name ?? entry.subject;
   return (
     <div
       draggable={canManage}
       onDragStart={
         canManage
-          ? (event) => onDragStart(event, { kind: "move", id: entry.id, subject: entry.subject })
+          ? (event) => onDragStart(event, { kind: "move", id: entry.id, subject: title })
           : undefined
       }
       onDragEnd={onDragEnd}
       onClick={(event) => onSelect(event, entry)}
-      style={{ transform: snapping ? "scale(1.05)" : "scale(1)" }}
       className={cn(
-        "transition-transform duration-150",
+        "transition-transform duration-200",
+        snapping ? "z-10" : "",
         canManage ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
       )}
-      title={`${entry.subject}${entry.note ? ` · ${entry.note}` : ""}`}
+      title={`${title}${entry.note ? ` · ${entry.note}` : ""}`}
     >
-      <LegoSurface seed={entry.subject} selected={selected} muted={cancelled} className="px-2.5 py-2">
-        <p className={cn("pr-8 text-[13px] font-semibold leading-snug", cancelled && "line-through")}>
-          {entry.subject}
-        </p>
+      <LegoSurface
+        seed={title}
+        color={entry.subjectRef?.color}
+        selected={selected}
+        muted={cancelled}
+        snapping={snapping}
+        className="px-2.5 py-2"
+      >
+        <p className={cn("pr-8 text-[13px] font-semibold leading-snug", cancelled && "line-through")}>{title}</p>
         {entry.teacher ? <p className="mt-0.5 truncate text-[11px] opacity-70">{entry.teacher}</p> : null}
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {entry.lessonType ? <BlockBadge tone="blue">{entry.lessonType}</BlockBadge> : null}
           {entry.room ? <BlockBadge tone="slate">{entry.room}</BlockBadge> : null}
           {entry.parity ? <BlockBadge tone="amber">{entry.parity === "odd" ? "Toq" : "Juft"}</BlockBadge> : null}
           {meta ? <BlockBadge tone={meta.tone}>{meta.label}</BlockBadge> : null}
@@ -155,7 +162,7 @@ export function BuilderGrid({
                       onDrop={(event) => onDropCell(event, cell)}
                       onClick={() => onSelectCell(cell)}
                       className={cn(
-                        "min-h-24 rounded-2xl border p-1.5 transition-all duration-150",
+                        "group min-h-24 rounded-2xl border p-1.5 transition-all duration-150",
                         isHover
                           ? "border-brand-400 bg-brand-50 ring-2 ring-brand-200"
                           : "border-slate-200/80 bg-slate-50/40",
@@ -179,7 +186,14 @@ export function BuilderGrid({
                           />
                         ))}
                         {cellEntries.length === 0 ? (
-                          <div className="flex min-h-20 items-center justify-center rounded-xl border border-dashed border-slate-200/80 text-[11px] font-medium text-slate-300">
+                          <div
+                            className={cn(
+                              "flex min-h-20 items-center justify-center rounded-xl border border-dashed text-[11px] font-medium transition-all duration-150",
+                              hasSelection
+                                ? "border-brand-300 bg-brand-50/50 text-brand-500"
+                                : "border-slate-200/80 text-slate-300 opacity-0 group-hover:opacity-100 group-hover:border-brand-300 group-hover:bg-brand-50/50 group-hover:text-brand-400",
+                            )}
+                          >
                             {hasSelection ? "Qo'yish" : "+"}
                           </div>
                         ) : null}

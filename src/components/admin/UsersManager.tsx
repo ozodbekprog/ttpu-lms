@@ -16,7 +16,7 @@ import {
   Select,
   Table,
 } from "@/components/ui";
-import { fmtDate } from "@/lib/utils";
+import { cn, fmtDate } from "@/lib/utils";
 
 export type AdminUser = {
   id: string;
@@ -52,16 +52,13 @@ const EMPTY_FORM: FormState = {
   isActive: true,
 };
 
-const ROLE_LABEL: Record<Role, string> = {
-  ADMIN: "Administrator",
-  TEACHER: "O'qituvchi",
-  STUDENT: "Talaba",
-};
-
-const ROLE_TONE: Record<Role, "brand" | "purple" | "slate"> = {
-  ADMIN: "brand",
-  TEACHER: "purple",
-  STUDENT: "slate",
+const ROLE_META: Record<
+  Role,
+  { label: string; tone: "brand" | "purple" | "slate"; dot: string; ring: string }
+> = {
+  ADMIN: { label: "Administrator", tone: "brand", dot: "bg-brand-500", ring: "ring-brand-200/80" },
+  TEACHER: { label: "O'qituvchi", tone: "purple", dot: "bg-purple-500", ring: "ring-purple-200/80" },
+  STUDENT: { label: "Talaba", tone: "slate", dot: "bg-slate-400", ring: "ring-slate-200" },
 };
 
 export default function UsersManager({
@@ -360,15 +357,15 @@ export default function UsersManager({
             <EmptyState title="Foydalanuvchilar topilmadi" description="Qidiruv shartlarini o'zgartirib ko'ring." />
           </CardBody>
         ) : (
-          <Table>
+          <Table className="max-h-[68vh] overflow-y-auto">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                <th className="px-5 py-3 font-semibold">Foydalanuvchi</th>
-                <th className="px-5 py-3 font-semibold">Rol</th>
-                <th className="px-5 py-3 font-semibold">Guruh</th>
-                <th className="px-5 py-3 font-semibold">Holat</th>
-                <th className="px-5 py-3 font-semibold">Ro&apos;yxatdan o&apos;tgan</th>
-                <th className="px-5 py-3 text-right font-semibold">Amallar</th>
+              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Foydalanuvchi</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Rol</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Guruh</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Holat</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Ro&apos;yxatdan o&apos;tgan</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 text-right font-semibold backdrop-blur">Amallar</th>
               </tr>
             </thead>
             <tbody>
@@ -379,7 +376,7 @@ export default function UsersManager({
                 >
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
-                      <Avatar name={user.name} className="size-8 text-[11px]" />
+                      <Avatar name={user.name} className="size-9 text-[11px] ring-1 ring-slate-900/10" />
                       <div className="min-w-0">
                         <span className="block truncate font-medium text-slate-900">{user.name}</span>
                         <span className="block truncate text-xs text-slate-500">{user.email}</span>
@@ -387,7 +384,13 @@ export default function UsersManager({
                     </div>
                   </td>
                   <td className="px-5 py-3">
-                    <Badge tone={ROLE_TONE[user.role]}>{ROLE_LABEL[user.role]}</Badge>
+                    <Badge
+                      tone={ROLE_META[user.role].tone}
+                      className={cn("gap-1.5 ring-1 ring-inset", ROLE_META[user.role].ring)}
+                    >
+                      <span className={cn("size-1.5 rounded-full", ROLE_META[user.role].dot)} />
+                      {ROLE_META[user.role].label}
+                    </Badge>
                   </td>
                   <td className="px-5 py-3 text-slate-600">{user.group?.name ?? "—"}</td>
                   <td className="px-5 py-3">
@@ -395,11 +398,19 @@ export default function UsersManager({
                   </td>
                   <td className="px-5 py-3 text-xs text-slate-500">{fmtDate(user.createdAt)}</td>
                   <td className="px-5 py-3">
-                    <div className="flex justify-end gap-1.5">
+                    <div className="flex items-center justify-end gap-1.5">
                       <Button size="sm" variant="secondary" onClick={() => openEdit(user)}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
                         Tahrirlash
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => openReset(user)}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="4" y="10" width="16" height="10" rx="2" />
+                          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                        </svg>
                         Parol
                       </Button>
                       {user.id !== currentUserId ? (
@@ -409,6 +420,12 @@ export default function UsersManager({
                           className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                           onClick={() => remove(user)}
                         >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                          </svg>
                           O&apos;chirish
                         </Button>
                       ) : null}

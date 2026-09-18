@@ -2,10 +2,28 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Button, ButtonLink, Card, CardBody, EmptyState, Input, PageHeader, Select } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, CardBody, EmptyState, Input, PageHeader } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { RoomCard, type RoomItem } from "@/components/rooms/room-card";
 import RoomsManager from "@/components/rooms/RoomsManager";
 import { ROOM_TYPE_LABELS, ROOM_TYPES, isRoomType, matchesRoomType } from "@/components/rooms/room-type";
+
+function buildHref(q: string, type: string) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (type) params.set("type", type);
+  const query = params.toString();
+  return query ? `/rooms?${query}` : "/rooms";
+}
+
+function segmentClass(active: boolean) {
+  return cn(
+    "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors duration-150",
+    active
+      ? "border-brand-200 bg-brand-50 text-brand-800 shadow-sm"
+      : "border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700",
+  );
+}
 
 export default async function RoomsPage({
   searchParams,
@@ -38,14 +56,24 @@ export default async function RoomsPage({
     equipment: room.equipment,
   }));
 
+  const typeCounts = ROOM_TYPES.map((value) => ({
+    value,
+    count: rooms.filter((room) => matchesRoomType(room, value)).length,
+  }));
+
   return (
     <>
       <PageHeader eyebrow="Kampus" title="Xonalar" subtitle={`${items.length} ta xona`} />
 
-      <form action="/rooms" method="get" className="mb-6">
-        <Card>
-          <CardBody className="flex flex-wrap items-center gap-2">
-            <div className="relative w-full sm:w-80">
+      <Card className="mb-6">
+        <CardBody className="space-y-4 py-4">
+          <form
+            action="/rooms"
+            method="get"
+            className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          >
+            <input type="hidden" name="type" value={type} />
+            <div className="relative flex-1">
               <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="7" />
@@ -59,28 +87,56 @@ export default async function RoomsPage({
                 className="pl-9"
               />
             </div>
-            <Select name="type" defaultValue={type} className="w-full sm:w-48">
-              <option value="">Barcha turlar</option>
-              {ROOM_TYPES.map((value) => (
-                <option key={value} value={value}>
-                  {ROOM_TYPE_LABELS[value]}
-                </option>
-              ))}
-            </Select>
-            <Button type="submit" variant="secondary">
+            <Button type="submit" variant="secondary" className="sm:w-auto">
               Qidirish
             </Button>
             {q || type ? (
               <Link
                 href="/rooms"
-                className="text-sm font-medium text-slate-500 transition-colors duration-150 hover:text-brand-800"
+                className="text-center text-sm font-medium text-slate-500 transition-colors duration-150 hover:text-brand-800"
               >
                 Tozalash
               </Link>
             ) : null}
-          </CardBody>
-        </Card>
-      </form>
+          </form>
+
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+            <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Turi
+            </span>
+            <Link href={buildHref(q, "")} className={segmentClass(type === "")}>
+              Barchasi
+              <span className="rounded-full bg-white/70 px-1.5 text-[11px] text-slate-500 ring-1 ring-slate-200/70">
+                {rooms.length}
+              </span>
+            </Link>
+            {typeCounts.map(({ value, count }) => (
+              <Link key={value} href={buildHref(q, value)} className={segmentClass(type === value)}>
+                {ROOM_TYPE_LABELS[value]}
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 text-[11px] ring-1",
+                    type === value
+                      ? "bg-white/70 text-brand-600 ring-brand-200/70"
+                      : "bg-white/70 text-slate-500 ring-slate-200/70",
+                  )}
+                >
+                  {count}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
+
+      {q || type ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <span className="font-medium">Natija:</span>
+          <Badge tone="blue">{items.length} ta xona</Badge>
+          {q ? <Badge>„{q}“</Badge> : null}
+          {type ? <Badge>{ROOM_TYPE_LABELS[type]}</Badge> : null}
+        </div>
+      ) : null}
 
       {user.role === "ADMIN" ? (
         <RoomsManager rooms={items} />
@@ -89,7 +145,7 @@ export default async function RoomsPage({
           title={q || type ? "Hech narsa topilmadi" : "Xonalar yo'q"}
           description={
             q || type
-              ? "Qidiruv shartlariga mos xona topilmadi."
+              ? "Qidiruv shartlariga mos xona topilmadi. So'zni yoki turni o'zgartirib ko'ring."
               : "Hozircha katalogda xonalar yo'q."
           }
           action={

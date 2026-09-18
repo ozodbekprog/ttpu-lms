@@ -65,12 +65,14 @@ export function BookingsBoard({
   const [saving, setSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const firstFilterRun = useRef(true);
 
   const selectedRoom = rooms.find((room) => room.id === roomId) ?? null;
   const resolvedRoom = roomMode === "list" ? selectedRoom?.name ?? "" : roomText.trim();
   const today = todayIso();
+  const filtersActive = Boolean(filterDate || filterRoom.trim());
 
   const reload = useCallback(async () => {
     const params = new URLSearchParams();
@@ -124,10 +126,12 @@ export function BookingsBoard({
     event.preventDefault();
     if (!resolvedRoom) {
       setError("Xona nomini kiriting yoki ro'yxatdan tanlang");
+      setConflict(false);
       return;
     }
     setSaving(true);
     setError(null);
+    setConflict(false);
     setNotice(null);
     try {
       const response = await fetch("/api/bookings", {
@@ -143,6 +147,7 @@ export function BookingsBoard({
       const payload = (await response.json().catch(() => null)) as CreatePayload | null;
       if (!response.ok || !payload || !payload.ok) {
         setError(payload && !payload.ok ? payload.error : "Bron qilib bo'lmadi");
+        setConflict(response.status === 409);
         return;
       }
       setPurpose("");
@@ -152,6 +157,7 @@ export function BookingsBoard({
       await reload();
     } catch {
       setError("Tarmoq xatosi. Qayta urinib ko'ring");
+      setConflict(false);
     } finally {
       setSaving(false);
     }
@@ -167,6 +173,7 @@ export function BookingsBoard({
     }
     setCancellingId(booking.id);
     setError(null);
+    setConflict(false);
     setNotice(null);
     try {
       const response = await fetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
@@ -211,13 +218,13 @@ export function BookingsBoard({
         </div>
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid items-start gap-6 lg:grid-cols-[400px_minmax(0,1fr)]">
         <div className="animate-fade-up" style={{ animationDelay: "80ms" }}>
           <Card className="relative overflow-hidden">
             <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
             <CardHeader title="Yangi bron" subtitle="Xona, sana va parni tanlang" />
             <CardBody>
-              <form onSubmit={submit} className="space-y-4">
+              <form onSubmit={submit} className="space-y-5">
                 <div>
                   <Label>Xona</Label>
                   {rooms.length > 0 ? (
@@ -266,28 +273,45 @@ export function BookingsBoard({
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Sana</Label>
-                    <Input
-                      type="date"
-                      value={date}
-                      onChange={(event) => setDate(event.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label>Par</Label>
-                    <Select
-                      value={slot}
-                      onChange={(event) => setSlot(Number(event.target.value))}
-                    >
-                      {SLOTS.map((value) => (
-                        <option key={value} value={value}>
-                          {value}-par · {SLOT_TIMES[value]}
-                        </option>
-                      ))}
-                    </Select>
+                <div>
+                  <Label>Sana</Label>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(event) => setDate(event.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label>Par</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {SLOTS.map((value) => {
+                      const active = slot === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setSlot(value)}
+                          className={cn(
+                            "flex flex-col items-center rounded-xl border px-1 py-2 text-center transition-all duration-150",
+                            active
+                              ? "border-brand-500 bg-brand-50 text-brand-800 shadow-sm ring-2 ring-brand-500/15"
+                              : "border-slate-200 bg-white text-slate-500 hover:border-brand-300 hover:text-slate-700",
+                          )}
+                        >
+                          <span className="text-sm font-semibold leading-none">{value}-par</span>
+                          <span
+                            className={cn(
+                              "mt-1 text-[10px] leading-none",
+                              active ? "text-brand-600" : "text-slate-400",
+                            )}
+                          >
+                            {SLOT_TIMES[value]}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -302,13 +326,69 @@ export function BookingsBoard({
                   />
                 </div>
 
+                <div className="rounded-xl bg-slate-50 px-3.5 py-3 ring-1 ring-slate-100">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Tanlov
+                  </p>
+                  <p className="mt-1 truncate text-sm font-medium text-slate-700">
+                    {resolvedRoom || "Xona tanlanmagan"}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {fmtDate(date)} · {slot}-par · {SLOT_TIMES[slot]}
+                  </p>
+                </div>
+
                 {error ? (
-                  <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">{error}</p>
+                  <div
+                    className={cn(
+                      "flex items-start gap-2.5 rounded-xl px-3.5 py-3 text-sm ring-1",
+                      conflict
+                        ? "bg-amber-50 text-amber-800 ring-amber-200"
+                        : "bg-rose-50 text-rose-700 ring-rose-200",
+                    )}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.9"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mt-0.5 shrink-0"
+                    >
+                      <path d="M12 9v4" />
+                      <path d="M12 17h.01" />
+                      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold">{conflict ? "Bu vaqt band" : "Xatolik"}</p>
+                      <p className={cn("mt-0.5 text-xs", conflict ? "text-amber-700" : "text-rose-600")}>
+                        {conflict
+                          ? "Tanlangan xona, sana va par allaqachon band qilingan. Boshqa par yoki xonani tanlang."
+                          : error}
+                      </p>
+                    </div>
+                  </div>
                 ) : null}
                 {notice ? (
-                  <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
-                    {notice}
-                  </p>
+                  <div className="flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3.5 py-3 text-sm text-emerald-700 ring-1 ring-emerald-200">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mt-0.5 shrink-0"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <p className="font-medium">{notice}</p>
+                  </div>
                 ) : null}
 
                 <Button type="submit" className="w-full" disabled={saving}>
@@ -328,87 +408,149 @@ export function BookingsBoard({
             />
 
             {staff ? (
-              <div className="grid gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-4 sm:grid-cols-[1fr_1fr_auto]">
-                <div>
-                  <Label>Sana bo&apos;yicha</Label>
-                  <Input
-                    type="date"
-                    value={filterDate}
-                    onChange={(event) => setFilterDate(event.target.value)}
-                  />
+              <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    Filtr
+                  </p>
+                  {filtersActive ? (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="text-xs font-medium text-slate-500 transition-colors duration-150 hover:text-brand-800"
+                    >
+                      Tozalash
+                    </button>
+                  ) : null}
                 </div>
-                <div>
-                  <Label>Xona bo&apos;yicha</Label>
-                  <Input
-                    value={filterRoom}
-                    onChange={(event) => setFilterRoom(event.target.value)}
-                    placeholder="Xona nomi"
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button variant="secondary" onClick={resetFilters}>
-                    Tozalash
-                  </Button>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label>Sana bo&apos;yicha</Label>
+                    <Input
+                      type="date"
+                      value={filterDate}
+                      onChange={(event) => setFilterDate(event.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Xona bo&apos;yicha</Label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="7" />
+                          <path d="m20 20-3.5-3.5" />
+                        </svg>
+                      </span>
+                      <Input
+                        value={filterRoom}
+                        onChange={(event) => setFilterRoom(event.target.value)}
+                        placeholder="Xona nomi"
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : null}
 
             <CardBody className="p-0">
               {items.length === 0 ? (
-                <EmptyState
-                  title="Hozircha bronlar yo'q"
-                  description="Chapdagi shakl orqali xonani band qiling — bron shu yerda ko'rinadi."
-                />
+                filtersActive ? (
+                  <EmptyState
+                    title="Filtrga mos bron topilmadi"
+                    description="Sana yoki xona filtrini o'zgartirib qayta ko'ring."
+                    action={
+                      <Button variant="secondary" size="sm" onClick={resetFilters}>
+                        Filtrlarni tozalash
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <EmptyState
+                    title={staff ? "Hozircha bronlar yo'q" : "Sizda hali bron yo'q"}
+                    description="Chapdagi shakl orqali xonani band qiling — bron shu yerda ko'rinadi."
+                  />
+                )
               ) : (
-                <ul className="divide-y divide-slate-100">
-                  {items.map((booking) => (
-                    <li
-                      key={booking.id}
-                      className="flex flex-wrap items-start justify-between gap-3 px-5 py-4 transition-colors hover:bg-slate-50/70"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-semibold tracking-tight text-brand-950">
-                            {booking.roomName}
-                          </p>
-                          <Badge tone="blue">
-                            {booking.slot}-par · {SLOT_TIMES[booking.slot]}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {fmtDate(booking.date)}
-                          {booking.purpose ? ` · ${booking.purpose}` : ""}
-                        </p>
-                        {staff ? (
-                          <div className="mt-2 flex items-center gap-2">
-                            <Avatar name={booking.user.name} size={22} />
-                            <span className="text-xs text-slate-500">
-                              {booking.user.name}
-                              {booking.user.group ? ` · ${booking.user.group.name}` : ""}
-                            </span>
+                <ul className="space-y-3 p-4 sm:p-5">
+                  {items.map((booking) => {
+                    const active = booking.status === "ACTIVE";
+                    return (
+                      <li
+                        key={booking.id}
+                        className={cn(
+                          "relative overflow-hidden rounded-xl border p-4 transition-all duration-200",
+                          active
+                            ? "border-slate-200 bg-white hover:border-brand-200 hover:shadow-card"
+                            : "border-slate-200/70 bg-slate-50/70",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "absolute inset-y-0 left-0 w-1",
+                            active ? "bg-emerald-400" : "bg-slate-300",
+                          )}
+                        />
+                        <div className="flex flex-wrap items-start justify-between gap-3 pl-2">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p
+                                className={cn(
+                                  "font-semibold tracking-tight",
+                                  active ? "text-brand-950" : "text-slate-500",
+                                )}
+                              >
+                                {booking.roomName}
+                              </p>
+                              <Badge tone={active ? "green" : "slate"}>
+                                {active ? "Faol" : "Bekor qilingan"}
+                              </Badge>
+                            </div>
+                            <p className="mt-1 text-sm text-slate-500">{fmtDate(booking.date)}</p>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center rounded-md px-2 py-0.5 font-medium",
+                                  active
+                                    ? "bg-brand-50 text-brand-700"
+                                    : "bg-slate-100 text-slate-500",
+                                )}
+                              >
+                                {booking.slot}-par · {SLOT_TIMES[booking.slot]}
+                              </span>
+                              {booking.purpose ? (
+                                <span className="text-slate-500">{booking.purpose}</span>
+                              ) : null}
+                            </div>
+                            {staff ? (
+                              <div className="mt-2.5 flex items-center gap-2">
+                                <Avatar name={booking.user.name} size={22} />
+                                <span className="text-xs text-slate-500">
+                                  {booking.user.name}
+                                  {booking.user.group ? ` · ${booking.user.group.name}` : ""}
+                                </span>
+                              </div>
+                            ) : null}
                           </div>
-                        ) : null}
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <Badge tone={booking.status === "ACTIVE" ? "green" : "slate"}>
-                          {booking.status === "ACTIVE" ? "Faol" : "Bekor qilingan"}
-                        </Badge>
-                        {canCancel(booking) ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-rose-600! hover:bg-rose-50!"
-                            disabled={cancellingId === booking.id}
-                            onClick={() => {
-                              void cancelBooking(booking);
-                            }}
-                          >
-                            {cancellingId === booking.id ? "Bekor qilinmoqda…" : "Bekor qilish"}
-                          </Button>
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
+                          <div className="flex shrink-0 items-center gap-2">
+                            {canCancel(booking) ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-rose-600! hover:bg-rose-50! hover:text-rose-700!"
+                                disabled={cancellingId === booking.id}
+                                onClick={() => {
+                                  void cancelBooking(booking);
+                                }}
+                              >
+                                {cancellingId === booking.id ? "Bekor qilinmoqda…" : "Bekor qilish"}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </CardBody>

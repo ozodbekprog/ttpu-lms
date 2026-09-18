@@ -18,6 +18,7 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<CheckInResult | null>(null);
+  const [pop, setPop] = useState(false);
   const autoSubmitted = useRef(false);
 
   async function submit(value: string) {
@@ -47,7 +48,9 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
     }
 
     setResult(json.data);
+    setPop(false);
     setStatus("success");
+    window.requestAnimationFrame(() => setPop(true));
   }
 
   useEffect(() => {
@@ -60,28 +63,43 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
 
   if (status === "success" && result) {
     return (
-      <Card className="mx-auto max-w-lg border-emerald-100">
-        <CardBody className="flex flex-col items-center gap-2.5 py-12 text-center">
-          <span className="flex size-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60">
-            <svg
-              width="30"
-              height="30"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+      <Card className="animate-fade-up relative mx-auto max-w-lg overflow-hidden border-emerald-100">
+        <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-gold-400" />
+        <span className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-emerald-300/20 blur-3xl" />
+        <span className="pointer-events-none absolute -bottom-24 -left-12 size-48 rounded-full bg-gold-300/15 blur-3xl" />
+        <CardBody className="relative flex flex-col items-center gap-2.5 py-12 text-center">
+          <span className="relative flex size-24 items-center justify-center">
+            <span className="absolute inset-0 animate-pulse-ring rounded-full bg-emerald-400/25" />
+            <span
+              className={cn(
+                "relative flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/40 ring-8 ring-emerald-50 transition-all duration-500 ease-out",
+                pop ? "scale-100 opacity-100" : "scale-50 opacity-0",
+              )}
             >
-              <path d="m5 13 4 4L19 7" />
-            </svg>
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={cn(
+                  "transition-transform duration-500 delay-150 ease-out",
+                  pop ? "scale-100" : "scale-0",
+                )}
+              >
+                <path d="m5 13 4 4L19 7" />
+              </svg>
+            </span>
           </span>
-          <p className="mt-1 text-lg font-semibold text-emerald-800">Davomat belgilandi</p>
+          <p className="mt-2 text-xl font-semibold text-emerald-800">Davomat belgilandi</p>
           <p className="text-sm font-medium text-slate-700">{result.course.title}</p>
           <p className="text-sm text-slate-500">{fmtDate(`${result.date}T00:00:00.000Z`)}</p>
           <Button
             variant="secondary"
-            className="mt-4"
+            className="mt-4 px-6"
             onClick={() => {
               setStatus("idle");
               setResult(null);
@@ -96,10 +114,11 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
   }
 
   return (
-    <Card className="mx-auto max-w-lg">
+    <Card className="animate-fade-up relative mx-auto max-w-lg overflow-hidden">
+      <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
       <CardBody className="space-y-6 px-6 py-9 sm:px-8">
         <div className="flex flex-col items-center gap-2 text-center">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-50 to-brand-100 text-brand-700 shadow-sm ring-1 ring-brand-100">
             <svg
               width="22"
               height="22"

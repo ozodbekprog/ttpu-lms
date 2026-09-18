@@ -64,6 +64,18 @@ const DEMO_ACCOUNTS = [
   },
 ];
 
+const PANEL_FEATURES = [
+  "Barcha fanlar va materiallar bir joyda",
+  "Baholar, GPA va rasmiy transkript",
+  "Jadval, davomat va Telegram eslatmalari",
+];
+
+const PANEL_STATS = [
+  { value: "12k+", label: "Talaba" },
+  { value: "450+", label: "Fan" },
+  { value: "98%", label: "Qoniqish" },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -102,102 +114,155 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-brand-50 via-surface to-surface px-4 py-12 sm:px-6">
-      <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(to_right,var(--color-brand-100)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-brand-100)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_75%)]" />
-      <Card className="relative w-full max-w-md p-7 sm:p-9">
-        <div className="flex justify-center">
-          <Logo size={44} />
-        </div>
-        <div className="mt-6 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand-950">Tizimga kirish</h1>
-          <p className="mt-1.5 text-sm text-slate-500">
-            TTPU LMS hisobingiz bilan davom eting
+    <main className="grid min-h-screen bg-surface lg:grid-cols-2">
+      <section className="relative hidden overflow-hidden bg-brand-950 lg:flex lg:flex-col lg:justify-between lg:gap-12 lg:p-12 xl:p-16">
+        <div className="pointer-events-none absolute inset-0 [background-image:linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(ellipse_90%_70%_at_20%_0%,black,transparent_80%)]" />
+        <div className="pointer-events-none absolute -left-24 top-24 size-80 rounded-full bg-brand-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 bottom-8 size-72 rounded-full bg-gold-400/15 blur-3xl" />
+        <div className="relative">
+          <span className="inline-flex rounded-2xl bg-white p-2.5 shadow-lift">
+            <Logo size={40} />
+          </span>
+          <h2 className="mt-10 max-w-md text-3xl font-bold leading-tight tracking-tight text-white xl:text-4xl">
+            O&apos;quv jarayoni yagona, tez va ishonchli platformada
+          </h2>
+          <p className="mt-5 max-w-md leading-relaxed text-brand-200">
+            Kurslar, baholar, jadval va davomat — bitta hisobda, barcha qurilmalarda.
           </p>
-        </div>
-        <form onSubmit={onSubmit} className="mt-8 space-y-5">
-          <div>
-            <Label>Email</Label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@ttpu.uz"
-              autoComplete="email"
-              required
-            />
-          </div>
-          <div>
-            <Label>Parol</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              required
-            />
-          </div>
-          {error ? (
-            <div className="flex items-start gap-2.5 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mt-0.5 size-4 shrink-0"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 8v4" />
-                <path d="M12 16h.01" />
-              </svg>
-              <p>{error}</p>
-            </div>
-          ) : null}
-          <Button type="submit" disabled={loading} size="lg" className="w-full">
-            {loading ? "Kirilmoqda..." : "Kirish"}
-          </Button>
-        </form>
-        <div className="mt-8">
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-slate-100" />
-            <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
-              Demo hisoblar
-            </span>
-            <span className="h-px flex-1 bg-slate-100" />
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {DEMO_ACCOUNTS.map((account) => (
-              <button
-                key={account.email}
-                type="button"
-                onClick={() => fillDemo(account.email)}
-                className="group flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3 transition-all duration-150 hover:border-brand-300 hover:bg-brand-50"
-              >
-                <span className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition-colors duration-150 group-hover:bg-brand-100">
-                  {account.icon}
-                </span>
-                <span className="text-xs font-medium text-slate-700 group-hover:text-brand-800">
-                  {account.role}
-                </span>
-              </button>
+          <ul className="mt-8 space-y-3.5">
+            {PANEL_FEATURES.map((feature) => (
+              <li key={feature} className="flex items-start gap-3 text-sm text-brand-100">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mt-0.5 size-4 shrink-0 text-gold-400"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                {feature}
+              </li>
             ))}
+          </ul>
+        </div>
+        <div className="relative grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
+          {PANEL_STATS.map((stat) => (
+            <div key={stat.label}>
+              <p className="text-2xl font-semibold tracking-tight text-white">{stat.value}</p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-brand-300">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex items-center justify-center px-4 py-12 sm:px-6">
+        <div className="w-full max-w-md">
+          <div className="flex justify-center lg:hidden">
+            <Logo size={44} />
           </div>
-          <p className="mt-3 text-center text-[11px] text-slate-400">
-            Bosilganda demo email va parol avtomatik to&apos;ldiriladi
+          <Card className="mt-6 p-7 sm:p-9 lg:mt-0">
+            <div className="text-center">
+              <h1 className="text-2xl font-semibold tracking-tight text-brand-950">
+                Tizimga kirish
+              </h1>
+              <p className="mt-1.5 text-sm text-slate-500">
+                TTPU LMS hisobingiz bilan davom eting
+              </p>
+            </div>
+            <form onSubmit={onSubmit} className="mt-8 space-y-5">
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email@ttpu.uz"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+              <div>
+                <Label>Parol</Label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+              {error ? (
+                <div className="flex items-start gap-2.5 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mt-0.5 size-4 shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v4" />
+                    <path d="M12 16h.01" />
+                  </svg>
+                  <p>{error}</p>
+                </div>
+              ) : null}
+              <Button type="submit" disabled={loading} size="lg" className="w-full">
+                {loading ? "Kirilmoqda..." : "Kirish"}
+              </Button>
+            </form>
+            <div className="mt-8">
+              <div className="flex items-center gap-3">
+                <span className="h-px flex-1 bg-slate-100" />
+                <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+                  Demo hisoblar
+                </span>
+                <span className="h-px flex-1 bg-slate-100" />
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    onClick={() => fillDemo(account.email)}
+                    className="group flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3 transition-all duration-150 hover:border-brand-300 hover:bg-brand-50"
+                  >
+                    <span className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition-colors duration-150 group-hover:bg-brand-100">
+                      {account.icon}
+                    </span>
+                    <span className="text-xs font-medium text-slate-700 group-hover:text-brand-800">
+                      {account.role}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-center text-[11px] text-slate-400">
+                Bosilganda demo email va parol avtomatik to&apos;ldiriladi
+              </p>
+            </div>
+            <p className="mt-7 text-center text-sm text-slate-500">
+              Hisobingiz yo&apos;qmi?{" "}
+              <Link
+                href="/register"
+                className="font-medium text-brand-700 transition-colors duration-150 hover:text-brand-900 hover:underline"
+              >
+                Ro&apos;yxatdan o&apos;tish
+              </Link>
+            </p>
+          </Card>
+          <p className="mt-6 text-center text-xs text-slate-400">
+            Kirish orqali siz universitetning foydalanish qoidalariga rozilik bildirasiz.
           </p>
         </div>
-        <p className="mt-7 text-center text-sm text-slate-500">
-          Hisobingiz yo&apos;qmi?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-brand-700 transition-colors duration-150 hover:text-brand-900 hover:underline"
-          >
-            Ro&apos;yxatdan o&apos;tish
-          </Link>
-        </p>
-      </Card>
+      </section>
     </main>
   );
 }

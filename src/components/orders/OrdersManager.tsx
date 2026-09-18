@@ -11,20 +11,23 @@ import {
   EmptyState,
   Input,
   Label,
-  Select,
-  Table,
+  Progress,
   Textarea,
 } from "@/components/ui";
-import { fmtDateTime } from "@/lib/utils";
+import { cn, fmtDateTime } from "@/lib/utils";
 import {
+  ORDER_STATUS_DOT,
+  ORDER_STATUS_HINT,
   ORDER_STATUS_LABEL,
   ORDER_STATUS_TONE,
-  ORDER_TYPES,
+  ORDER_TYPE_HINT,
   ORDER_TYPE_LABEL,
+  ORDER_TYPES,
   toOrderStatus,
   toOrderType,
   type OrderType,
 } from "./shared";
+import type { ReactNode } from "react";
 
 export type OrderItem = {
   id: string;
@@ -53,6 +56,83 @@ const RETAKE_KIND_LABEL: Record<RetakeItem["kind"], string> = {
   QUIZ: "Test",
   ASSIGNMENT: "Topshiriq",
 };
+
+const TYPE_ICONS: Record<OrderType, ReactNode> = {
+  TRANSCRIPT: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+      <path d="M14 2v6h6M9 13h6M9 17h6" />
+    </svg>
+  ),
+  CERTIFICATE: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="9" r="6" />
+      <path d="M9 14.5 7.5 22l4.5-2.5L16.5 22 15 14.5" />
+      <path d="m10 9 1.5 1.5L14.5 7.5" />
+    </svg>
+  ),
+  RETAKE: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
+  ),
+  OTHER: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
+      <path d="M9.5 10h.01M12.5 10h.01M15.5 10h.01" />
+    </svg>
+  ),
+};
+
+function TimelineRow({ label, date, dot }: { label: string; date: string; dot: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className={cn("size-1.5 shrink-0 rounded-full", dot)} />
+      <span className="font-medium text-slate-600">{label}</span>
+      <span className="ml-auto text-slate-400">{date}</span>
+    </div>
+  );
+}
+
+function OrderTimelineItem({ order }: { order: OrderItem }) {
+  const status = toOrderStatus(order.status);
+  const type = toOrderType(order.type);
+  return (
+    <div className="relative flex gap-4">
+      <span className={cn("relative z-10 mt-2 size-2.5 shrink-0 rounded-full ring-4 ring-white", ORDER_STATUS_DOT[status])} />
+      <div className="min-w-0 flex-1 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-medium text-slate-900">{order.subject ?? ORDER_TYPE_LABEL[type]}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <Badge tone="slate">{ORDER_TYPE_LABEL[type]}</Badge>
+              <Badge tone={ORDER_STATUS_TONE[status]}>{ORDER_STATUS_LABEL[status]}</Badge>
+            </div>
+          </div>
+          <span className="text-xs text-slate-400">{fmtDateTime(order.createdAt)}</span>
+        </div>
+        {order.note ? (
+          <p className="mt-2.5 text-xs leading-relaxed text-slate-500">{order.note}</p>
+        ) : null}
+        <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
+          <TimelineRow label="Yuborildi" date={fmtDateTime(order.createdAt)} dot="bg-brand-300" />
+          <TimelineRow
+            label={ORDER_STATUS_HINT[status]}
+            date={fmtDateTime(order.updatedAt)}
+            dot={ORDER_STATUS_DOT[status]}
+          />
+        </div>
+        {order.adminComment ? (
+          <div className="mt-3 rounded-xl bg-brand-50/70 px-3.5 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">Admin izohi</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">{order.adminComment}</p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export default function OrdersManager({
   orders,
@@ -138,20 +218,58 @@ export default function OrdersManager({
       ) : null}
 
       <Card>
-        <CardHeader title="Yangi ariza" subtitle="Transkript, ma'lumotnoma yoki boshqa so'rov" />
+        <CardHeader
+          title="Yangi ariza"
+          subtitle="Avval ariza turini tanlang, so'ng mavzuni kiriting"
+          action={
+            <Badge tone="blue">
+              <span className={cn("mr-1.5 size-1.5 rounded-full", ORDER_STATUS_DOT.NEW)} />
+              {ORDER_TYPE_LABEL[type]}
+            </Badge>
+          }
+        />
         <CardBody>
-          <form className="grid gap-4 sm:grid-cols-2" onSubmit={submit}>
-            <div>
+          <form className="grid gap-5 sm:grid-cols-2" onSubmit={submit}>
+            <div className="sm:col-span-2">
               <Label>Ariza turi</Label>
-              <Select value={type} onChange={(e) => setType(e.target.value as OrderType)}>
-                {ORDER_TYPES.map((value) => (
-                  <option key={value} value={value}>
-                    {ORDER_TYPE_LABEL[value]}
-                  </option>
-                ))}
-              </Select>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {ORDER_TYPES.map((value) => {
+                  const active = type === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setType(value)}
+                      aria-pressed={active}
+                      className={cn(
+                        "flex items-start gap-3 rounded-2xl border p-4 text-left transition-all duration-150",
+                        active
+                          ? "border-brand-500 bg-brand-50/70 shadow-sm ring-2 ring-brand-500/15"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "inline-flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors duration-150",
+                          active ? "bg-brand-600 text-white" : "bg-slate-100 text-slate-500",
+                        )}
+                      >
+                        {TYPE_ICONS[value]}
+                      </span>
+                      <span className="min-w-0">
+                        <span className={cn("block text-sm font-semibold", active ? "text-brand-800" : "text-slate-800")}>
+                          {ORDER_TYPE_LABEL[value]}
+                        </span>
+                        <span className="mt-0.5 block text-xs leading-snug text-slate-500">
+                          {ORDER_TYPE_HINT[value]}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <Label>Mavzu</Label>
               <Input
                 value={subject}
@@ -182,72 +300,42 @@ export default function OrdersManager({
       </Card>
 
       <Card>
-        <CardHeader title="Mening arizalarim" subtitle={`${orders.length} ta`} />
+        <CardHeader title="Mening arizalarim" subtitle={`${orders.length} ta so'rov`} />
         {orders.length === 0 ? (
           <CardBody>
             <EmptyState
               title="Arizalar yo'q"
-              description="Yangi ariza yuboring — holati shu yerda ko'rinadi."
+              description="Yangi ariza yuboring — holati shu yerda vaqt chizig'i ko'rinishida chiqadi."
             />
           </CardBody>
         ) : (
-          <Table>
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                <th className="px-5 py-3 font-semibold">Ariza</th>
-                <th className="px-5 py-3 font-semibold">Tur</th>
-                <th className="px-5 py-3 font-semibold">Holat</th>
-                <th className="px-5 py-3 font-semibold">Yuborilgan</th>
-                <th className="px-5 py-3 font-semibold">Admin izohi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                const status = toOrderStatus(order.status);
-                return (
-                  <tr
-                    key={order.id}
-                    className="border-b border-slate-50 align-top transition-colors duration-150 last:border-0 hover:bg-slate-50/60"
-                  >
-                    <td className="px-5 py-3">
-                      <span className="block font-medium text-slate-900">
-                        {order.subject ?? ORDER_TYPE_LABEL[toOrderType(order.type)]}
-                      </span>
-                      {order.note ? (
-                        <span className="mt-0.5 block max-w-md text-xs leading-relaxed text-slate-500">
-                          {order.note}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="px-5 py-3">
-                      <Badge tone="slate">{ORDER_TYPE_LABEL[toOrderType(order.type)]}</Badge>
-                    </td>
-                    <td className="px-5 py-3">
-                      <Badge tone={ORDER_STATUS_TONE[status]}>{ORDER_STATUS_LABEL[status]}</Badge>
-                    </td>
-                    <td className="px-5 py-3 text-xs text-slate-500">{fmtDateTime(order.createdAt)}</td>
-                    <td className="px-5 py-3">
-                      {order.adminComment ? (
-                        <span className="block max-w-xs text-xs leading-relaxed text-slate-600">
-                          {order.adminComment}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
+          <CardBody>
+            <div className="relative space-y-4 before:absolute before:bottom-6 before:left-[5px] before:top-2 before:w-px before:bg-slate-200/80">
+              {orders.map((order) => (
+                <OrderTimelineItem key={order.id} order={order} />
+              ))}
+            </div>
+          </CardBody>
         )}
       </Card>
 
-      <Card>
-        <CardHeader
-          title="Qayta topshirish"
-          subtitle="60% dan past natijalar bo'yicha so'rov yuborish"
-        />
+      <Card className="overflow-hidden border-amber-200/70">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-100 bg-gradient-to-r from-amber-50 via-amber-50/60 to-white px-6 py-4">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+                <path d="M12 8v4l3 2" />
+              </svg>
+            </span>
+            <div>
+              <h3 className="font-semibold tracking-tight text-slate-900">Qayta topshirish</h3>
+              <p className="mt-0.5 text-sm text-amber-700/80">{"60% dan past natijalar bo'yicha so'rov yuborish"}</p>
+            </div>
+          </div>
+          <Badge tone="amber">{retakes.length} ta fan</Badge>
+        </div>
         {retakes.length === 0 ? (
           <CardBody>
             <EmptyState
@@ -260,28 +348,31 @@ export default function OrdersManager({
             {retakes.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-slate-50/60 px-4 py-3"
+                className="rounded-xl border border-amber-200/70 bg-amber-50/40 px-4 py-3.5 transition-colors duration-150 hover:bg-amber-50/70"
               >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-slate-900">{item.title}</span>
-                    <Badge tone="slate">{RETAKE_KIND_LABEL[item.kind]}</Badge>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-slate-900">{item.title}</span>
+                      <Badge tone="slate">{RETAKE_KIND_LABEL[item.kind]}</Badge>
+                    </div>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {item.course ? `${item.course} · ` : ""}Natija:{" "}
+                      <span className="font-semibold text-rose-600">
+                        {item.score}/{item.max} ({item.percent}%)
+                      </span>
+                    </p>
+                    <Progress value={item.percent} className="mt-2.5 max-w-xs" />
                   </div>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {item.course ? `${item.course} · ` : ""}Natija:{" "}
-                    <span className="font-semibold text-rose-600">
-                      {item.score}/{item.max} ({item.percent}%)
-                    </span>
-                  </p>
+                  <Button
+                    size="sm"
+                    variant="gold"
+                    disabled={busyRetake === item.id}
+                    onClick={() => requestRetake(item)}
+                  >
+                    {busyRetake === item.id ? "Yuborilmoqda..." : "Qayta topshirish so'rovi"}
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={busyRetake === item.id}
-                  onClick={() => requestRetake(item)}
-                >
-                  {busyRetake === item.id ? "Yuborilmoqda..." : "Qayta topshirish so'rovi"}
-                </Button>
               </div>
             ))}
           </CardBody>

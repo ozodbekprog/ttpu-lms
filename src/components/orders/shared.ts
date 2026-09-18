@@ -29,6 +29,27 @@ export const ORDER_STATUS_TONE: Record<OrderStatus, OrderStatusTone> = {
   REJECTED: "rose",
 };
 
+export const ORDER_STATUS_DOT: Record<OrderStatus, string> = {
+  NEW: "bg-brand-400",
+  IN_PROGRESS: "bg-amber-400",
+  DONE: "bg-emerald-400",
+  REJECTED: "bg-rose-400",
+};
+
+export const ORDER_STATUS_HINT: Record<OrderStatus, string> = {
+  NEW: "Ko'rib chiqilishi kutilmoqda",
+  IN_PROGRESS: "Ko'rib chiqilmoqda",
+  DONE: "Yakunlangan",
+  REJECTED: "Rad etilgan",
+};
+
+export const ORDER_TYPE_HINT: Record<OrderType, string> = {
+  TRANSCRIPT: "Rasmiy baholar jadvali",
+  CERTIFICATE: "O'qish haqida ma'lumotnoma",
+  RETAKE: "Fan yoki testni qayta topshirish",
+  OTHER: "Boshqa turdagi murojaat",
+};
+
 export function isOrderType(value: string): value is OrderType {
   return (ORDER_TYPES as readonly string[]).includes(value);
 }

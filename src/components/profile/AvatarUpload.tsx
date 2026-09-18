@@ -62,15 +62,23 @@ export function AvatarUpload({
 
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <div className="relative">
-        <Avatar name={name} src={src} size={size} className={cn("ring-4 ring-white", className)} />
+      <div className="group/avatar relative">
+        <Avatar
+          name={name}
+          src={src}
+          size={size}
+          className={cn("ring-4 ring-white shadow-lg", className)}
+        />
+        {busy ? (
+          <span className="absolute inset-0 rounded-full bg-brand-950/45 backdrop-blur-[1px]" />
+        ) : null}
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
           aria-label="Avatar yuklash"
           title="Avatar yuklash"
-          className="absolute -bottom-0.5 -right-0.5 inline-flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors duration-150 hover:bg-slate-50 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="absolute -bottom-0.5 -right-0.5 inline-flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-700 to-brand-950 text-white shadow-lg ring-2 ring-white transition-all duration-200 hover:scale-105 hover:from-brand-600 hover:to-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {busy ? (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="animate-spin">

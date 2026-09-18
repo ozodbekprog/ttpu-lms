@@ -27,6 +27,7 @@ export function ChatClient({ currentUserId, initialUserId }: Props) {
     items: ChatMessage[];
   } | null>(null);
   const [sending, setSending] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const openedInitial = useRef(false);
 
   const refreshConversations = useCallback(async () => {
@@ -36,6 +37,8 @@ export function ChatClient({ currentUserId, initialUserId }: Props) {
       if (res.ok && json?.ok && json.data) setConversations(json.data.conversations);
     } catch {
       return;
+    } finally {
+      setLoaded(true);
     }
   }, []);
 
@@ -146,7 +149,7 @@ export function ChatClient({ currentUserId, initialUserId }: Props) {
   const loadingMessages = activeId !== null && messageData?.conversationId !== activeId;
 
   return (
-    <Card className="flex h-[calc(100vh-15rem)] min-h-[480px] overflow-hidden">
+    <Card className="flex h-[calc(100vh-15rem)] min-h-[480px] animate-fade-up overflow-hidden">
       <div
         className={cn(
           "w-full flex-col border-slate-100 md:flex md:w-80 md:border-r lg:w-96",
@@ -157,6 +160,7 @@ export function ChatClient({ currentUserId, initialUserId }: Props) {
           conversations={conversations}
           activeId={activeId}
           currentUserId={currentUserId}
+          loading={!loaded}
           onSelect={setActiveId}
           onStartConversation={openConversation}
         />

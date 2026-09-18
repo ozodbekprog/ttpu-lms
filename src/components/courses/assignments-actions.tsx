@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label, Textarea } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 export type AssignmentData = {
   id: string;
@@ -17,6 +18,44 @@ function toLocalInput(value: string | null) {
   const date = new Date(value);
   const pad = (part: number) => String(part).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function PencilIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
 }
 
 export function AssignmentsActions({ assignment }: { assignment: AssignmentData }) {
@@ -70,19 +109,45 @@ export function AssignmentsActions({ assignment }: { assignment: AssignmentData 
 
   return (
     <>
-      <div className="flex shrink-0 gap-2">
-        <Button size="sm" variant="secondary" onClick={() => setEditing((value) => !value)}>
+      <div
+        className={cn(
+          "flex shrink-0 items-center gap-1.5 transition-opacity duration-150",
+          editing
+            ? "opacity-100"
+            : "md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100",
+        )}
+      >
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setEditing((value) => !value)}
+          aria-label="Tahrirlash"
+        >
+          <PencilIcon />
           Tahrirlash
         </Button>
-        <Button size="sm" variant="danger" onClick={handleDelete} disabled={deleting}>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          aria-label="O'chirish"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors duration-150 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <TrashIcon />
           O&apos;chirish
-        </Button>
+        </button>
       </div>
       {editing ? (
         <form
           onSubmit={handleSubmit}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4"
+          className="animate-fade-up mt-1 w-full rounded-2xl border border-brand-100 bg-brand-50/30 p-4 ring-1 ring-brand-50"
         >
+          <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <span className="inline-flex size-6 items-center justify-center rounded-lg bg-white text-brand-700 ring-1 ring-brand-100">
+              <PencilIcon />
+            </span>
+            Topshiriqni tahrirlash
+          </p>
           <div className="grid gap-4">
             <div>
               <Label>Sarlavha</Label>
@@ -91,6 +156,7 @@ export function AssignmentsActions({ assignment }: { assignment: AssignmentData 
                 onChange={(event) => setTitle(event.target.value)}
                 maxLength={200}
                 required
+                className="bg-white"
               />
             </div>
             <div>
@@ -99,6 +165,7 @@ export function AssignmentsActions({ assignment }: { assignment: AssignmentData 
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 rows={3}
+                className="bg-white"
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -108,6 +175,7 @@ export function AssignmentsActions({ assignment }: { assignment: AssignmentData 
                   type="datetime-local"
                   value={dueAt}
                   onChange={(event) => setDueAt(event.target.value)}
+                  className="bg-white"
                 />
               </div>
               <div>
@@ -119,6 +187,7 @@ export function AssignmentsActions({ assignment }: { assignment: AssignmentData 
                   value={maxScore}
                   onChange={(event) => setMaxScore(event.target.value)}
                   required
+                  className="bg-white"
                 />
               </div>
             </div>

@@ -1,19 +1,23 @@
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PageHeader, Stat } from "@/components/ui";
+import { PageHeader } from "@/components/ui";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { PasswordForm } from "@/components/profile/PasswordForm";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileHero } from "@/components/profile/ProfileHero";
+import { StatsRow } from "@/components/profile/StatsRow";
+import type { ProfileStatKind } from "@/components/profile/StatsRow";
 
 export default async function ProfilePage() {
   const user = await requireUser();
 
   let coursesCount = 0;
   let certificatesCount = 0;
+  let coursesHint = "Jami kurslar";
   let thirdLabel = "Ma'lumot";
   let thirdValue: string | number = "—";
   let thirdHint: string | undefined;
+  let thirdKind: ProfileStatKind = "users";
 
   if (user.role === "STUDENT") {
     const [enrollments, certificates, graded] = await Promise.all([
@@ -26,6 +30,7 @@ export default async function ProfilePage() {
     ]);
     coursesCount = enrollments;
     certificatesCount = certificates;
+    coursesHint = "Yozilgan kurslar";
     const percents = graded.map((item) =>
       item.assignment.maxScore > 0 ? (item.score ?? 0) / item.assignment.maxScore : 0,
     );
@@ -34,6 +39,7 @@ export default async function ProfilePage() {
       ? `${Math.round((percents.reduce((sum, value) => sum + value, 0) / percents.length) * 100)}%`
       : "—";
     thirdHint = percents.length ? `${percents.length} ta baholangan ish` : "Hali baho yo'q";
+    thirdKind = "average";
   } else if (user.role === "TEACHER") {
     const [courses, certificates, students] = await Promise.all([
       prisma.course.count({ where: { teacherId: user.id } }),
@@ -46,9 +52,11 @@ export default async function ProfilePage() {
     ]);
     coursesCount = courses;
     certificatesCount = certificates;
+    coursesHint = "O'qitayotgan kurslar";
     thirdLabel = "Talabalar";
     thirdValue = students.length;
     thirdHint = "Kurslariga yozilgan";
+    thirdKind = "students";
   } else {
     const [courses, certificates, users] = await Promise.all([
       prisma.course.count(),
@@ -57,9 +65,11 @@ export default async function ProfilePage() {
     ]);
     coursesCount = courses;
     certificatesCount = certificates;
+    coursesHint = "Tizimdagi kurslar";
     thirdLabel = "Foydalanuvchilar";
     thirdValue = users;
     thirdHint = "Faol hisoblar";
+    thirdKind = "users";
   }
 
   return (
@@ -74,12 +84,31 @@ export default async function ProfilePage() {
         bio={user.bio}
         createdAt={user.createdAt}
         groupName={user.group?.name ?? null}
-        avatar={<AvatarUpload name={user.name} src={user.avatarUrl} />}
+        avatar={<AvatarUpload name={user.name} src={user.avatarUrl} className="shadow-xl" />}
       />
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Kurslar" value={coursesCount} />
-        <Stat label="Sertifikatlar" value={certificatesCount} />
-        <Stat label={thirdLabel} value={thirdValue} hint={thirdHint} />
+      <div className="mt-6">
+        <StatsRow
+          items={[
+            {
+              kind: "courses",
+              label: "Kurslar",
+              value: coursesCount,
+              hint: coursesHint,
+            },
+            {
+              kind: "certificates",
+              label: "Sertifikatlar",
+              value: certificatesCount,
+              hint: "Jami sertifikatlar",
+            },
+            {
+              kind: thirdKind,
+              label: thirdLabel,
+              value: thirdValue,
+              hint: thirdHint,
+            },
+          ]}
+        />
       </div>
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
         <ProfileForm initialName={user.name} initialBio={user.bio} avatarUrl={user.avatarUrl} />

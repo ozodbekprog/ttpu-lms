@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ButtonLink, PageHeader } from "@/components/ui";
-import { ProfileHero, ROLE_META } from "@/components/profile/ProfileHero";
+import { ButtonLink } from "@/components/ui";
+import { ProfileDetails } from "@/components/profile/ProfileDetails";
+import { ProfileHero } from "@/components/profile/ProfileHero";
 
 export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const current = await requireUser();
@@ -15,11 +17,23 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <PageHeader
-        eyebrow="Foydalanuvchi"
-        title={profile.name}
-        subtitle={ROLE_META[profile.role].label}
-      />
+      <nav className="mb-4 flex flex-wrap items-center gap-2 text-sm">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-medium text-slate-500 transition-colors duration-150 hover:bg-white hover:text-brand-700"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <path d="M9 22V12h6v10" />
+          </svg>
+          Bosh sahifa
+        </Link>
+        <span className="text-slate-300">/</span>
+        <span className="rounded-lg px-2 py-1 font-medium text-slate-700">
+          {isOwn ? "Mening profilim" : "Foydalanuvchi profili"}
+        </span>
+      </nav>
+
       <ProfileHero
         name={profile.name}
         role={profile.role}
@@ -46,6 +60,13 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
             </ButtonLink>
           )
         }
+      />
+
+      <ProfileDetails
+        email={profile.email}
+        role={profile.role}
+        groupName={profile.group?.name ?? null}
+        createdAt={profile.createdAt}
       />
     </>
   );

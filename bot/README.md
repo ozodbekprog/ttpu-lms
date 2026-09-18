@@ -37,14 +37,15 @@ faqat `.env` dagi `DATABASE_URL` manzilida PostgreSQL ishlab turishi kerak.
 
 ## Buyruqlar
 
-- `/start` — salomlashish va qisqa qo'llanma
+- `/start` — salomlashish va imkoniyatlar ro'yxati
 - email yuborish (masalan `ozodbek@ttpu.uz`) — chatni foydalanuvchiga bog'laydi
-- `/jadval` — bugungi darslar
-- `/ertaga` — ertangi darslar
-- `/hafta` — haftalik jadval: kunlar bo'yicha guruhlangan, bugungi kun belgilanadi,
-  har bir darsda holat (masalan `(Bekor qilindi)`) ko'rsatiladi
-- `/davomat` — o'qituvchi uchun bugungi darslari (par vaqti, fan, xona, guruh) va
-  har bir dars uchun davomat sahifasi havolasi. Talaba yuborsa, bugungi jadvali qaytadi.
+- `/jadval` — bugungi darslar: `📅` sarlavha, kun nomi va sana, har dars
+  `🕘 vaqt | 📚 fan | 🚪 xona | 👨‍🏫 o'qituvchi` ko'rinishida, darslar orasida bo'sh qator
+- `/ertaga` — ertangi darslar (xuddi shu ko'rinishda)
+- `/hafta` — haftalik jadval: `📌 Dushanba` kabi kun sarlavhalari, ajratgichlar,
+  bugungi kun belgilanadi, har bir darsda holat (masalan `❌ Bekor qilindi`)
+- `/davomat` — o'qituvchi uchun `🔔` uslubidagi bugungi darslar (par vaqti, fan, xona, guruh)
+  va har bir dars uchun `🔗` davomat sahifasi havolasi. Talaba yuborsa, bugungi jadvali qaytadi.
 - `/help` — buyruqlar ro'yxati
 
 ## Avtomatik eslatma
@@ -55,9 +56,9 @@ kuniga bir marta bog'langan har bir foydalanuvchiga eslatma yuboradi:
 - bugungi darslar (guruh jadvali bo'yicha),
 - bugun tugaydigan deadline'lar: topshiriqlar va testlar (`dueAt`).
 
-O'qituvchilarga qo'shimcha ravishda o'z darslari (guruh va davomat havolasi bilan)
-hamda "Davomatni belgilashni unutmang" eslatmasi va birinchi dars havolasi yuboriladi.
-Talaba eslatmasi matni o'zgarmaydi.
+Eslatma matni `🌟`, `📌`, `⏰` belgilari bilan bezatilgan. O'qituvchilarga qo'shimcha
+ravishda o'z darslari (guruh va `🔗` davomat havolasi bilan) hamda
+"⏰ Davomatni belgilashni unutmang" eslatmasi va birinchi dars havolasi yuboriladi.
 
 Eslatma bir kunda takroran yuborilmasligi uchun oxirgi yuborilgan sana
 `bot/data.json` dagi `lastReminderDate` maydonida saqlanadi. Xatolik yuz bersa

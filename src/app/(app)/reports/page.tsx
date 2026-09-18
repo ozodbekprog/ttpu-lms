@@ -52,7 +52,28 @@ export default async function ReportsPage({
         title="Hisobotlar"
         subtitle={`${selected.title} · ${stats.studentCount} ta talaba`}
         action={
-          <form method="get" className="flex items-end gap-2">
+          <form
+            method="get"
+            className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-1.5 shadow-sm backdrop-blur"
+          >
+            <span className="hidden select-none items-center gap-1.5 pl-2 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-400 sm:inline-flex">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M3 5h18" />
+                <path d="M6 12h12" />
+                <path d="M10 19h4" />
+              </svg>
+              Kurs
+            </span>
             <Select name="courseId" defaultValue={selected.id} className="w-64">
               {courses.map((course) => (
                 <option key={course.id} value={course.id}>
@@ -60,35 +81,47 @@ export default async function ReportsPage({
                 </option>
               ))}
             </Select>
-            <Button type="submit" variant="secondary">
-              Ko&apos;rsatish
-            </Button>
+            <Button type="submit">Ko&apos;rsatish</Button>
           </form>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Stat
-          label="Talabalar"
-          value={stats.studentCount}
-          hint={`${stats.assignmentCount} topshiriq, ${stats.quizCount} test`}
-        />
-        <Stat
-          label="Topshiriqlar o'rtachasi"
-          value={percent(stats.assignmentAverage)}
-          hint={`${stats.gradedCount}/${stats.submissionCount} baholangan`}
-        />
-        <Stat
-          label="Topshirish foizi"
-          value={percent(stats.submissionRate)}
-          hint={`${stats.submissionCount} ta javob`}
-        />
-        <Stat
-          label="Davomat foizi"
-          value={percent(stats.attendanceRate)}
-          hint={`${stats.attendanceCount} ta yozuv`}
-        />
-        <Stat label="Test o'rtachasi" value={percent(stats.quizAverage)} hint={`${stats.quizCount} ta test`} />
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-brand-50/70">
+          <Stat
+            label="Talabalar"
+            value={stats.studentCount}
+            hint={`${stats.assignmentCount} topshiriq, ${stats.quizCount} test`}
+          />
+        </div>
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-emerald-50/70">
+          <Stat
+            label="Topshiriqlar o'rtachasi"
+            value={percent(stats.assignmentAverage)}
+            hint={`${stats.gradedCount}/${stats.submissionCount} baholangan`}
+          />
+        </div>
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-sky-50/70">
+          <Stat
+            label="Topshirish foizi"
+            value={percent(stats.submissionRate)}
+            hint={`${stats.submissionCount} ta javob`}
+          />
+        </div>
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-amber-50/70">
+          <Stat
+            label="Davomat foizi"
+            value={percent(stats.attendanceRate)}
+            hint={`${stats.attendanceCount} ta yozuv`}
+          />
+        </div>
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-purple-50/70">
+          <Stat
+            label="Test o'rtachasi"
+            value={percent(stats.quizAverage)}
+            hint={`${stats.quizCount} ta test`}
+          />
+        </div>
       </div>
 
       <Card className="mt-6">

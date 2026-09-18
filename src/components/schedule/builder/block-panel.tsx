@@ -37,12 +37,13 @@ export function BlockPanel({
 }) {
   const [draft, setDraft] = useState<{ id: string; value: string } | null>(null);
   const roomValue = draft?.id === entry.id ? draft.value : entry.room ?? "";
+  const title = entry.subjectRef?.name ?? entry.subject;
 
   return (
     <div className="fixed bottom-4 right-4 z-40 w-[calc(100vw-2rem)] max-w-sm">
       <Card className="border-brand-200 shadow-xl">
         <CardHeader
-          title={entry.subject}
+          title={title}
           subtitle={`${dayName(entry.dayOfWeek)}, ${entry.slot}-par · ${SLOT_TIMES[entry.slot]}`}
           action={
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -59,6 +60,7 @@ export function BlockPanel({
           ) : null}
 
           <div className="flex flex-wrap items-center gap-1.5">
+            {entry.lessonType ? <Badge tone="blue">{entry.lessonType}</Badge> : null}
             {entry.parity ? (
               <Badge tone="amber">{entry.parity === "odd" ? "Toq hafta" : "Juft hafta"}</Badge>
             ) : (

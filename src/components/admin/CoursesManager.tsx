@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, Badge, Button, Card, CardBody, CardHeader, EmptyState, Input, Select, Table } from "@/components/ui";
-import { fmtDate } from "@/lib/utils";
+import { cn, fmtDate } from "@/lib/utils";
 
 export type AdminCourse = {
   id: string;
@@ -19,6 +19,56 @@ export type AdminCourse = {
 export type TeacherOption = { id: string; name: string; email: string };
 
 type ApiResult = { ok: boolean; error?: string };
+
+function ToggleSwitch({
+  checked,
+  disabled,
+  onToggle,
+  label,
+  tone,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+  label: string;
+  tone: "emerald" | "amber";
+}) {
+  const active =
+    tone === "emerald"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : "border-amber-200 bg-amber-50 text-amber-700";
+  const knob = tone === "emerald" ? "bg-emerald-500" : "bg-amber-500";
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={onToggle}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50",
+        checked
+          ? active
+          : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700",
+      )}
+    >
+      <span
+        className={cn(
+          "relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-150",
+          checked ? knob : "bg-slate-300",
+        )}
+      >
+        <span
+          className={cn(
+            "inline-block size-3 translate-x-0.5 rounded-full bg-white shadow transition-transform duration-150",
+            checked && "translate-x-3.5",
+          )}
+        />
+      </span>
+      {label}
+    </button>
+  );
+}
 
 export default function CoursesManager({
   courses,
@@ -157,15 +207,15 @@ export default function CoursesManager({
             />
           </CardBody>
         ) : (
-          <Table>
+          <Table className="max-h-[68vh] overflow-y-auto">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                <th className="px-5 py-3 font-semibold">Kurs</th>
-                <th className="px-5 py-3 font-semibold">O&apos;qituvchi</th>
-                <th className="px-5 py-3 font-semibold">Talabalar</th>
-                <th className="px-5 py-3 font-semibold">Holat</th>
-                <th className="px-5 py-3 font-semibold">Yaratilgan</th>
-                <th className="px-5 py-3 text-right font-semibold">Amallar</th>
+              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Kurs</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">O&apos;qituvchi</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Talabalar</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Holat</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Yaratilgan</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 text-right font-semibold backdrop-blur">Amallar</th>
               </tr>
             </thead>
             <tbody>
@@ -197,7 +247,7 @@ export default function CoursesManager({
                           value={course.teacher.id}
                           disabled={busyId === course.id}
                           onChange={(e) => assignTeacher(course, e.target.value)}
-                          className="max-w-44"
+                          className="max-w-44 rounded-lg py-1.5 text-xs"
                         >
                           {!currentTeacher ? (
                             <option value={course.teacher.id}>{course.teacher.name}</option>
@@ -211,14 +261,32 @@ export default function CoursesManager({
                       </div>
                     </td>
                     <td className="px-5 py-3">
-                      <Badge tone="slate">{course.studentCount} ta</Badge>
+                      <Badge tone={course.studentCount > 0 ? "blue" : "slate"} className="gap-1.5">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        {course.studentCount} ta
+                      </Badge>
                     </td>
                     <td className="px-5 py-3">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge tone={course.isPublished ? "green" : "amber"}>
-                          {course.isPublished ? "E'lon qilingan" : "Qoralama"}
-                        </Badge>
-                        {isElective(course) ? <Badge tone="gold">Tanlov fan</Badge> : null}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ToggleSwitch
+                          checked={course.isPublished}
+                          disabled={busyId === course.id}
+                          onToggle={() => togglePublish(course)}
+                          label={course.isPublished ? "E'lon qilingan" : "Qoralama"}
+                          tone="emerald"
+                        />
+                        <ToggleSwitch
+                          checked={isElective(course)}
+                          disabled={busyId === course.id}
+                          onToggle={() => toggleElective(course)}
+                          label="Tanlov fan"
+                          tone="amber"
+                        />
                       </div>
                     </td>
                     <td className="px-5 py-3 text-xs text-slate-500">{fmtDate(course.createdAt)}</td>
@@ -226,27 +294,17 @@ export default function CoursesManager({
                       <div className="flex justify-end gap-1.5">
                         <Button
                           size="sm"
-                          variant="secondary"
-                          disabled={busyId === course.id}
-                          onClick={() => toggleElective(course)}
-                        >
-                          {isElective(course) ? "Tanlovdan olish" : "Tanlov fan"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          disabled={busyId === course.id}
-                          onClick={() => togglePublish(course)}
-                        >
-                          {course.isPublished ? "Yashirish" : "E'lon qilish"}
-                        </Button>
-                        <Button
-                          size="sm"
                           variant="ghost"
                           className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                           disabled={busyId === course.id}
                           onClick={() => remove(course)}
                         >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                          </svg>
                           O&apos;chirish
                         </Button>
                       </div>

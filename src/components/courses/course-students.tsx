@@ -158,15 +158,57 @@ export function CourseStudents({
       {resolvedCourseId ? (
         adding ? (
           <Card>
-            <CardHeader title="Talaba qo'shish" subtitle="Talabani ism yoki email bo'yicha toping" />
+            <CardHeader
+              title={
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M19 8v6" />
+                      <path d="M22 11h-6" />
+                    </svg>
+                  </span>
+                  {"Talaba qo'shish"}
+                </span>
+              }
+              subtitle="Talabani ism yoki email bo'yicha toping"
+            />
             <CardBody className="flex flex-wrap items-end gap-3">
               <div className="min-w-52 flex-1">
                 <Label>Qidiruv</Label>
-                <Input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Ism yoki email"
-                />
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.5-3.5" />
+                    </svg>
+                  </span>
+                  <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Ism yoki email"
+                    className="pl-9"
+                  />
+                </div>
               </div>
               <div className="min-w-52 flex-1">
                 <Label>Talaba</Label>
@@ -186,6 +228,19 @@ export function CourseStudents({
                 </Select>
               </div>
               <Button onClick={addStudent} disabled={busy || loading || !selectedId}>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
                 {"Qo'shish"}
               </Button>
               <Button variant="secondary" onClick={() => setAdding(false)}>
@@ -195,7 +250,24 @@ export function CourseStudents({
           </Card>
         ) : (
           <div className="flex justify-end">
-            <Button onClick={openAdd}>{"+ Talaba qo'shish"}</Button>
+            <Button onClick={openAdd}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M19 8v6" />
+                <path d="M22 11h-6" />
+              </svg>
+              {"Talaba qo'shish"}
+            </Button>
           </div>
         )
       ) : null}
@@ -207,20 +279,95 @@ export function CourseStudents({
           <CardHeader title="Talabalar" subtitle={`${enrollments.length} ta yozilgan`} />
           <Table>
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <th className="px-5 py-3 font-medium">#</th>
-                <th className="px-5 py-3 font-medium">Talaba</th>
-                <th className="px-5 py-3 font-medium">Email</th>
-                <th className="px-5 py-3 font-medium">Guruh</th>
-                <th className="px-5 py-3 font-medium">Yozilgan</th>
-                <th className="px-5 py-3 font-medium">Amal</th>
+              <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] uppercase tracking-[0.08em] text-slate-400">
+                <th className="px-5 py-3.5 font-semibold">#</th>
+                <th className="px-5 py-3.5 font-semibold">
+                  <span className="inline-flex items-center gap-1.5">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Talaba
+                  </span>
+                </th>
+                <th className="px-5 py-3.5 font-semibold">
+                  <span className="inline-flex items-center gap-1.5">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="2" y="4" width="20" height="16" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    Email
+                  </span>
+                </th>
+                <th className="px-5 py-3.5 font-semibold">
+                  <span className="inline-flex items-center gap-1.5">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Guruh
+                  </span>
+                </th>
+                <th className="px-5 py-3.5 font-semibold">
+                  <span className="inline-flex items-center gap-1.5">
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <path d="M16 2v4" />
+                      <path d="M8 2v4" />
+                      <path d="M3 10h18" />
+                    </svg>
+                    Yozilgan
+                  </span>
+                </th>
+                <th className="px-5 py-3.5 font-semibold">Amal</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {enrollments.map((enrollment, index) => (
-                <tr key={enrollment.id} className="transition-colors duration-150 hover:bg-slate-50/70">
+                <tr
+                  key={enrollment.id}
+                  className="group transition-colors duration-150 hover:bg-brand-50/30"
+                >
                   <td className="px-5 py-3">
-                    <span className="inline-flex size-6 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-500">
+                    <span className="inline-flex size-6 items-center justify-center rounded-lg bg-slate-100 text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-200/70">
                       {index + 1}
                     </span>
                   </td>
@@ -233,7 +380,7 @@ export function CourseStudents({
                   <td className="px-5 py-3 text-slate-500">{enrollment.user.email}</td>
                   <td className="px-5 py-3">
                     {enrollment.user.group?.name ? (
-                      <span className="inline-flex rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                      <span className="inline-flex rounded-lg bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 ring-1 ring-inset ring-brand-100">
                         {enrollment.user.group.name}
                       </span>
                     ) : (
@@ -245,12 +392,26 @@ export function CourseStudents({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-rose-600"
+                      className="text-rose-600 hover:bg-rose-50! hover:text-rose-700!"
                       disabled={busy}
                       onClick={() =>
                         removeStudent(enrollment.id, enrollment.user.id, enrollment.user.name)
                       }
                     >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
                       Chiqarish
                     </Button>
                   </td>

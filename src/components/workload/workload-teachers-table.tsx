@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge, Table } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { formatHours, type WorkloadTeacher } from "./workload-data";
 
 export type WorkloadSortKey = "name" | "courses" | "students" | "hours" | "pending";
@@ -61,6 +62,39 @@ function teacherHref(id: string, sort: WorkloadSortKey, dir: "asc" | "desc") {
   return `/workload?${params.toString()}`;
 }
 
+function SortArrows({ dir }: { dir: "asc" | "desc" | null }) {
+  return (
+    <span aria-hidden className="inline-flex flex-col -space-y-1">
+      <svg
+        width="9"
+        height="9"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={dir === "asc" ? "text-brand-700" : "text-slate-300"}
+      >
+        <path d="m6 15 6-6 6 6" />
+      </svg>
+      <svg
+        width="9"
+        height="9"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={dir === "desc" ? "text-brand-700" : "text-slate-300"}
+      >
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    </span>
+  );
+}
+
 export function WorkloadTeachersTable({
   teachers,
   sort,
@@ -76,20 +110,34 @@ export function WorkloadTeachersTable({
     <Table>
       <thead>
         <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          {COLUMNS.map((column) => (
-            <th
-              key={column.key}
-              className={column.align === "right" ? "px-5 py-3 text-right" : "px-5 py-3"}
-            >
-              <Link
-                href={sortHref(column.key, sort, dir, activeTeacherId)}
-                className="inline-flex items-center gap-1 transition-colors duration-150 hover:text-brand-700"
+          {COLUMNS.map((column) => {
+            const active = sort === column.key;
+            return (
+              <th
+                key={column.key}
+                aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : undefined}
+                className={cn("group/sort px-5 py-3", column.align === "right" ? "text-right" : "")}
               >
-                {column.label}
-                {sort === column.key ? <span aria-hidden>{dir === "asc" ? "↑" : "↓"}</span> : null}
-              </Link>
-            </th>
-          ))}
+                <Link
+                  href={sortHref(column.key, sort, dir, activeTeacherId)}
+                  className={cn(
+                    "inline-flex select-none items-center gap-1.5 transition-colors duration-150 hover:text-brand-700",
+                    active ? "text-brand-700" : "",
+                  )}
+                >
+                  {column.label}
+                  <span
+                    className={cn(
+                      "inline-flex transition-opacity duration-150",
+                      active ? "opacity-100" : "opacity-0 group-hover/sort:opacity-100",
+                    )}
+                  >
+                    <SortArrows dir={active ? dir : null} />
+                  </span>
+                </Link>
+              </th>
+            );
+          })}
         </tr>
       </thead>
       <tbody>

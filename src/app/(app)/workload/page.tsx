@@ -45,26 +45,34 @@ export default async function WorkloadPage({
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
-          label="Kurslar"
-          value={data.summary.courseCount}
-          hint={scopeName ? "Biriktirilgan kurslar" : "Tizimdagi barcha kurslar"}
-        />
-        <Stat
-          label="Talabalar"
-          value={data.summary.studentCount}
-          hint="Kurslarga yozilgan talabalar"
-        />
-        <Stat
-          label="Kutilayotgan baholash"
-          value={data.summary.pendingReviews}
-          hint="Topshiriq va matnli javoblar"
-        />
-        <Stat
-          label="Haftalik soatlar"
-          value={formatHours(data.summary.weeklyHours)}
-          hint="Jadval: 1 dars = 1.5 soat"
-        />
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-brand-50/70">
+          <Stat
+            label="Kurslar"
+            value={data.summary.courseCount}
+            hint={scopeName ? "Biriktirilgan kurslar" : "Tizimdagi barcha kurslar"}
+          />
+        </div>
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-emerald-50/70">
+          <Stat
+            label="Talabalar"
+            value={data.summary.studentCount}
+            hint="Kurslarga yozilgan talabalar"
+          />
+        </div>
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-amber-50/70">
+          <Stat
+            label="Kutilayotgan baholash"
+            value={data.summary.pendingReviews}
+            hint="Topshiriq va matnli javoblar"
+          />
+        </div>
+        <div className="rounded-2xl transition-transform duration-150 hover:-translate-y-0.5 [&>div]:h-full [&>div]:bg-gradient-to-br [&>div]:from-white [&>div]:to-purple-50/70">
+          <Stat
+            label="Haftalik soatlar"
+            value={formatHours(data.summary.weeklyHours)}
+            hint="Jadval: 1 dars = 1.5 soat"
+          />
+        </div>
       </div>
 
       {user.role === "ADMIN" ? (

@@ -99,7 +99,13 @@ export default function RoomsManager({ rooms }: { rooms: RoomItem[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button onClick={openCreate}>+ Yangi xona</Button>
+        <Button onClick={openCreate}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14" />
+            <path d="M5 12h14" />
+          </svg>
+          Yangi xona
+        </Button>
         <div className="flex flex-wrap items-center gap-2">
           {notice ? (
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
@@ -175,7 +181,15 @@ export default function RoomsManager({ rooms }: { rooms: RoomItem[] }) {
       ) : null}
 
       {rooms.length === 0 ? (
-        <EmptyState title="Xonalar yo'q" description="Birinchi xonani qo'shing." />
+        <EmptyState
+          title="Xonalar yo'q"
+          description="Birinchi xonani qo'shing — u katalogda shu yerda ko'rinadi."
+          action={
+            <Button size="sm" variant="secondary" onClick={openCreate}>
+              Xona qo&apos;shish
+            </Button>
+          }
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rooms.map((room) => (

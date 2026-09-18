@@ -41,18 +41,40 @@ export default async function ScheduleBuilderPage({
   const rowEntries = await prisma.scheduleEntry.findMany({
     where: { groupId: selectedGroup.id },
     orderBy: [{ dayOfWeek: "asc" }, { slot: "asc" }],
+    include: { subjectRef: { select: { name: true, color: true } } },
   });
 
   const courseRows = await prisma.course.findMany({
     where: user.role === "ADMIN" ? {} : { teacherId: user.id },
     orderBy: { title: "asc" },
-    select: { id: true, title: true, teacher: { select: { name: true } } },
+    select: {
+      id: true,
+      title: true,
+      subjectId: true,
+      coverColor: true,
+      teacher: { select: { name: true } },
+    },
   });
   const courses: BuilderCourse[] = courseRows.map((course) => ({
     id: course.id,
     title: course.title,
     teacherName: course.teacher.name,
+    subjectId: course.subjectId,
+    coverColor: course.coverColor,
   }));
+
+  let myGroupIds: string[] = [];
+  if (user.role === "TEACHER") {
+    const enrollments = await prisma.enrollment.findMany({
+      where: { course: { teacherId: user.id }, user: { groupId: { not: null } } },
+      select: { user: { select: { groupId: true } } },
+    });
+    const taught = new Set<string>();
+    for (const row of enrollments) {
+      if (row.user.groupId) taught.add(row.user.groupId);
+    }
+    myGroupIds = groups.filter((group) => taught.has(group.id)).map((group) => group.id);
+  }
 
   const roomSet = new Set<string>(STANDARD_ROOMS);
   const existingRooms = await prisma.scheduleEntry.findMany({
@@ -88,6 +110,9 @@ export default async function ScheduleBuilderPage({
     dayOfWeek: entry.dayOfWeek,
     slot: entry.slot,
     subject: entry.subject,
+    subjectId: entry.subjectId,
+    lessonType: entry.lessonType,
+    subjectRef: entry.subjectRef ? { name: entry.subjectRef.name, color: entry.subjectRef.color } : null,
     teacher: entry.teacher,
     room: entry.room,
     parity: entry.parity,
@@ -114,6 +139,7 @@ export default async function ScheduleBuilderPage({
         role={user.role === "ADMIN" ? "ADMIN" : "TEACHER"}
         userName={user.name}
         groups={groups}
+        myGroupIds={myGroupIds}
         selectedGroupId={selectedGroup.id}
         weekStart={weekStart}
         weekParity={weekParity}

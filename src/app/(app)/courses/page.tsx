@@ -64,8 +64,14 @@ export default async function CoursesPage() {
         />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((course) => (
-            <CourseCard key={course.id} course={course} staff={staff} />
+          {items.map((course, index) => (
+            <div
+              key={course.id}
+              className="h-full animate-fade-up"
+              style={{ animationDelay: `${Math.min(index * 60, 360)}ms` }}
+            >
+              <CourseCard course={course} staff={staff} />
+            </div>
           ))}
         </div>
       )}

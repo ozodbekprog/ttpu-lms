@@ -19,17 +19,18 @@ export default function QuizzesLoading() {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, index) => (
           <Card key={index} className="flex flex-col p-5">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <Bar className="h-4 w-2/3" />
                 <Bar className="mt-2 h-3 w-1/3" />
+                <Bar className="mt-3 h-5 w-24 rounded-full" />
               </div>
-              <Bar className="h-5 w-24 rounded-full" />
+              <div className="relative size-[88px] shrink-0 animate-pulse rounded-full border-8 border-slate-200 bg-slate-100" />
             </div>
-            <div className="mt-4 flex gap-4">
-              <Bar className="h-3 w-16" />
-              <Bar className="h-3 w-20" />
-              <Bar className="h-3 w-16" />
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Bar className="h-6 w-20 rounded-lg" />
+              <Bar className="h-6 w-24 rounded-lg" />
+              <Bar className="h-6 w-20 rounded-lg" />
             </div>
             <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-4">
               <Bar className="h-7 w-20 rounded-lg" />

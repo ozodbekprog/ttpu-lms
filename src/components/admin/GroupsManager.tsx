@@ -192,13 +192,13 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
             />
           </CardBody>
         ) : (
-          <Table>
+          <Table className="max-h-[68vh] overflow-y-auto">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                <th className="px-5 py-3 font-semibold">Nomi</th>
-                <th className="px-5 py-3 font-semibold">Yil</th>
-                <th className="px-5 py-3 font-semibold">Foydalanuvchilar</th>
-                <th className="px-5 py-3 text-right font-semibold">Amallar</th>
+              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Nomi</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Yil</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">A&apos;zolar</th>
+                <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 text-right font-semibold backdrop-blur">Amallar</th>
               </tr>
             </thead>
             <tbody>
@@ -207,10 +207,25 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
                   key={group.id}
                   className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/60"
                 >
-                  <td className="px-5 py-3 font-medium text-slate-900">{group.name}</td>
-                  <td className="px-5 py-3 text-slate-600">{group.year ?? "—"}</td>
                   <td className="px-5 py-3">
-                    <Badge tone="slate">{group.userCount} ta</Badge>
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-800 to-brand-600 text-[11px] font-semibold uppercase text-white shadow-sm">
+                        {group.name.slice(0, 2)}
+                      </span>
+                      <span className="font-medium text-slate-900">{group.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 tabular-nums text-slate-600">{group.year ?? "—"}</td>
+                  <td className="px-5 py-3">
+                    <Badge tone={group.userCount > 0 ? "blue" : "slate"} className="gap-1.5">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                      {group.userCount} a&apos;zo
+                    </Badge>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-1.5">

@@ -8,6 +8,8 @@ const createSchema = z.object({
   dayOfWeek: z.number().int().min(1).max(6),
   slot: z.number().int().min(1).max(8),
   subject: z.string().trim().min(1).max(200),
+  subjectId: z.string().cuid().nullish(),
+  lessonType: z.string().max(40).nullish(),
   teacher: z.string().trim().max(200).nullish(),
   room: z.string().trim().max(100).nullish(),
   parity: z.enum(["odd", "even"]).nullish(),
@@ -39,6 +41,7 @@ export async function GET(request: Request) {
   const entries = await prisma.scheduleEntry.findMany({
     where: { groupId: group.id },
     orderBy: [{ dayOfWeek: "asc" }, { slot: "asc" }],
+    include: { subjectRef: { select: { name: true, color: true } } },
   });
 
   return Response.json({ ok: true, data: { group, entries } });
@@ -69,6 +72,13 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Bu jadval yozuvini o'zgartirish huquqingiz yo'q" }, { status: 403 });
   }
 
+  if (data.subjectId) {
+    const subject = await prisma.subject.findUnique({ where: { id: data.subjectId }, select: { id: true } });
+    if (!subject) {
+      return Response.json({ ok: false, error: "Fan topilmadi" }, { status: 400 });
+    }
+  }
+
   const parity = data.parity ?? null;
   const conflict = await prisma.scheduleEntry.findFirst({
     where: {
@@ -89,12 +99,15 @@ export async function POST(request: Request) {
       dayOfWeek: data.dayOfWeek,
       slot: data.slot,
       subject: data.subject,
+      subjectId: data.subjectId ?? null,
+      lessonType: data.lessonType ? data.lessonType : null,
       teacher: data.teacher ? data.teacher : null,
       room: data.room ? data.room : null,
       parity,
       status: data.status ?? "NORMAL",
       note: data.note ? data.note : null,
     },
+    include: { subjectRef: { select: { name: true, color: true } } },
   });
 
   return Response.json({ ok: true, data: entry }, { status: 201 });

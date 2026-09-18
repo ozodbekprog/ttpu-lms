@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Badge, Table } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { formatHours, type WorkloadCourse } from "./workload-data";
 
 export function WorkloadCoursesTable({
@@ -41,19 +42,41 @@ export function WorkloadCoursesTable({
             <td className="px-5 py-3 text-right tabular-nums text-slate-700">
               {course.studentCount}
             </td>
-            <td className="px-5 py-3">
+            <td className={cn("px-5 py-3", course.pendingSubmissions > 0 ? "bg-amber-50/50" : "")}>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="tabular-nums text-slate-700">{course.assignmentCount}</span>
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    course.pendingSubmissions > 0
+                      ? "font-semibold text-amber-800"
+                      : "text-slate-700",
+                  )}
+                >
+                  {course.assignmentCount}
+                </span>
                 {course.pendingSubmissions > 0 ? (
-                  <Badge tone="amber">{course.pendingSubmissions} baholanmagan</Badge>
+                  <Badge tone="amber" className="shadow-sm ring-1 ring-inset ring-amber-200/80">
+                    {course.pendingSubmissions} baholanmagan
+                  </Badge>
                 ) : null}
               </div>
             </td>
-            <td className="px-5 py-3">
+            <td className={cn("px-5 py-3", course.pendingTextAnswers > 0 ? "bg-amber-50/50" : "")}>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="tabular-nums text-slate-700">{course.quizCount}</span>
+                <span
+                  className={cn(
+                    "tabular-nums",
+                    course.pendingTextAnswers > 0
+                      ? "font-semibold text-amber-800"
+                      : "text-slate-700",
+                  )}
+                >
+                  {course.quizCount}
+                </span>
                 {course.pendingTextAnswers > 0 ? (
-                  <Badge tone="amber">{course.pendingTextAnswers} matnli javob</Badge>
+                  <Badge tone="amber" className="shadow-sm ring-1 ring-inset ring-amber-200/80">
+                    {course.pendingTextAnswers} matnli javob
+                  </Badge>
                 ) : null}
               </div>
             </td>

@@ -2,8 +2,10 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
+  Avatar,
   Badge,
   Button,
+  ButtonLink,
   Card,
   CardBody,
   CardHeader,
@@ -18,6 +20,7 @@ import { cn, fmtDate, fmtDateTime, gradeColor, scorePercent } from "@/lib/utils"
 import { SubmissionBadge } from "@/components/courses/assignments-status";
 import { getStudentAttendance } from "@/app/api/attendance/summary/data";
 import { GradeBadge } from "@/components/grades/grade-badge";
+import { GradeRing } from "@/components/grades/grade-ring";
 import { RatingPanel } from "@/components/grades/rating-panel";
 import { rankRatings } from "@/components/grades/rating";
 import type { RatingEntry } from "@/components/grades/rating";
@@ -177,6 +180,26 @@ export default async function GradesPage({
       ratingRows = rankRatings(entries);
     }
 
+    const me = ratingRows.find((row) => row.isMe) ?? null;
+
+    function groupAverage(group: (typeof groups)[number]) {
+      let score = 0;
+      let max = 0;
+      for (const submission of group.submissions) {
+        if (submission.score == null) continue;
+        score += submission.score;
+        max += submission.assignment.maxScore;
+      }
+      for (const attempt of group.attempts) {
+        if (attempt.score == null) continue;
+        const quizMax = attempt.quiz.questions.reduce((sum, question) => sum + question.points, 0);
+        if (quizMax <= 0) continue;
+        score += attempt.score;
+        max += quizMax;
+      }
+      return max > 0 ? Math.round((score / max) * 100) : null;
+    }
+
     return (
       <>
         <PageHeader title="Baholarim" subtitle={user.group?.name ?? "Talaba"} />
@@ -221,32 +244,47 @@ export default async function GradesPage({
           </Card>
         ) : null}
 
-        <Card className="relative overflow-hidden">
+        <Card className="relative overflow-hidden border-brand-100">
           <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
-          <CardBody className="grid gap-6 py-6 sm:grid-cols-[minmax(0,15rem)_1fr] sm:items-center">
-            <div className="flex items-center gap-5">
-              <GradeBadge percent={average} size="xl" className="shadow-md" />
-              <div>
-                <p className="text-sm font-medium text-slate-500">Umumiy o&apos;rtacha</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  {maxSum > 0 ? "Baholangan topshiriq va testlar asosida" : "Hali baho yo'q"}
-                </p>
-              </div>
+          <span className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-brand-100/50 blur-3xl" />
+          <span className="pointer-events-none absolute -bottom-28 -left-16 size-64 rounded-full bg-gold-300/20 blur-3xl" />
+          <CardBody className="relative grid gap-7 py-7 sm:grid-cols-[auto_1fr] sm:items-center">
+            <div className="flex justify-center sm:block">
+              <GradeRing percent={average} />
             </div>
-            <div className="space-y-3">
-              <Progress value={average ?? 0} max={100} className="h-2" />
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
-                <span>
-                  <span className="font-semibold text-slate-700">{graded.length}</span> baholangan
-                </span>
-                <span className="hidden h-4 w-px bg-slate-200 sm:block" />
-                <span>
-                  <span className="font-semibold text-slate-700">{submissions.length}</span> javob
-                </span>
-                <span className="hidden h-4 w-px bg-slate-200 sm:block" />
-                <span>
-                  <span className="font-semibold text-slate-700">{attempts.length}</span> test urinishi
-                </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold text-slate-600">Umumiy o&apos;rtacha</p>
+                {me ? <Badge tone="gold">Reytingda #{me.rank}</Badge> : null}
+              </div>
+              <p className="mt-1 text-xs text-slate-400">
+                {maxSum > 0 ? "Baholangan topshiriq va testlar asosida" : "Hali baho yo'q"}
+              </p>
+              <div className="mt-5">
+                <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-500">
+                  <span>O&apos;zlashtirish</span>
+                  <span className="tabular-nums text-slate-700">{average ?? 0}%</span>
+                </div>
+                <Progress value={average ?? 0} max={100} className="h-2" />
+              </div>
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                {[
+                  { label: "Baholangan", value: graded.length },
+                  { label: "Javoblar", value: submissions.length },
+                  { label: "Testlar", value: attempts.length },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl bg-white/70 px-3.5 py-3 ring-1 ring-slate-100"
+                  >
+                    <p className="text-xl font-semibold tracking-tight tabular-nums text-brand-900">
+                      {item.value}
+                    </p>
+                    <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                      {item.label}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </CardBody>
@@ -268,8 +306,8 @@ export default async function GradesPage({
             <Card key={group.title} className="mt-6">
               <CardHeader
                 title={
-                  <span className="flex items-center gap-2">
-                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand-50 text-xs font-bold text-brand-700">
+                  <span className="flex items-center gap-2.5">
+                    <span className="inline-flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-900 to-brand-600 text-xs font-bold text-white shadow-sm">
                       {group.title.slice(0, 1).toUpperCase()}
                     </span>
                     {group.title}
@@ -278,12 +316,22 @@ export default async function GradesPage({
                 subtitle={`${group.submissions.length} ta topshiriq javobi${
                   group.attempts.length > 0 ? ` · ${group.attempts.length} ta test` : ""
                 }`}
+                action={
+                  groupAverage(group) != null ? (
+                    <span className="flex items-center gap-2">
+                      <span className="hidden text-[11px] font-medium uppercase tracking-wide text-slate-400 sm:block">
+                        Kurs o&apos;rtachasi
+                      </span>
+                      <GradeBadge percent={groupAverage(group)} size="md" />
+                    </span>
+                  ) : null
+                }
               />
               <CardBody className="space-y-6">
                 {group.submissions.length > 0 ? (
                   <Table>
                     <thead>
-                      <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                      <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wide text-slate-400">
                         <th className="py-2.5 pr-3 text-left font-medium">Topshiriq</th>
                         <th className="px-3 py-2.5 text-left font-medium">Muddat</th>
                         <th className="px-3 py-2.5 text-left font-medium">Holat</th>
@@ -336,7 +384,7 @@ export default async function GradesPage({
                     </p>
                     <Table>
                       <thead>
-                        <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                        <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wide text-slate-400">
                           <th className="py-2.5 pr-3 text-left font-medium">Test</th>
                           <th className="px-3 py-2.5 text-left font-medium">Sana</th>
                           <th className="px-3 py-2.5 text-left font-medium">Holat</th>
@@ -465,6 +513,11 @@ export default async function GradesPage({
     return sum + (assignment?.maxScore ?? 0);
   }, 0);
 
+  const pendingSubmissions = submissions.filter((submission) => submission.score == null);
+  const studentNames = new Map(
+    enrollments.map((enrollment) => [enrollment.user.id, enrollment.user.name]),
+  );
+
   return (
     <>
       <PageHeader
@@ -489,9 +542,88 @@ export default async function GradesPage({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Talabalar" value={enrollments.length} />
         <Stat label="Topshiriqlar" value={assignments.length} />
-        <Stat label="Topshirilgan" value={submissions.length} />
+        <Stat
+          label="Kutilmoqda"
+          value={pendingSubmissions.length}
+          hint={pendingSubmissions.length > 0 ? "Baholash navbatida" : "Navbat bo'sh"}
+        />
         <Stat label="Baholangan" value={gradedSubmissions.length} />
       </div>
+
+      <Card className="mt-6">
+        <CardHeader
+          title="Baholash navbati"
+          subtitle={
+            pendingSubmissions.length > 0
+              ? `${pendingSubmissions.length} ta javob baho kutmoqda`
+              : "Barcha topshirilgan javoblar baholangan"
+          }
+          action={
+            pendingSubmissions.length > 0 ? (
+              <Badge tone="amber">{pendingSubmissions.length} ta</Badge>
+            ) : (
+              <Badge tone="green">Tayyor</Badge>
+            )
+          }
+        />
+        <CardBody className="p-0">
+          {pendingSubmissions.length === 0 ? (
+            <div className="flex items-center gap-3 px-6 py-5 text-sm text-slate-500">
+              <span className="inline-flex size-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m5 12 4.5 4.5L19 7" />
+                </svg>
+              </span>
+              Baholash navbatda turgan javob yo&apos;q.
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {pendingSubmissions
+                .slice()
+                .sort((a, b) => a.submittedAt.getTime() - b.submittedAt.getTime())
+                .slice(0, 6)
+                .map((submission, index) => {
+                  const assignment = assignments.find(
+                    (item) => item.id === submission.assignmentId,
+                  );
+                  const student = studentNames.get(submission.studentId) ?? "Talaba";
+                  return (
+                    <li
+                      key={submission.id}
+                      className="flex items-center gap-3 px-4 py-3 transition-colors duration-150 animate-fade-up hover:bg-slate-50/70 sm:px-6"
+                      style={{ animationDelay: `${index * 45}ms` }}
+                    >
+                      <Avatar name={student} className="size-9! text-[10px]" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-slate-800">{student}</p>
+                        <p className="truncate text-xs text-slate-500">
+                          {assignment?.title ?? "Topshiriq"} · {fmtDate(submission.submittedAt)}
+                        </p>
+                      </div>
+                      <ButtonLink
+                        href={`/courses/${selected.slug}/assignments/${submission.assignmentId}`}
+                        variant="secondary"
+                        size="sm"
+                        className="shrink-0"
+                      >
+                        Baholash
+                      </ButtonLink>
+                    </li>
+                  );
+                })}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
 
       <Card className="mt-6">
         <CardHeader
@@ -505,86 +637,95 @@ export default async function GradesPage({
               description="Kursda talaba yoki topshiriq mavjud emas."
             />
           ) : (
-            <Table>
-              <thead>
-                <tr className="bg-slate-50 text-xs text-slate-500">
-                  <th className="sticky left-0 z-10 rounded-l-xl bg-slate-50 py-3 pr-4 text-left font-medium">
-                    Talaba
-                  </th>
-                  {assignments.map((assignment) => (
-                    <th key={assignment.id} className="min-w-28 px-3 py-3 text-center font-medium">
-                      <span className="mx-auto block max-w-32 truncate">{assignment.title}</span>
-                      <span className="block font-normal text-slate-400">max {assignment.maxScore}</span>
+            <div className="max-h-[70vh] overflow-auto overscroll-contain rounded-2xl border border-slate-200/70">
+              <table className="w-full min-w-max text-left text-sm">
+                <thead>
+                  <tr className="text-xs text-slate-500">
+                    <th className="sticky left-0 top-0 z-30 min-w-44 bg-slate-50 px-4 py-3 text-left font-medium shadow-[inset_0_-1px_0_#e2e8f0]">
+                      Talaba
                     </th>
-                  ))}
-                  <th className="rounded-r-xl bg-brand-50 px-3 py-3 text-center font-semibold text-brand-800">
-                    O&apos;rtacha
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {enrollments.map((enrollment) => {
-                  const average = studentAverage(enrollment.user.id);
-                  return (
-                    <tr
-                      key={enrollment.id}
-                      className="group border-b border-slate-100 transition-colors duration-150 last:border-0 hover:bg-slate-50/60"
-                    >
-                      <td className="sticky left-0 z-10 bg-white py-3 pr-4 text-sm font-medium text-slate-800 transition-colors duration-150 group-hover:bg-slate-50">
-                        {enrollment.user.name}
-                      </td>
-                      {assignments.map((assignment) => {
-                        const submission = byStudentAssignment.get(
-                          `${enrollment.user.id}:${assignment.id}`,
-                        );
-                        return (
-                          <td key={assignment.id} className="px-3 py-3 text-center text-sm">
-                            {submission ? (
-                              submission.score != null ? (
-                                <GradeBadge
-                                  percent={scorePercent(submission.score, assignment.maxScore)}
-                                  size="sm"
-                                />
-                              ) : (
-                                <SubmissionBadge status={submission.status} />
-                              )
-                            ) : (
-                              <span className="text-slate-300">—</span>
-                            )}
-                          </td>
-                        );
-                      })}
-                      <td className="bg-brand-50/40 px-3 py-3 text-center text-sm font-semibold transition-colors duration-150 group-hover:bg-brand-50/70">
-                        {average != null ? (
-                          <span className={gradeColor(average)}>{average}%</span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-                <tr className="bg-slate-50 text-xs text-slate-500">
-                  <td className="sticky left-0 z-10 rounded-bl-xl bg-slate-50 py-2.5 pr-4 font-medium">
-                    O&apos;rtacha
-                  </td>
-                  {assignments.map((assignment) => {
-                    const average = assignmentAverage(assignment.id, assignment.maxScore);
-                    return (
-                      <td
+                    {assignments.map((assignment) => (
+                      <th
                         key={assignment.id}
-                        className="px-3 py-2.5 text-center font-semibold text-slate-600"
+                        className="sticky top-0 z-20 min-w-28 bg-slate-50 px-3 py-3 text-center font-medium shadow-[inset_0_-1px_0_#e2e8f0]"
                       >
-                        {average != null ? `${average}%` : "—"}
-                      </td>
+                        <span className="mx-auto block max-w-32 truncate">{assignment.title}</span>
+                        <span className="block font-normal text-slate-400">
+                          max {assignment.maxScore}
+                        </span>
+                      </th>
+                    ))}
+                    <th className="sticky top-0 z-20 bg-brand-50 px-3 py-3 text-center font-semibold text-brand-800 shadow-[inset_0_-1px_0_#dbe4f4]">
+                      O&apos;rtacha
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enrollments.map((enrollment) => {
+                    const average = studentAverage(enrollment.user.id);
+                    return (
+                      <tr
+                        key={enrollment.id}
+                        className="group border-b border-slate-100 transition-colors duration-150 last:border-0 hover:bg-slate-50/60"
+                      >
+                        <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-medium text-slate-800 transition-colors duration-150 group-hover:bg-slate-50">
+                          {enrollment.user.name}
+                        </td>
+                        {assignments.map((assignment) => {
+                          const submission = byStudentAssignment.get(
+                            `${enrollment.user.id}:${assignment.id}`,
+                          );
+                          return (
+                            <td key={assignment.id} className="px-3 py-3 text-center text-sm">
+                              {submission ? (
+                                submission.score != null ? (
+                                  <GradeBadge
+                                    percent={scorePercent(submission.score, assignment.maxScore)}
+                                    size="sm"
+                                  />
+                                ) : (
+                                  <SubmissionBadge status={submission.status} />
+                                )
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td className="border-l border-brand-100/70 bg-brand-50/40 px-3 py-3 text-center text-sm font-semibold transition-colors duration-150 group-hover:bg-brand-50/70">
+                          {average != null ? (
+                            <span className={gradeColor(average)}>{average}%</span>
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
+                        </td>
+                      </tr>
                     );
                   })}
-                  <td className="rounded-br-xl bg-brand-50 px-3 py-2.5 text-center font-semibold text-brand-800">
-                    {totalMax > 0 ? `${Math.round((totalScore / totalMax) * 100)}%` : "—"}
-                  </td>
-                </tr>
-              </tbody>
-            </Table>
+                </tbody>
+                <tfoot>
+                  <tr className="text-xs text-slate-500">
+                    <td className="sticky bottom-0 left-0 z-30 bg-slate-50 px-4 py-2.5 font-medium shadow-[inset_0_1px_0_#e2e8f0]">
+                      O&apos;rtacha
+                    </td>
+                    {assignments.map((assignment) => {
+                      const average = assignmentAverage(assignment.id, assignment.maxScore);
+                      return (
+                        <td
+                          key={assignment.id}
+                          className="sticky bottom-0 z-20 bg-slate-50 px-3 py-2.5 text-center font-semibold text-slate-600 shadow-[inset_0_1px_0_#e2e8f0]"
+                        >
+                          {average != null ? `${average}%` : "—"}
+                        </td>
+                      );
+                    })}
+                    <td className="sticky bottom-0 z-20 border-l border-brand-100/70 bg-brand-50 px-3 py-2.5 text-center font-semibold text-brand-800 shadow-[inset_0_1px_0_#dbe4f4]">
+                      {totalMax > 0 ? `${Math.round((totalScore / totalMax) * 100)}%` : "—"}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           )}
         </CardBody>
       </Card>

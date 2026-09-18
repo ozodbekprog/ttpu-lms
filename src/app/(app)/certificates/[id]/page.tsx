@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { isStaff, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { fmtDate } from "@/lib/utils";
-import { certificateSerial } from "@/components/certificates/certificate-access";
+import {
+  certificateGrade,
+  certificateSerial,
+} from "@/components/certificates/certificate-access";
 import { PrintButton } from "@/components/certificates/print-button";
 
 const PRINT_STYLES = `
@@ -32,43 +35,56 @@ const PRINT_STYLES = `
 
 function GoldSeal() {
   return (
-    <svg viewBox="0 0 56 56" className="size-10 text-gold-400 sm:size-12" aria-hidden="true">
-      <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <circle
-        cx="28"
-        cy="28"
-        r="19"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="0.9"
-        strokeDasharray="2.5 3"
-      />
+    <svg viewBox="0 0 64 64" className="size-11 text-gold-400 sm:size-14" aria-hidden="true">
+      <defs>
+        <linearGradient id="cert-detail-seal" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#e3c76a" />
+          <stop offset="50%" stopColor="#d4af37" />
+          <stop offset="100%" stopColor="#a9871f" />
+        </linearGradient>
+      </defs>
       <path
-        d="M20 28.5l5.2 5.2L36.5 22.4"
+        d="M22 38 18.5 60 32 54.5 45.5 60 42 38"
+        fill="url(#cert-detail-seal)"
+        stroke="#a9871f"
+        strokeWidth="0.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="32" cy="26" r="21" fill="url(#cert-detail-seal)" stroke="#a9871f" strokeWidth="0.8" />
+      <circle cx="32" cy="26" r="16.5" fill="#ffffff" />
+      <circle cx="32" cy="26" r="16.5" fill="none" stroke="#d4af37" strokeWidth="1.2" />
+      <circle cx="32" cy="26" r="13" fill="none" stroke="#d4af37" strokeWidth="0.7" strokeDasharray="2.4 2.4" />
+      <path
+        d="M24.5 26.5l5.4 5.2L40 21.6"
         fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
+        stroke="#1d3460"
+        strokeWidth="2.6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        d="M28 2.5v4M28 49.5v4M2.5 28h4M49.5 28h4"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
       <text
-        x="28"
-        y="44"
+        x="32"
+        y="42.5"
         textAnchor="middle"
-        fontSize="6.5"
-        fontWeight="600"
-        fill="currentColor"
-        letterSpacing="1.5"
+        fontSize="6.4"
+        fontWeight="700"
+        fill="#a9871f"
+        letterSpacing="1.6"
       >
         TTPU
       </text>
     </svg>
+  );
+}
+
+function CornerOrnaments() {
+  return (
+    <>
+      <span className="pointer-events-none absolute left-2 top-2 size-7 border-l-2 border-t-2 border-gold-400/80" />
+      <span className="pointer-events-none absolute right-2 top-2 size-7 border-r-2 border-t-2 border-gold-400/80" />
+      <span className="pointer-events-none absolute bottom-2 left-2 size-7 border-b-2 border-l-2 border-gold-400/80" />
+      <span className="pointer-events-none absolute bottom-2 right-2 size-7 border-b-2 border-r-2 border-gold-400/80" />
+    </>
   );
 }
 
@@ -84,7 +100,7 @@ export default async function CertificatePage({
     where: { id },
     include: {
       course: { select: { title: true } },
-      student: { select: { name: true } },
+      student: { select: { name: true, group: { select: { name: true } } } },
       issuedBy: { select: { name: true } },
     },
   });
@@ -94,27 +110,39 @@ export default async function CertificatePage({
   const isOwner = certificate.studentId === user.id;
   if (!isOwner && !isStaff(user.role)) notFound();
 
+  const grade = certificateGrade(certificate.grade);
+  const serial = certificateSerial(certificate.id);
+
   return (
     <>
       <style>{PRINT_STYLES}</style>
 
       <div className="print:hidden">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <Link
               href="/certificates"
               className="inline-flex items-center gap-1 text-sm text-slate-500 transition-colors duration-150 hover:text-brand-700"
             >
-              ← Sertifikatlar
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Sertifikatlar
             </Link>
             <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-brand-950">
               {certificate.student.name}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              {certificate.course.title} · {certificateSerial(certificate.id)}
+              {certificate.course.title} ·{" "}
+              <span className="font-mono text-xs tracking-wider text-slate-400">{serial}</span>
             </p>
           </div>
-          <PrintButton />
+          <div className="flex flex-col items-end gap-1.5">
+            <PrintButton />
+            <p className="text-xs text-slate-400">
+              PDF sifatida saqlash yoki chop etish uchun
+            </p>
+          </div>
         </div>
       </div>
 
@@ -127,7 +155,9 @@ export default async function CertificatePage({
           </div>
 
           <div className="relative flex h-full flex-col border-[3px] border-gold-400/70 print:border-[2px]">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-brand-950 px-4 py-3 text-white sm:px-8 sm:py-3.5">
+            <CornerOrnaments />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gold-400/60 bg-gradient-to-r from-brand-950 via-brand-900 to-brand-950 px-4 py-3 text-white sm:px-8 sm:py-3.5">
               <div className="flex items-center gap-3">
                 <span className="flex size-10 items-center justify-center rounded-lg border border-gold-400/50 bg-white/5 text-[11px] font-bold tracking-wider text-white sm:size-11">
                   TTPU
@@ -143,7 +173,7 @@ export default async function CertificatePage({
               </div>
               <div className="flex items-center gap-3">
                 <p className="hidden text-[10px] font-semibold uppercase tracking-[0.35em] text-white/60 sm:block">
-                  Sertifikat
+                  Rasmiy hujjat
                 </p>
                 <GoldSeal />
               </div>
@@ -153,13 +183,24 @@ export default async function CertificatePage({
               <p className="font-serif text-3xl font-bold uppercase tracking-[0.28em] text-brand-950 sm:text-4xl print:text-3xl">
                 Sertifikat
               </p>
-              <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-gold-600">
+              <div className="mt-2 flex items-center gap-2">
+                <span className="h-px w-10 bg-gold-400/70" />
+                <span className="size-1.5 rotate-45 bg-gold-500" />
+                <span className="h-px w-10 bg-gold-400/70" />
+              </div>
+              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-gold-600">
                 Kursni tamomlaganlik sertifikati
               </p>
+
               <p className="mt-4 text-sm text-slate-500">Ushbu sertifikat</p>
               <p className="mt-1 font-serif text-3xl font-bold leading-tight text-slate-900 sm:text-5xl print:text-4xl">
                 {certificate.student.name}
               </p>
+              {certificate.student.group ? (
+                <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                  {certificate.student.group.name} guruhi
+                </p>
+              ) : null}
               <div className="mt-2.5 h-0.5 w-56 bg-gold-400/70 sm:w-64" />
               <p className="mt-3 text-sm text-slate-500">
                 quyidagi kursni muvaffaqiyatli tamomlaganligi uchun taqdim etiladi
@@ -169,7 +210,8 @@ export default async function CertificatePage({
               </p>
               {certificate.grade != null ? (
                 <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-gold-400/60 bg-gold-300/15 px-5 py-1.5 text-sm font-semibold text-gold-600">
-                  Natija: {certificate.grade} ball
+                  <span className="size-1.5 rotate-45 bg-gold-500" />
+                  Natija: {certificate.grade} ball · {grade.label}
                 </p>
               ) : null}
             </div>
@@ -178,19 +220,23 @@ export default async function CertificatePage({
               <div className="text-left">
                 <p className="font-semibold text-slate-700">Sana</p>
                 <p className="mt-1 text-slate-500">{fmtDate(certificate.issuedAt)}</p>
+                <p className="mt-0.5 text-[10px] text-slate-400">Toshkent shahri</p>
               </div>
               <div className="flex flex-col items-center">
-                <p className="font-serif text-sm italic text-slate-600">
+                <p className="font-serif text-base italic text-brand-900">
                   {certificate.issuedBy.name}
                 </p>
-                <div className="mt-1.5 h-px w-32 bg-slate-400 sm:w-40" />
-                <p className="mt-1 text-[10px] uppercase tracking-widest text-slate-400">Imzo</p>
+                <div className="mt-1.5 h-px w-32 bg-gold-400/80 sm:w-40" />
+                <p className="mt-1 text-[10px] uppercase tracking-widest text-slate-400">
+                  Imzo
+                </p>
               </div>
               <div className="text-right">
                 <p className="font-semibold text-slate-700">Seriya raqami</p>
                 <p className="mt-1 font-mono text-[11px] tracking-wider text-slate-500">
-                  {certificateSerial(certificate.id)}
+                  {serial}
                 </p>
+                <p className="mt-0.5 text-[10px] text-slate-400">TTPU LMS orqali berilgan</p>
               </div>
             </div>
           </div>

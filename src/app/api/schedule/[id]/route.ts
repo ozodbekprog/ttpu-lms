@@ -8,6 +8,8 @@ const updateSchema = z.object({
   dayOfWeek: z.number().int().min(1).max(6).optional(),
   slot: z.number().int().min(1).max(8).optional(),
   subject: z.string().trim().min(1).max(200).optional(),
+  subjectId: z.string().cuid().nullish(),
+  lessonType: z.string().max(40).nullish(),
   teacher: z.string().trim().max(200).nullish(),
   room: z.string().trim().max(100).nullish(),
   parity: z.enum(["odd", "even"]).nullish(),
@@ -56,6 +58,13 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     return Response.json({ ok: false, error: "Bu jadval yozuvini o'zgartirish huquqingiz yo'q" }, { status: 403 });
   }
 
+  if (data.subjectId) {
+    const subject = await prisma.subject.findUnique({ where: { id: data.subjectId }, select: { id: true } });
+    if (!subject) {
+      return Response.json({ ok: false, error: "Fan topilmadi" }, { status: 400 });
+    }
+  }
+
   const nextDayOfWeek = data.dayOfWeek ?? entry.dayOfWeek;
   const nextSlot = data.slot ?? entry.slot;
   const nextParity = data.parity === undefined ? entry.parity : data.parity;
@@ -80,12 +89,15 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       ...(data.dayOfWeek !== undefined ? { dayOfWeek: data.dayOfWeek } : {}),
       ...(data.slot !== undefined ? { slot: data.slot } : {}),
       ...(data.subject !== undefined ? { subject: data.subject } : {}),
+      ...(data.subjectId !== undefined ? { subjectId: data.subjectId ?? null } : {}),
+      ...(data.lessonType !== undefined ? { lessonType: data.lessonType ? data.lessonType : null } : {}),
       ...(data.teacher !== undefined ? { teacher: data.teacher ? data.teacher : null } : {}),
       ...(data.room !== undefined ? { room: data.room ? data.room : null } : {}),
       ...(data.parity !== undefined ? { parity: data.parity ?? null } : {}),
       ...(data.status !== undefined ? { status: data.status } : {}),
       ...(data.note !== undefined ? { note: data.note ? data.note : null } : {}),
     },
+    include: { subjectRef: { select: { name: true, color: true } } },
   });
 
   if (data.status !== undefined && data.status !== entry.status) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Card, CardBody } from "@/components/ui";
+import { Badge, Card, CardBody, Progress } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { ModuleFlags, ModuleKey } from "@/server/settings";
 
@@ -112,11 +112,32 @@ export default function SettingsManager({
     }
   }
 
+  const enabledCount = modules.filter((item) => flags[item.key]).length;
+
   return (
     <div className="space-y-4">
+      <Card className="animate-fade-up relative overflow-hidden">
+        <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
+        <CardBody className="flex flex-wrap items-center justify-between gap-5">
+          <div>
+            <p className="text-sm font-medium text-slate-500">Faol modullar</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-brand-950">
+              {enabledCount}
+              <span className="ml-1 text-base font-medium text-slate-400">/ {modules.length}</span>
+            </p>
+          </div>
+          <div className="w-full max-w-xs">
+            <Progress value={enabledCount} max={modules.length} />
+            <p className="mt-2 text-xs text-slate-400">
+              O&apos;zgarishlar saqlanadi va darhol kuchga kiradi
+            </p>
+          </div>
+        </CardBody>
+      </Card>
+
       <div className="flex min-h-8 flex-wrap items-center gap-2">
         {notice ? (
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
+          <span className="animate-fade-up inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 6 9 17l-5-5" />
             </svg>
@@ -124,66 +145,90 @@ export default function SettingsManager({
           </span>
         ) : null}
         {error ? (
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700">
+          <span className="animate-fade-up inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
             {error}
           </span>
         ) : null}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {modules.map((item) => {
+        {modules.map((item, index) => {
           const enabled = flags[item.key];
           const busy = busyKey === item.key;
           return (
-            <Card
-              key={item.key}
-              className={cn(
-                "relative overflow-hidden transition-all duration-200",
-                enabled ? "border-brand-200/70" : "border-slate-200/70 bg-slate-50/40",
-              )}
-            >
-              {enabled ? (
-                <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
-              ) : null}
-              <CardBody className="flex items-center gap-4">
+            <div key={item.key} className="animate-fade-up" style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}>
+              <Card
+                className={cn(
+                  "group relative h-full overflow-hidden transition-all duration-300",
+                  enabled
+                    ? "border-brand-200/70 hover:shadow-lift"
+                    : "border-slate-200/70 bg-slate-50/40 hover:shadow-lift",
+                )}
+              >
                 <span
                   className={cn(
-                    "inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg transition-all duration-200",
-                    ICON_TONES[item.key],
-                    enabled ? "scale-100" : "scale-95 saturate-0",
+                    "absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400 transition-opacity duration-300",
+                    enabled ? "opacity-100" : "opacity-0",
                   )}
-                >
-                  {MODULE_ICONS[item.key]}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold tracking-tight text-brand-950">{item.title}</p>
-                    <Badge tone={enabled ? "green" : "slate"}>{enabled ? "Yoqilgan" : "O'chirilgan"}</Badge>
-                  </div>
-                  <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{item.description}</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={enabled}
-                  aria-label={item.title}
-                  disabled={busy}
-                  onClick={() => toggle(item)}
-                  className={cn(
-                    "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/20",
-                    enabled ? "bg-emerald-500" : "bg-slate-300",
-                    busy ? "cursor-wait opacity-70" : "cursor-pointer",
-                  )}
-                >
+                />
+                <CardBody className="flex items-center gap-4">
                   <span
                     className={cn(
-                      "inline-block size-5 rounded-full bg-white shadow-sm transition-transform duration-200",
-                      enabled ? "translate-x-6" : "translate-x-1",
+                      "inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg transition-all duration-300",
+                      ICON_TONES[item.key],
+                      enabled
+                        ? "scale-100 group-hover:scale-105"
+                        : "scale-95 opacity-70 saturate-0 group-hover:opacity-100 group-hover:saturate-50",
                     )}
-                  />
-                </button>
-              </CardBody>
-            </Card>
+                  >
+                    {MODULE_ICONS[item.key]}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold tracking-tight text-brand-950">{item.title}</p>
+                      <span className="relative inline-flex items-center">
+                        <Badge tone={enabled ? "green" : "slate"}>{enabled ? "Yoqilgan" : "O'chirilgan"}</Badge>
+                        {enabled ? (
+                          <span className="absolute -right-1 -top-1 size-2 animate-pulse rounded-full bg-emerald-500" />
+                        ) : null}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{item.description}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    aria-label={item.title}
+                    aria-busy={busy}
+                    disabled={busy}
+                    onClick={() => toggle(item)}
+                    className={cn(
+                      "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full ring-1 ring-inset transition-all duration-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/20",
+                      enabled
+                        ? "bg-emerald-500 ring-emerald-600/30 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]"
+                        : "bg-slate-300 ring-slate-400/20",
+                      busy ? "cursor-wait opacity-70" : "cursor-pointer",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-flex size-5 items-center justify-center rounded-full bg-white shadow transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                        enabled ? "translate-x-6" : "translate-x-1",
+                      )}
+                    >
+                      {busy ? (
+                        <span className="size-3 animate-spin rounded-full border-2 border-slate-200 border-t-brand-700" />
+                      ) : null}
+                    </span>
+                  </button>
+                </CardBody>
+              </Card>
+            </div>
           );
         })}
       </div>
