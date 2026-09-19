@@ -12,7 +12,7 @@ import {
 
 type ApiResult = { ok: boolean; data?: { preferences: UserPreferences }; error?: string };
 
-type ToggleKey = "reminderBot" | "deadlineReminder" | "showCharts" | "scheduleListView";
+type ToggleKey = "reminderBot" | "deadlineReminder" | "emailNotify" | "showCharts" | "scheduleListView";
 
 type BusyKey = keyof UserPreferences;
 
@@ -39,6 +39,13 @@ const REMINDER_ITEMS: ToggleItem[] = [
     enabledNotice: "Deadline eslatmasi yoqildi",
     disabledNotice: "Deadline eslatmasi o'chirildi",
   },
+  {
+    key: "emailNotify",
+    title: "Email bildirishnomalari",
+    description: "Muhim bildirishnomalar email manzilingizga ham yuboriladi.",
+    enabledNotice: "Email bildirishnomalari yoqildi",
+    disabledNotice: "Email bildirishnomalari o'chirildi",
+  },
 ];
 
 const VIEW_ITEMS: ToggleItem[] = [
@@ -61,6 +68,7 @@ const VIEW_ITEMS: ToggleItem[] = [
 const TOGGLE_TONES: Record<ToggleKey, string> = {
   reminderBot: "from-sky-400 to-blue-600 shadow-sky-500/30",
   deadlineReminder: "from-amber-300 to-gold-500 shadow-gold-500/30",
+  emailNotify: "from-rose-400 to-pink-600 shadow-rose-500/30",
   showCharts: "from-emerald-400 to-teal-600 shadow-emerald-500/30",
   scheduleListView: "from-brand-500 to-brand-800 shadow-brand-500/30",
 };
@@ -77,6 +85,12 @@ const TOGGLE_ICONS: Record<ToggleKey, ReactNode> = {
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <path d="M16 2v4M8 2v4M3 10h18" />
       <path d="M12 13v3M12 19h.01" />
+    </svg>
+  ),
+  emailNotify: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
     </svg>
   ),
   showCharts: (

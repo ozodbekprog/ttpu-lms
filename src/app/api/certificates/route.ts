@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { canManageCertificate } from "@/components/certificates/certificate-access";
+import { logAudit } from "@/server/audit";
 
 const createSchema = z.object({
   courseId: z.string().trim().min(1),
@@ -108,6 +109,13 @@ export async function POST(request: Request) {
     const certificate = await prisma.certificate.create({
       data: { courseId, studentId, grade, issuedById: user.id },
       include: certificateInclude,
+    });
+    await logAudit({
+      actorId: user.id,
+      action: "certificate.issue",
+      entity: "Certificate",
+      entityId: certificate.id,
+      meta: { courseId, studentId, grade },
     });
     return Response.json({ ok: true, data: certificate }, { status: 201 });
   } catch (error) {

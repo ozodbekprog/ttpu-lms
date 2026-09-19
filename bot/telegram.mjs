@@ -194,6 +194,7 @@ function attendanceUrl(slug, date, slot) {
 
 const REMINDER_HOUR = 8;
 const REMINDER_CHECK_MS = 60 * 60 * 1000;
+const EXAM_WINDOW_DAYS = 30;
 
 function pad2(value) {
   return String(value).padStart(2, "0");
@@ -235,9 +236,9 @@ async function collectReminder(user, dayStart) {
       })
     : [];
 
-  if (courseIds.length === 0) return { lessons, deadlines: [] };
+  if (courseIds.length === 0) return { lessons, deadlines: [], exams: [] };
 
-  const [assignments, quizzes] = await Promise.all([
+  const [assignments, quizzes, exams] = await Promise.all([
     db.assignment.findMany({
       where: { courseId: { in: courseIds }, dueAt: { gte: dayStart, lt: dayEnd } },
       orderBy: { dueAt: "asc" },
@@ -251,6 +252,14 @@ async function collectReminder(user, dayStart) {
       },
       orderBy: { dueAt: "asc" },
       include: { course: { select: { title: true } } },
+    }),
+    db.examSession.findMany({
+      where: { courseId: { in: courseIds }, date: { gte: dayStart, lt: dayEnd } },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+      include: {
+        course: { select: { title: true } },
+        sheets: { select: { status: true, score: true } },
+      },
     }),
   ]);
 
@@ -267,7 +276,7 @@ async function collectReminder(user, dayStart) {
     .filter((item) => item.dueAt !== null)
     .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime());
 
-  return { lessons, deadlines };
+  return { lessons, deadlines, exams };
 }
 
 async function collectTeacherLessons(user, dayOfWeek) {
@@ -303,7 +312,61 @@ function teacherLessonText(item, date) {
   return lines.join("\n");
 }
 
-export function reminderText(user, day, lessons, deadlines, teacherLessons = []) {
+export function examTime(session) {
+  if (!session.startTime) return "";
+  return session.endTime ? `${session.startTime}–${session.endTime}` : session.startTime;
+}
+
+export function examPermission(sheet) {
+  if (!sheet) return "❌ Ruxsat yo'q";
+  return sheet.status === "FAILED" || sheet.status === "ABSENT" ? "❌ Ruxsat yo'q" : "✅ Ruxsat";
+}
+
+export function formatExamSession(session) {
+  const date = session.date;
+  const time = examTime(session);
+  const head = `🗓 ${pad2(date.getDate())}.${pad2(date.getMonth() + 1)}.${date.getFullYear()} (${DAY_TITLES[date.getDay()]})${time ? ` | 🕘 ${time}` : ""}`;
+  const lines = [head, `📚 ${session.course.title} — ${session.title}`];
+  const sheet = session.sheets?.[0] ?? null;
+  const info = [];
+  if (session.room) info.push(`🚪 Xona: ${session.room}`);
+  if (sheet?.seat) info.push(`🎫 O'rindiq: ${sheet.seat}`);
+  if (info.length > 0) lines.push(info.join(" | "));
+  lines.push(examPermission(sheet));
+  return lines.join("\n");
+}
+
+export function examsText(sessions) {
+  if (sessions.length === 0) return "Kelayotgan imtihonlar yo'q";
+  const lines = ["📝 Kelayotgan imtihonlar", SEPARATOR, ""];
+  for (const session of sessions) {
+    lines.push(formatExamSession(session));
+    lines.push("");
+  }
+  return lines.join("\n").trimEnd();
+}
+
+export function examReminderText(session) {
+  const meta = [session.room, examTime(session)].filter(Boolean).join(", ");
+  return `📝 Bugun imtihon: ${session.course.title} — ${session.title}${meta ? ` (${meta})` : ""}`;
+}
+
+function gradedSheetCount(sheets) {
+  return sheets.filter((sheet) => sheet.score !== null || sheet.status !== "PENDING").length;
+}
+
+export function teacherExamText(session) {
+  const lines = [`• 📝 ${session.course.title} — ${session.title}`];
+  const meta = [];
+  if (session.room) meta.push(`🚪 ${session.room}`);
+  const time = examTime(session);
+  if (time) meta.push(`🕘 ${time}`);
+  if (meta.length > 0) lines.push(`   ${meta.join(" | ")}`);
+  lines.push(`   🗂 ${session.sheets.length} varaq, ${gradedSheetCount(session.sheets)} natija kiritilgan`);
+  return lines.join("\n");
+}
+
+export function reminderText(user, day, lessons, deadlines, teacherLessons = [], exams = []) {
   const lines = [`🌟 Eslatma — bugun, ${DAY_NAMES[day.getDay()]}, ${dateKey(day)}`];
   if (user.group) lines.push(`👥 Guruh: ${user.group.name}`);
   lines.push(SEPARATOR, "");
@@ -320,6 +383,15 @@ export function reminderText(user, day, lessons, deadlines, teacherLessons = [])
     }
   } else {
     lines.push(lessons.length > 0 ? formatEntries(lessons) : "📭 Bugun darslar yo'q.");
+  }
+  if (exams.length > 0) {
+    lines.push("");
+    if (user.role === "TEACHER") {
+      lines.push("📝 Bugungi imtihonlar:");
+      for (const exam of exams) lines.push(teacherExamText(exam));
+    } else {
+      for (const exam of exams) lines.push(examReminderText(exam));
+    }
   }
   lines.push("");
   lines.push("⏰ Bugungi muddatlar:");
@@ -346,10 +418,10 @@ async function sendDailyReminders() {
         include: { group: true },
       });
       if (!user) continue;
-      const { lessons, deadlines } = await collectReminder(user, dayStart);
+      const { lessons, deadlines, exams } = await collectReminder(user, dayStart);
       const teacherLessons =
         user.role === "TEACHER" ? await collectTeacherLessons(user, now.getDay()) : [];
-      await sendMessage(chatId, reminderText(user, now, lessons, deadlines, teacherLessons));
+      await sendMessage(chatId, reminderText(user, now, lessons, deadlines, teacherLessons, exams));
     } catch (error) {
       console.error(`Eslatma yuborilmadi (${chatId}):`, errorText(error));
     }
@@ -376,6 +448,7 @@ const HELP_TEXT = [
   "• /ertaga — ertangi darslar",
   "• /hafta — haftalik jadval (kun-kun)",
   "• /davomat — o'qituvchilar uchun bugungi darslar va davomat havolalari",
+  "• /imtihon — kelayotgan imtihonlar (30 kun)",
   "• /help — shu yordam",
   "",
   "📧 Email manzilingizni yuborsangiz (masalan: ozodbek@ttpu.uz), jadval guruhingizga bog'lanadi.",
@@ -522,6 +595,39 @@ async function sendAttendance(chatId) {
   await sendMessage(chatId, lines.join("\n"));
 }
 
+async function sendExams(chatId) {
+  const email = links[String(chatId)];
+  if (!email) {
+    await sendMessage(chatId, "Avval email manzilingizni yuboring (masalan: ozodbek@ttpu.uz).");
+    return;
+  }
+  const user = await getPrisma().user.findUnique({ where: { email } });
+  if (!user) {
+    delete links[String(chatId)];
+    saveData();
+    await sendMessage(chatId, "Bog'langan foydalanuvchi bazadan topilmadi. Emailni qayta yuboring.");
+    return;
+  }
+
+  const from = startOfDay(new Date());
+  const until = new Date(from);
+  until.setDate(until.getDate() + EXAM_WINDOW_DAYS);
+  until.setHours(23, 59, 59, 999);
+
+  const sessions = await getPrisma().examSession.findMany({
+    where: {
+      date: { gte: from, lte: until },
+      course: { enrollments: { some: { userId: user.id } } },
+    },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    include: {
+      course: { select: { title: true } },
+      sheets: { where: { studentId: user.id }, select: { seat: true, status: true } },
+    },
+  });
+  await sendMessage(chatId, examsText(sessions));
+}
+
 async function handleMessage(message) {
   const chatId = message.chat.id;
   const text = (message.text ?? "").trim();
@@ -550,6 +656,10 @@ async function handleMessage(message) {
   }
   if (command === "davomat") {
     await sendAttendance(chatId);
+    return;
+  }
+  if (command === "imtihon") {
+    await sendExams(chatId);
     return;
   }
   if (command) {

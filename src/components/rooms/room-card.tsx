@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Badge, Card, CardBody } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -35,7 +36,15 @@ function TypeGlyph({ type }: { type: RoomType }) {
   );
 }
 
-export function RoomCard({ room, actions }: { room: RoomItem; actions?: ReactNode }) {
+export function RoomCard({
+  room,
+  actions,
+  href,
+}: {
+  room: RoomItem;
+  actions?: ReactNode;
+  href?: string;
+}) {
   const type = roomType(room);
   const meta = ROOM_TYPE_META[type];
   const equipment = room.equipment
@@ -143,8 +152,22 @@ export function RoomCard({ room, actions }: { room: RoomItem; actions?: ReactNod
           )}
         </div>
 
-        {actions ? (
-          <div className="mt-auto flex justify-end gap-1.5 border-t border-slate-100 pt-3">{actions}</div>
+        {actions || href ? (
+          <div className="mt-auto flex flex-wrap items-center justify-end gap-1.5 border-t border-slate-100 pt-3">
+            {actions}
+            {href ? (
+              <Link
+                href={href}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-700 transition-colors duration-150 hover:bg-brand-50"
+              >
+                Haftalik bandlik
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m13 6 6 6-6 6" />
+                </svg>
+              </Link>
+            ) : null}
+          </div>
         ) : null}
       </CardBody>
     </Card>

@@ -2,11 +2,16 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Badge, Button, ButtonLink, Card, CardBody, EmptyState, Input, PageHeader } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import { Badge, Button, ButtonLink, Card, CardBody, CardHeader, EmptyState, Input, Label, PageHeader, Select } from "@/components/ui";
+import { cn, fmtDate } from "@/lib/utils";
 import { RoomCard, type RoomItem } from "@/components/rooms/room-card";
 import RoomsManager from "@/components/rooms/RoomsManager";
 import { ROOM_TYPE_LABELS, ROOM_TYPES, isRoomType, matchesRoomType } from "@/components/rooms/room-type";
+import { findAvailableRooms, roomWeekIsoForDate } from "@/components/rooms/room-data";
+import { parseIsoDate } from "@/components/rooms/room-week";
+import { SLOT_TIMES } from "@/components/attendance/lesson-utils";
+
+const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8];
 
 function buildHref(q: string, type: string) {
   const params = new URLSearchParams();
@@ -28,13 +33,22 @@ function segmentClass(active: boolean) {
 export default async function RoomsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; date?: string; slot?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
 
   const q = typeof params.q === "string" ? params.q.trim() : "";
   const type = typeof params.type === "string" && isRoomType(params.type) ? params.type : "";
+
+  const rawDate = typeof params.date === "string" ? params.date.trim() : "";
+  const findDate = rawDate && parseIsoDate(rawDate) ? rawDate : "";
+  const rawSlot = typeof params.slot === "string" ? Number(params.slot) : Number.NaN;
+  const findSlot = Number.isInteger(rawSlot) && rawSlot >= 1 && rawSlot <= 8 ? rawSlot : null;
+
+  const availableRooms =
+    findDate && findSlot !== null ? await findAvailableRooms(findDate, findSlot) : null;
+  const findWeek = findDate ? roomWeekIsoForDate(findDate) : "";
 
   const where: Prisma.RoomWhereInput = {};
   if (q) {
@@ -129,6 +143,71 @@ export default async function RoomsPage({
         </CardBody>
       </Card>
 
+      <Card className="mb-6">
+        <CardHeader
+          title="Bo'sh xona topish"
+          subtitle="Sana va parni tanlang — dars ham, bron ham bo'lmagan xonalar ko'rsatiladi"
+        />
+        <CardBody className="space-y-4 py-4">
+          <form
+            action="/rooms"
+            method="get"
+            className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+          >
+            <input type="hidden" name="q" value={q} />
+            <input type="hidden" name="type" value={type} />
+            <div>
+              <Label>Sana</Label>
+              <Input type="date" name="date" defaultValue={findDate} required />
+            </div>
+            <div>
+              <Label>Par</Label>
+              <Select name="slot" defaultValue={findSlot === null ? "1" : String(findSlot)}>
+                {SLOTS.map((value) => (
+                  <option key={value} value={value}>
+                    {value}-par · {SLOT_TIMES[value]}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Button type="submit" variant="secondary" className="sm:w-auto">
+              Topish
+            </Button>
+          </form>
+
+          {availableRooms ? (
+            <div className="border-t border-slate-100 pt-4">
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="font-medium">{fmtDate(findDate)}</span>
+                <Badge tone="blue">{findSlot}-par</Badge>
+                <Badge tone="green">{availableRooms.length} ta bo&apos;sh xona</Badge>
+              </div>
+              {availableRooms.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  Bu vaqtda bo&apos;sh xona yo&apos;q. Boshqa par yoki sanani tanlab ko&apos;ring.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {availableRooms.map((room) => (
+                    <Link
+                      key={room.id}
+                      href={`/rooms/${room.id}${findWeek ? `?week=${findWeek}` : ""}`}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-all duration-150 hover:border-brand-300 hover:text-brand-800"
+                    >
+                      <span className="size-1.5 rounded-full bg-emerald-400" />
+                      {room.name}
+                      {room.building ? (
+                        <span className="text-slate-400">· {room.building}</span>
+                      ) : null}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </CardBody>
+      </Card>
+
       {q || type ? (
         <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <span className="font-medium">Natija:</span>
@@ -159,7 +238,7 @@ export default async function RoomsPage({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((room) => (
-            <RoomCard key={room.id} room={room} />
+            <RoomCard key={room.id} room={room} href={`/rooms/${room.id}`} />
           ))}
         </div>
       )}

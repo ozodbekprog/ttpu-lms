@@ -50,6 +50,7 @@ model User {
   bio          String?
   preferences  Json?
   isActive     Boolean  @default(true)
+  sessionEpoch Int      @default(0)
   createdAt    DateTime @default(now())
 
   groupId String?
@@ -76,16 +77,33 @@ model User {
   courseReviews        CourseReview[]
   subjectsTaught       TeacherSubject[]
   scheduleEntriesTaught ScheduleEntry[]   @relation("ScheduleTeacher")
+  examSheets           ExamSheet[]
+  auditLogs            AuditLog[]
+  passwordResets       PasswordResetToken[]
+
+  subGroupId String?
+  subGroup   SubGroup? @relation(fields: [subGroupId], references: [id], onDelete: SetNull)
+  facultyId  String?
+  faculty    Faculty?  @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  curatedGroups Group[] @relation("GroupCurator")
 
   @@index([groupId])
+  @@index([subGroupId])
 }
 
 model Group {
-  id       String          @id @default(cuid())
-  name     String          @unique
-  year     Int?
-  users    User[]
-  schedule ScheduleEntry[]
+  id        String          @id @default(cuid())
+  name      String          @unique
+  year      Int?
+  facultyId String?
+  faculty   Faculty?        @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  curatorId String?
+  curator   User?           @relation("GroupCurator", fields: [curatorId], references: [id], onDelete: SetNull)
+  users     User[]
+  schedule  ScheduleEntry[]
+  subGroups SubGroup[]
+
+  @@index([curatorId])
 }
 
 model Course {
@@ -115,6 +133,8 @@ model Course {
   certificates       Certificate[]
   attendanceSessions AttendanceSession[]
   reviews            CourseReview[]
+  examSessions       ExamSession[]
+  bankQuestions      BankQuestion[]
 
   @@index([teacherId])
 }
@@ -261,6 +281,8 @@ model ScheduleEntry {
   subjectRef Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   teacherRef User?    @relation("ScheduleTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
 
+  subGroup String?
+
   @@index([groupId, dayOfWeek])
   @@index([subjectId])
   @@index([teacherId])
@@ -376,6 +398,7 @@ model Subject {
   entries     ScheduleEntry[]
   courses     Course[]
   teachers    TeacherSubject[]
+  bankQuestions BankQuestion[]
 }
 
 model TeacherSubject {
@@ -389,6 +412,117 @@ model TeacherSubject {
 
   @@unique([teacherId, subjectId])
   @@index([subjectId])
+}
+
+model ExamSession {
+  id            String   @id @default(cuid())
+  courseId      String
+  termId        String?
+  title         String
+  type          String   @default("FINAL")
+  date          DateTime
+  startTime     String?
+  endTime       String?
+  room          String?
+  admissionOpen Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  course Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  term   Term?       @relation(fields: [termId], references: [id], onDelete: SetNull)
+  sheets ExamSheet[]
+
+  @@index([courseId, date])
+}
+
+model ExamSheet {
+  id        String   @id @default(cuid())
+  sessionId String
+  studentId String
+  seat      String?
+  status    String   @default("PENDING")
+  score     Int?
+  createdAt DateTime @default(now())
+
+  session ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+}
+
+model BankQuestion {
+  id         String       @id @default(cuid())
+  courseId   String?
+  subjectId  String?
+  text       String
+  type       QuestionType @default(SINGLE)
+  options    Json         @default("[]")
+  correct    Json         @default("[]")
+  difficulty Int          @default(2)
+  createdAt  DateTime     @default(now())
+
+  course  Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@index([courseId, subjectId])
+}
+
+model SubGroup {
+  id      String @id @default(cuid())
+  groupId String
+  name    String
+
+  group Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  users User[]
+
+  @@unique([groupId, name])
+}
+
+model Faculty {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  code   String?
+  groups Group[]
+  users  User[]
+}
+
+model Term {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  sessions ExamSession[]
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model TimeSlot {

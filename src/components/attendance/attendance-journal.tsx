@@ -68,6 +68,7 @@ export function AttendanceJournal({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [monthKey, setMonthKey] = useState<string | null>(null);
+  const [subGroupFilter, setSubGroupFilter] = useState<string | null>(null);
   const today = useSyncExternalStore(subscribeToday, localToday, () => null);
 
   const months = useMemo(() => journalMonthKeys(dates), [dates]);
@@ -79,9 +80,22 @@ export function AttendanceJournal({
     [dates, activeMonth],
   );
 
+  const subGroupOptions = useMemo(() => {
+    const names = new Set<string>();
+    for (const student of students) {
+      if (student.subGroup) names.add(student.subGroup);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [students]);
+
+  const visibleStudents = useMemo(
+    () => (subGroupFilter ? students.filter((student) => student.subGroup === subGroupFilter) : students),
+    [students, subGroupFilter],
+  );
+
   const summary = useMemo(() => {
     const map: Record<string, JournalSummaryRow> = {};
-    for (const student of students) {
+    for (const student of visibleStudents) {
       const counts = { present: 0, absent: 0, late: 0, excused: 0 };
       for (const date of dates) {
         const status = records[student.id]?.[date];
@@ -102,12 +116,12 @@ export function AttendanceJournal({
       };
     }
     return map;
-  }, [records, dates, students]);
+  }, [records, dates, visibleStudents]);
 
   const totals = useMemo(() => {
     const map: Record<string, { attended: number; total: number }> = {};
     for (const date of visibleDates) map[date] = { attended: 0, total: 0 };
-    for (const student of students) {
+    for (const student of visibleStudents) {
       const row = records[student.id];
       if (!row) continue;
       for (const date of visibleDates) {
@@ -120,7 +134,7 @@ export function AttendanceJournal({
       }
     }
     return map;
-  }, [records, visibleDates, students]);
+  }, [records, visibleDates, visibleStudents]);
 
   const overall = useMemo(() => {
     let attended = 0;
@@ -224,16 +238,16 @@ export function AttendanceJournal({
     setMessage("Yozuv tozalandi");
   }
 
-  const editingStudent = editor ? students.find((student) => student.id === editor.studentId) : null;
+  const editingStudent = editor ? visibleStudents.find((student) => student.id === editor.studentId) : null;
   const editingStatus = editor ? records[editor.studentId]?.[editor.date] ?? null : null;
-  const empty = students.length === 0 || dates.length === 0;
+  const empty = visibleStudents.length === 0 || dates.length === 0;
 
   return (
     <>
       <Card className="overflow-hidden">
         <CardHeader
           title="Guruh jurnali"
-          subtitle={`${students.length} ta talaba · ${dates.length} ta dars`}
+          subtitle={`${visibleStudents.length} ta talaba · ${dates.length} ta dars`}
           action={
             months.length > 0 ? (
               <div className="flex items-center gap-2">
@@ -295,6 +309,38 @@ export function AttendanceJournal({
             ) : null
           }
         />
+        {subGroupOptions.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-100 px-6 py-2.5">
+            <span className="text-xs font-medium text-slate-500">Kichik guruh:</span>
+            <button
+              type="button"
+              onClick={() => setSubGroupFilter(null)}
+              className={cn(
+                "rounded-full border px-2.5 py-1 text-xs font-medium transition-all duration-150",
+                subGroupFilter === null
+                  ? "border-brand-500 bg-brand-50 text-brand-700 ring-1 ring-brand-300"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:bg-brand-50/60",
+              )}
+            >
+              Barchasi
+            </button>
+            {subGroupOptions.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setSubGroupFilter(name)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs font-medium transition-all duration-150",
+                  subGroupFilter === name
+                    ? "border-brand-500 bg-brand-50 text-brand-700 ring-1 ring-brand-300"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:bg-brand-50/60",
+                )}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {empty ? (
           <div className="px-6 py-6">
             <EmptyState
@@ -359,7 +405,7 @@ export function AttendanceJournal({
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((student) => {
+                  {visibleStudents.map((student) => {
                     const isMe = student.id === currentUserId;
                     const rowSummary = summary[student.id] ?? EMPTY_SUMMARY;
                     const rowBg = isMe ? "bg-brand-50" : "bg-white group-hover:bg-slate-50";

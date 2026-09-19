@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:cov": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",
     "db:seed": "node prisma/seed.mjs",
     "db:reset": "prisma migrate reset --force && node prisma/seed.mjs",
@@ -17,24 +21,29 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@types/nodemailer": "^8.0.2",
     "@types/qrcode": "^1.5.6",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.12",
     "next": "16.3.5",
+    "nodemailer": "^10.0.10",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

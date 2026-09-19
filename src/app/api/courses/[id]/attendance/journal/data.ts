@@ -18,7 +18,16 @@ export async function getAttendanceJournal(courseId: string): Promise<JournalDat
   const [enrollments, rows] = await Promise.all([
     prisma.enrollment.findMany({
       where: { courseId, user: { isActive: true } },
-      include: { user: { select: { id: true, name: true, avatarUrl: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            subGroup: { select: { name: true } },
+          },
+        },
+      },
       orderBy: { user: { name: "asc" } },
     }),
     prisma.attendance.findMany({
@@ -28,7 +37,12 @@ export async function getAttendanceJournal(courseId: string): Promise<JournalDat
     }),
   ]);
 
-  const students = enrollments.map((enrollment) => enrollment.user);
+  const students = enrollments.map((enrollment) => ({
+    id: enrollment.user.id,
+    name: enrollment.user.name,
+    avatarUrl: enrollment.user.avatarUrl,
+    subGroup: enrollment.user.subGroup?.name ?? null,
+  }));
   const activeIds = new Set(students.map((student) => student.id));
   const dates = [...new Set(rows.map((row) => isoDay(row.date)))].sort().slice(-MAX_DATES);
   const dateSet = new Set(dates);

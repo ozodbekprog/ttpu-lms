@@ -77,6 +77,7 @@ export default async function SchedulePage({
             teacherId: true,
             room: true,
             parity: true,
+            subGroup: true,
             status: true,
             note: true,
             updatedAt: true,
@@ -101,6 +102,7 @@ export default async function SchedulePage({
     teacherRef: row.teacherRef ? { id: row.teacherRef.id, name: row.teacherRef.name } : null,
     room: row.room,
     parity: row.parity,
+    subGroup: row.subGroup,
     status: row.status,
     note: row.note,
   }));
@@ -227,6 +229,16 @@ export default async function SchedulePage({
     }
   }
 
+  const subGroups = selectedGroup
+    ? (
+        await prisma.subGroup.findMany({
+          where: { groupId: selectedGroup.id },
+          select: { name: true },
+          orderBy: { name: "asc" },
+        })
+      ).map((item) => item.name)
+    : [];
+
   return (
     <>
       <PageHeader
@@ -250,6 +262,7 @@ export default async function SchedulePage({
         nowMinutes={now.getHours() * 60 + now.getMinutes()}
         palette={palette}
         teacherOptions={teacherOptions}
+        subGroups={subGroups}
       />
     </>
   );

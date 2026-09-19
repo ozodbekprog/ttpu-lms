@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { notifyGroupStudents } from "@/server/notify";
+import { logAudit } from "@/server/audit";
 import { canManageEntry } from "../_helpers";
 
 const updateSchema = z.object({
@@ -14,6 +15,7 @@ const updateSchema = z.object({
   teacherId: z.string().cuid().nullish(),
   room: z.string().trim().max(100).nullish(),
   parity: z.enum(["odd", "even"]).nullish(),
+  subGroup: z.string().trim().max(20).nullish(),
   status: z.enum(["NORMAL", "CHANGED", "MOVED", "CANCELLED"]).optional(),
   note: z.string().trim().max(300).nullish(),
 });
@@ -103,6 +105,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       ...(data.teacherId !== undefined ? { teacherId: data.teacherId ?? null } : {}),
       ...(data.room !== undefined ? { room: data.room ? data.room : null } : {}),
       ...(data.parity !== undefined ? { parity: data.parity ?? null } : {}),
+      ...(data.subGroup !== undefined ? { subGroup: data.subGroup ? data.subGroup : null } : {}),
       ...(data.status !== undefined ? { status: data.status } : {}),
       ...(data.note !== undefined ? { note: data.note ? data.note : null } : {}),
     },
@@ -120,6 +123,13 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       title: `${STATUS_TITLES[data.status]}: ${updated.subject}`,
       body: data.status === "CANCELLED" ? parts.join(" · ") : undefined,
       link: "/schedule",
+    });
+    await logAudit({
+      actorId: guard.user.id,
+      action: "schedule.status",
+      entity: "ScheduleEntry",
+      entityId: updated.id,
+      meta: { from: entry.status, to: data.status, subject: updated.subject, groupId: updated.groupId },
     });
   }
 

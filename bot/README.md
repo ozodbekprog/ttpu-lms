@@ -46,6 +46,10 @@ faqat `.env` dagi `DATABASE_URL` manzilida PostgreSQL ishlab turishi kerak.
   bugungi kun belgilanadi, har bir darsda holat (masalan `❌ Bekor qilindi`)
 - `/davomat` — o'qituvchi uchun `🔔` uslubidagi bugungi darslar (par vaqti, fan, xona, guruh)
   va har bir dars uchun `🔗` davomat sahifasi havolasi. Talaba yuborsa, bugungi jadvali qaytadi.
+- `/imtihon` — bog'langan talabaning kelayotgan imtihon sessiyalari (bugundan boshlab 30 kun):
+  sana va vaqt, fan va imtihon nomi, xona, `🎫 O'rindiq` (varaq bo'lsa) hamda
+  `✅ Ruxsat` / `❌ Ruxsat yo'q` (varaqa holatiga qarab). Imtihon bo'lmasa:
+  `Kelayotgan imtihonlar yo'q`.
 - `/help` — buyruqlar ro'yxati
 
 ## Avtomatik eslatma
@@ -54,6 +58,9 @@ Bot har soatda vaqtni tekshiradi va mahalliy vaqt bilan **08:00–09:00** oralig
 kuniga bir marta bog'langan har bir foydalanuvchiga eslatma yuboradi:
 
 - bugungi darslar (guruh jadvali bo'yicha),
+- bugungi imtihon sessiyalari: talabaga `📝 Bugun imtihon: fan — nomi (xona, vaqt)`,
+  o'qituvchiga o'zi o'tkazadigan sessiyalar va varaqalar holati
+  (`🗂 12 varaq, 5 natija kiritilgan`),
 - bugun tugaydigan deadline'lar: topshiriqlar va testlar (`dueAt`).
 
 Eslatma matni `🌟`, `📌`, `⏰` belgilari bilan bezatilgan. O'qituvchilarga qo'shimcha

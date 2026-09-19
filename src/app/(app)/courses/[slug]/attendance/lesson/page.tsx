@@ -31,7 +31,7 @@ export default async function LessonAttendancePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ date?: string; slot?: string }>;
+  searchParams: Promise<{ date?: string; slot?: string; subGroup?: string }>;
 }) {
   const user = await requireUser();
   const { slug } = await params;
@@ -59,6 +59,7 @@ export default async function LessonAttendancePage({
             name: true,
             avatarUrl: true,
             group: { select: { name: true } },
+            subGroup: { select: { name: true } },
           },
         },
       },
@@ -80,14 +81,17 @@ export default async function LessonAttendancePage({
 
   const courseOption = { slug: course.slug, title: course.title };
   const teacherName = normalizeTeacherName(user.name);
+  const requestedSubGroup =
+    typeof query.subGroup === "string" && query.subGroup.trim() ? query.subGroup.trim() : null;
+  const candidates = dayEntries.filter(
+    (entry) => matchCourseSlug(entry.subject, [courseOption]) === course.slug,
+  );
   const matchedEntry =
-    dayEntries.find(
-      (entry) =>
-        matchCourseSlug(entry.subject, [courseOption]) === course.slug &&
-        entry.teacher !== null &&
-        normalizeTeacherName(entry.teacher) === teacherName,
+    (requestedSubGroup ? candidates.find((entry) => entry.subGroup === requestedSubGroup) : undefined) ??
+    candidates.find(
+      (entry) => entry.teacher !== null && normalizeTeacherName(entry.teacher) === teacherName,
     ) ??
-    dayEntries.find((entry) => matchCourseSlug(entry.subject, [courseOption]) === course.slug) ??
+    candidates[0] ??
     null;
 
   const students = enrollments.map((enrollment) => ({
@@ -95,6 +99,7 @@ export default async function LessonAttendancePage({
     name: enrollment.user.name,
     avatarUrl: enrollment.user.avatarUrl,
     groupName: enrollment.user.group?.name ?? null,
+    subGroupName: enrollment.user.subGroup?.name ?? null,
   }));
 
   const initial: Record<string, LessonStatus> = {};
@@ -104,9 +109,13 @@ export default async function LessonAttendancePage({
 
   const groupName =
     matchedEntry?.group.name ?? students.find((student) => student.groupName)?.groupName ?? null;
+  const subGroup = matchedEntry?.subGroup ?? requestedSubGroup;
   const room = matchedEntry?.room ?? null;
   const subject = matchedEntry?.subject ?? course.title;
   const time = SLOT_TIMES[slot] ?? `${slot}-par`;
+  const scheduleStatus = matchedEntry?.status ?? "NORMAL";
+  const scheduleNote = matchedEntry?.note ?? null;
+  const cancelled = scheduleStatus === "CANCELLED";
 
   return (
     <>
@@ -179,7 +188,7 @@ export default async function LessonAttendancePage({
                   {room}
                 </MetaChip>
               ) : null}
-              {groupName ? (
+              {groupName || subGroup ? (
                 <MetaChip
                   icon={
                     <svg
@@ -198,7 +207,7 @@ export default async function LessonAttendancePage({
                     </svg>
                   }
                 >
-                  {groupName}
+                  {[groupName, subGroup ? `${subGroup} kichik guruh` : null].filter(Boolean).join(" · ")}
                 </MetaChip>
               ) : null}
             </div>
@@ -224,6 +233,87 @@ export default async function LessonAttendancePage({
           </Link>
         </div>
       </section>
+      {cancelled ? (
+        <section className="animate-fade-up mb-6 flex items-start gap-3.5 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4">
+          <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+              <path d="M12 9v4M12 17h.01" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-rose-800">
+              Bu dars bekor qilingan — davomat belgilanmaydi
+            </p>
+            {scheduleNote ? (
+              <p className="mt-1 text-xs text-rose-600">{scheduleNote}</p>
+            ) : null}
+          </div>
+        </section>
+      ) : scheduleStatus !== "NORMAL" ? (
+        <section
+          className={
+            scheduleStatus === "CHANGED"
+              ? "animate-fade-up mb-6 flex items-start gap-3.5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4"
+              : "animate-fade-up mb-6 flex items-start gap-3.5 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4"
+          }
+        >
+          <span
+            className={
+              scheduleStatus === "CHANGED"
+                ? "mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600"
+                : "mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600"
+            }
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <p
+              className={
+                scheduleStatus === "CHANGED"
+                  ? "text-sm font-semibold text-amber-800"
+                  : "text-sm font-semibold text-sky-800"
+              }
+            >
+              {scheduleStatus === "CHANGED"
+                ? "Dars o'zgartirilgan — jadvaldagi o'zgarishni tekshiring"
+                : "Dars ko'chirilgan — jadvaldagi o'zgarishni tekshiring"}
+            </p>
+            {scheduleNote ? (
+              <p
+                className={
+                  scheduleStatus === "CHANGED"
+                    ? "mt-1 text-xs text-amber-700"
+                    : "mt-1 text-xs text-sky-700"
+                }
+              >
+                {scheduleNote}
+              </p>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
       <LessonAttendance
         courseId={course.id}
         date={date}
@@ -232,6 +322,8 @@ export default async function LessonAttendancePage({
         initial={initial}
         courses={teacherCourses}
         selectedSlug={course.slug}
+        subGroup={subGroup}
+        cancelled={cancelled}
       />
     </>
   );

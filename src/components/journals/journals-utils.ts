@@ -1,5 +1,7 @@
 export type JournalLessonStatus = "done" | "partial" | "empty";
 
+export type JournalScheduleStatus = "NORMAL" | "CHANGED" | "MOVED" | "CANCELLED";
+
 export type JournalLesson = {
   id: string;
   dayOfWeek: number;
@@ -13,7 +15,9 @@ export type JournalLesson = {
   courseSlug: string | null;
   attendanceCount: number;
   studentCount: number;
-  status: JournalLessonStatus;
+  status: JournalScheduleStatus;
+  note: string | null;
+  attendanceStatus: JournalLessonStatus;
 };
 
 export type JournalWeekData = {

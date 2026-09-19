@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ORDER_STATUSES } from "@/components/orders/shared";
+import { logAudit } from "@/server/audit";
 
 const patchSchema = z.object({
   status: z.enum(ORDER_STATUSES),
@@ -38,6 +39,14 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
           ? undefined
           : parsed.data.adminComment || null,
     },
+  });
+
+  await logAudit({
+    actorId: user.id,
+    action: "order.update",
+    entity: "Order",
+    entityId: order.id,
+    meta: { from: existing.status, to: order.status },
   });
 
   return Response.json({ ok: true, data: order });

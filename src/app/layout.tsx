@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PwaRegister } from "@/components/pwa/PwaRegister";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,6 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TTPU LMS — O'quv boshqaruv tizimi",
   description: "Turin Politexnika Universiteti uchun zamonaviy o'quv platformasi",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "TTPU LMS",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
@@ -27,7 +34,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="uz"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

@@ -22,3 +22,46 @@ jobs:
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
           AUTH_SECRET: ci-secret-not-for-production
       - run: npx tsc --noEmit
+      - run: npm run test:run
+
+  e2e:
+    if: false
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+      - run: npm run db:seed
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+      - run: npx playwright install --with-deps chromium
+      - name: E2E (server + tests)
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3000
+          npm run test:e2e
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+          AUTH_SECRET: ci-secret-not-for-production

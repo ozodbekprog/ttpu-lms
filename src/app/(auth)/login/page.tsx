@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, Input, Label } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 
 const DEMO_ACCOUNTS = [
   {
-    role: "Talaba",
+    roleKey: "authRoleStudent" as const,
     email: "ozodbek@ttpu.uz",
     icon: (
       <svg
@@ -26,7 +28,7 @@ const DEMO_ACCOUNTS = [
     ),
   },
   {
-    role: "O'qituvchi",
+    roleKey: "authRoleTeacher" as const,
     email: "n.mahamatov@ttpu.uz",
     icon: (
       <svg
@@ -45,7 +47,7 @@ const DEMO_ACCOUNTS = [
     ),
   },
   {
-    role: "Admin",
+    roleKey: "authRoleAdmin" as const,
     email: "admin@ttpu.uz",
     icon: (
       <svg
@@ -65,19 +67,20 @@ const DEMO_ACCOUNTS = [
 ];
 
 const PANEL_FEATURES = [
-  "Barcha fanlar va materiallar bir joyda",
-  "Baholar, GPA va rasmiy transkript",
-  "Jadval, davomat va Telegram eslatmalari",
-];
+  "authLoginFeature1",
+  "authLoginFeature2",
+  "authLoginFeature3",
+] as const;
 
 const PANEL_STATS = [
-  { value: "12k+", label: "Talaba" },
-  { value: "450+", label: "Fan" },
-  { value: "98%", label: "Qoniqish" },
+  { value: "12k+", labelKey: "authLoginStatStudents" as const },
+  { value: "450+", labelKey: "authLoginStatCourses" as const },
+  { value: "98%", labelKey: "authLoginStatSatisfaction" as const },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
+  const { locale, t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -101,13 +104,13 @@ export default function LoginPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.ok) {
-        setError(json?.error ?? "Kirishda xatolik yuz berdi");
+        setError(json?.error ?? t("authLoginError"));
         return;
       }
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Tarmoq xatosi. Qayta urinib ko'ring.");
+      setError(t("commonNetworkError"));
     } finally {
       setLoading(false);
     }
@@ -124,10 +127,10 @@ export default function LoginPage() {
             <Logo size={40} />
           </span>
           <h2 className="mt-10 max-w-md text-3xl font-bold leading-tight tracking-tight text-white xl:text-4xl">
-            O&apos;quv jarayoni yagona, tez va ishonchli platformada
+            {t("authLoginPanelTitle")}
           </h2>
           <p className="mt-5 max-w-md leading-relaxed text-brand-200">
-            Kurslar, baholar, jadval va davomat — bitta hisobda, barcha qurilmalarda.
+            {t("authLoginPanelSubtitle")}
           </p>
           <ul className="mt-8 space-y-3.5">
             {PANEL_FEATURES.map((feature) => (
@@ -143,17 +146,17 @@ export default function LoginPage() {
                 >
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
-                {feature}
+                {t(feature)}
               </li>
             ))}
           </ul>
         </div>
         <div className="relative grid grid-cols-3 gap-4 border-t border-white/10 pt-8">
           {PANEL_STATS.map((stat) => (
-            <div key={stat.label}>
+            <div key={stat.labelKey}>
               <p className="text-2xl font-semibold tracking-tight text-white">{stat.value}</p>
               <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-brand-300">
-                {stat.label}
+                {t(stat.labelKey)}
               </p>
             </div>
           ))}
@@ -162,40 +165,51 @@ export default function LoginPage() {
 
       <section className="flex items-center justify-center px-4 py-12 sm:px-6">
         <div className="w-full max-w-md">
-          <div className="flex justify-center lg:hidden">
-            <Logo size={44} />
+          <div className="flex items-center justify-between gap-3">
+            <div className="lg:hidden">
+              <Logo size={44} />
+            </div>
+            <LanguageSwitcher locale={locale} className="ml-auto" />
           </div>
-          <Card className="mt-6 p-7 sm:p-9 lg:mt-0">
+          <Card className="mt-6 p-7 sm:p-9">
             <div className="text-center">
               <h1 className="text-2xl font-semibold tracking-tight text-brand-950">
-                Tizimga kirish
+                {t("authLoginTitle")}
               </h1>
               <p className="mt-1.5 text-sm text-slate-500">
-                TTPU LMS hisobingiz bilan davom eting
+                {t("authLoginSubtitle")}
               </p>
             </div>
             <form onSubmit={onSubmit} className="mt-8 space-y-5">
               <div>
-                <Label>Email</Label>
+                <Label>{t("authEmail")}</Label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@ttpu.uz"
+                  placeholder={t("authEmailPlaceholder")}
                   autoComplete="email"
                   required
                 />
               </div>
               <div>
-                <Label>Parol</Label>
+                <Label>{t("authPassword")}</Label>
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t("authPasswordPlaceholder")}
                   autoComplete="current-password"
                   required
                 />
+                <div className="mt-2 flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-medium text-brand-700 transition-colors duration-150 hover:text-brand-900 hover:underline"
+                  >
+                    {t("authLoginForgot")}
+                  </Link>
+                </div>
               </div>
               {error ? (
                 <div className="flex items-start gap-2.5 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
@@ -216,14 +230,14 @@ export default function LoginPage() {
                 </div>
               ) : null}
               <Button type="submit" disabled={loading} size="lg" className="w-full">
-                {loading ? "Kirilmoqda..." : "Kirish"}
+                {loading ? t("authLoginSubmitting") : t("authLoginSubmit")}
               </Button>
             </form>
             <div className="mt-8">
               <div className="flex items-center gap-3">
                 <span className="h-px flex-1 bg-slate-100" />
                 <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
-                  Demo hisoblar
+                  {t("authDemoTitle")}
                 </span>
                 <span className="h-px flex-1 bg-slate-100" />
               </div>
@@ -239,27 +253,27 @@ export default function LoginPage() {
                       {account.icon}
                     </span>
                     <span className="text-xs font-medium text-slate-700 group-hover:text-brand-800">
-                      {account.role}
+                      {t(account.roleKey)}
                     </span>
                   </button>
                 ))}
               </div>
               <p className="mt-3 text-center text-[11px] text-slate-400">
-                Bosilganda demo email va parol avtomatik to&apos;ldiriladi
+                {t("authDemoHint")}
               </p>
             </div>
             <p className="mt-7 text-center text-sm text-slate-500">
-              Hisobingiz yo&apos;qmi?{" "}
+              {t("authLoginNoAccount")}{" "}
               <Link
                 href="/register"
                 className="font-medium text-brand-700 transition-colors duration-150 hover:text-brand-900 hover:underline"
               >
-                Ro&apos;yxatdan o&apos;tish
+                {t("authLoginRegister")}
               </Link>
             </p>
           </Card>
           <p className="mt-6 text-center text-xs text-slate-400">
-            Kirish orqali siz universitetning foydalanish qoidalariga rozilik bildirasiz.
+            {t("authLoginTerms")}
           </p>
         </div>
       </section>

@@ -20,7 +20,13 @@ const STATUS_META: Record<ScheduleStatus, { label: string; tone: "amber" | "blue
   CANCELLED: { label: "Bekor", tone: "rose" },
 };
 
-function BlockBadge({ tone, children }: { tone: "slate" | "amber" | "blue" | "rose"; children: string }) {
+function BlockBadge({
+  tone,
+  children,
+}: {
+  tone: "slate" | "amber" | "blue" | "rose" | "purple";
+  children: string;
+}) {
   return (
     <Badge tone={tone} className="px-1.5 py-0 text-[10px] leading-4">
       {children}
@@ -78,6 +84,7 @@ function BuilderBlock({
         <p className={cn("pr-8 text-[13px] font-semibold leading-snug", cancelled && "line-through")}>{title}</p>
         {entry.teacher ? <p className="mt-0.5 truncate text-[11px] opacity-70">{entry.teacher}</p> : null}
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {entry.subGroup ? <BlockBadge tone="purple">{entry.subGroup}</BlockBadge> : null}
           {entry.lessonType ? <BlockBadge tone="blue">{entry.lessonType}</BlockBadge> : null}
           {entry.room ? <BlockBadge tone="slate">{entry.room}</BlockBadge> : null}
           {entry.parity ? <BlockBadge tone="amber">{entry.parity === "odd" ? "Toq" : "Juft"}</BlockBadge> : null}

@@ -137,9 +137,18 @@ export default async function ScheduleBuilderPage({
     teacherRef: entry.teacherRef ? { id: entry.teacherRef.id, name: entry.teacherRef.name } : null,
     room: entry.room,
     parity: entry.parity,
+    subGroup: entry.subGroup,
     status: entry.status,
     note: entry.note,
   }));
+
+  const subGroups = (
+    await prisma.subGroup.findMany({
+      where: { groupId: selectedGroup.id },
+      select: { name: true },
+      orderBy: { name: "asc" },
+    })
+  ).map((item) => item.name);
 
   const backHref = `/schedule?groupId=${encodeURIComponent(selectedGroup.id)}&week=${weekStart}`;
 
@@ -171,6 +180,7 @@ export default async function ScheduleBuilderPage({
         courses={courses}
         teacherOptions={Array.from(teacherSet.values()).sort((a, b) => a.name.localeCompare(b.name))}
         roomOptions={Array.from(roomSet)}
+        subGroups={subGroups}
       />
     </>
   );

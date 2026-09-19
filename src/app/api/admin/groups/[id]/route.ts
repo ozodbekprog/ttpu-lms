@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 const patchSchema = z.object({
   name: z.string().trim().min(2).max(60).optional(),
   year: z.number().int().min(2000).max(2100).nullable().optional(),
+  curatorId: z.string().trim().min(1).nullable().optional(),
 });
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -27,11 +28,22 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     if (existing) return Response.json({ ok: false, error: "Bu nomdagi guruh mavjud" }, { status: 409 });
   }
 
+  if (parsed.data.curatorId) {
+    const curator = await prisma.user.findUnique({ where: { id: parsed.data.curatorId } });
+    if (!curator) return Response.json({ ok: false, error: "Kurator topilmadi" }, { status: 400 });
+  }
+
   const updated = await prisma.group.update({
     where: { id },
     data: {
       name: parsed.data.name,
       year: parsed.data.year === undefined ? undefined : parsed.data.year,
+      curator:
+        parsed.data.curatorId === undefined
+          ? undefined
+          : parsed.data.curatorId
+            ? { connect: { id: parsed.data.curatorId } }
+            : { disconnect: true },
     },
     include: { _count: { select: { users: true } } },
   });

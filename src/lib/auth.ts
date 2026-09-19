@@ -13,6 +13,7 @@ export type SessionUser = {
   role: Role;
   name: string;
   email: string;
+  epoch: number;
 };
 
 function secretKey() {
@@ -21,8 +22,14 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
-export async function createSession(user: Pick<User, "id" | "role" | "name" | "email">) {
-  const token = await new SignJWT({ uid: user.id, role: user.role, name: user.name, email: user.email })
+export async function createSession(user: Pick<User, "id" | "role" | "name" | "email" | "sessionEpoch">) {
+  const token = await new SignJWT({
+    uid: user.id,
+    role: user.role,
+    name: user.name,
+    email: user.email,
+    epoch: user.sessionEpoch,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
@@ -54,6 +61,7 @@ export async function getSession(): Promise<SessionUser | null> {
       role: payload.role as Role,
       name: payload.name as string,
       email: payload.email as string,
+      epoch: typeof payload.epoch === "number" ? payload.epoch : -1,
     };
   } catch {
     return null;
@@ -68,6 +76,7 @@ export async function getCurrentUser() {
     include: { group: true },
   });
   if (!user || !user.isActive) return null;
+  if (user.sessionEpoch !== session.epoch) return null;
   return user;
 }
 

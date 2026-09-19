@@ -1,8 +1,11 @@
 import { isStaff, requireUser } from "@/lib/auth";
 import { getStaffExams, getStudentExams } from "@/components/exams/data";
+import { getStaffSessions, getStudentSessions } from "@/components/exams/session-data";
 import { StaffExamCard, StudentExamCard } from "@/components/exams/cards";
 import { ExamGroupSection } from "@/components/exams/group";
 import { ExamStat } from "@/components/exams/stats";
+import { StaffSessionCard, StudentSessionCard } from "@/components/exams/session-cards";
+import { SectionHeading } from "@/components/exams/session-badges";
 import { ButtonLink, EmptyState, PageHeader } from "@/components/ui";
 
 const GROUPS = [
@@ -15,7 +18,10 @@ export default async function ExamsPage() {
   const user = await requireUser();
 
   if (isStaff(user.role)) {
-    const groups = await getStaffExams({ id: user.id, role: user.role });
+    const [groups, sessions] = await Promise.all([
+      getStaffExams({ id: user.id, role: user.role }),
+      getStaffSessions({ id: user.id, role: user.role }),
+    ]);
     const items = [...groups.upcoming, ...groups.today, ...groups.past];
     const submitted = items.reduce((sum, exam) => sum + exam.submittedCount, 0);
     const attempts = items.reduce((sum, exam) => sum + exam.attemptCount, 0);
@@ -27,9 +33,40 @@ export default async function ExamsPage() {
           title="Imtihonlar / Nazorat ishlari"
           subtitle={
             user.role === "TEACHER"
-              ? "O'qitadigan kurslaringiz bo'yicha nazorat ishlari"
-              : "Barcha kurslar bo'yicha nazorat ishlari"
+              ? "O'qitadigan kurslaringiz bo'yicha imtihon sessiyalari va nazorat ishlari"
+              : "Barcha kurslar bo'yicha imtihon sessiyalari va nazorat ishlari"
           }
+        />
+        <SectionHeading
+          title="Imtihon sessiyalari"
+          subtitle="Haqiqiy imtihonlar: sana, xona va ruxsat ro'yxati"
+          action={
+            <ButtonLink href="/exams/sessions" size="sm" variant="secondary">
+              Barcha sessiyalar
+            </ButtonLink>
+          }
+        />
+        {sessions.length === 0 ? (
+          <EmptyState
+            title="Imtihon sessiyalari yo'q"
+            description="Yangi sessiya yaratib, talabalar ro'yxatini shakllantiring."
+            action={
+              <ButtonLink href="/exams/sessions" size="sm">
+                Sessiya yaratish
+              </ButtonLink>
+            }
+          />
+        ) : (
+          <div className="mb-9 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {sessions.slice(0, 3).map((session) => (
+              <StaffSessionCard key={session.id} session={session} />
+            ))}
+          </div>
+        )}
+
+        <SectionHeading
+          title="Nazorat ishlari"
+          subtitle="Test asosidagi nazorat ishlari (quiz)"
         />
         <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ExamStat
@@ -89,7 +126,10 @@ export default async function ExamsPage() {
     );
   }
 
-  const groups = await getStudentExams(user.id);
+  const [groups, sessions] = await Promise.all([
+    getStudentExams(user.id),
+    getStudentSessions(user.id),
+  ]);
   const items = [...groups.upcoming, ...groups.today, ...groups.past];
   const eligible = items.filter((exam) => exam.attendance.eligible).length;
   const submitted = items.filter((exam) => exam.attempts.finished > 0).length;
@@ -98,8 +138,31 @@ export default async function ExamsPage() {
     <>
       <PageHeader
         title="Imtihonlar / Nazorat ishlari"
-        subtitle={`${user.group?.name ?? "Talaba"} · ${items.length} ta nazorat ishi`}
+        subtitle={`${user.group?.name ?? "Talaba"} · ${sessions.length} ta sessiya · ${items.length} ta nazorat ishi`}
       />
+      <SectionHeading
+        title="Mening imtihonlarim"
+        subtitle="Sana, xona, o'rindiq va ruxsat holati"
+        action={
+          <ButtonLink href="/exams/sessions" size="sm" variant="secondary">
+            Barchasi
+          </ButtonLink>
+        }
+      />
+      {sessions.length === 0 ? (
+        <EmptyState
+          title="Imtihon sessiyalari yo'q"
+          description="Kurslaringiz bo'yicha imtihon sessiyalari hali e'lon qilinmagan."
+        />
+      ) : (
+        <div className="mb-9 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {sessions.map((session) => (
+            <StudentSessionCard key={session.id} session={session} />
+          ))}
+        </div>
+      )}
+
+      <SectionHeading title="Nazorat ishlari" subtitle="Test asosidagi nazorat ishlari (quiz)" />
       <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <ExamStat
           icon="clipboard"

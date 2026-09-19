@@ -1,0 +1,23 @@
+[Unit]
+Description=TTPU LMS (Next.js)
+Documentation=https://github.com/ozodbekprog/ttpu-lms
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=ttpu
+Group=ttpu
+WorkingDirectory=/opt/ttpu-lms
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=/opt/ttpu-lms/.env
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

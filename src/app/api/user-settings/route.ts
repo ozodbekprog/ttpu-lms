@@ -7,6 +7,7 @@ const settingsSchema = z.strictObject({
   reminderBot: z.boolean().optional(),
   reminderHour: z.number().int().min(7).max(10).optional(),
   deadlineReminder: z.boolean().optional(),
+  emailNotify: z.boolean().optional(),
   showCharts: z.boolean().optional(),
   scheduleListView: z.boolean().optional(),
 });

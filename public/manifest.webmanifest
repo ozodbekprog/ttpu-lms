@@ -1,0 +1,26 @@
+{
+  "name": "TTPU LMS",
+  "short_name": "TTPU LMS",
+  "description": "Turin Politexnika Universiteti uchun o'quv platformasi",
+  "lang": "uz",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1d3460",
+  "background_color": "#f6f7fa",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

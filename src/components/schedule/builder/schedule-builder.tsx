@@ -71,6 +71,7 @@ export function ScheduleBuilder({
   courses,
   teacherOptions,
   roomOptions,
+  subGroups,
 }: {
   role: "TEACHER" | "ADMIN";
   userId: string;
@@ -86,6 +87,7 @@ export function ScheduleBuilder({
   courses: BuilderCourse[];
   teacherOptions: BuilderTeacherRef[];
   roomOptions: string[];
+  subGroups: string[];
 }) {
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
@@ -100,6 +102,7 @@ export function ScheduleBuilder({
   const [subjects, setSubjects] = useState<BuilderSubject[] | null>(null);
   const [lessonTypes, setLessonTypes] = useState<BuilderLessonType[] | null>(null);
   const [lessonType, setLessonType] = useState("Ma'ruza");
+  const [subGroup, setSubGroup] = useState("");
   const autoTeacherRef = useRef<string | null>(null);
 
   const dismissToast = useCallback(() => setToast(null), []);
@@ -208,6 +211,7 @@ export function ScheduleBuilder({
       teacherId,
       room: room || null,
       parity: parity || null,
+      subGroup: subGroup || null,
       status: "NORMAL" as const,
     };
     const richBody = { ...baseBody, lessonType: lessonType || null, ...(subjectId ? { subjectId } : {}) };
@@ -459,6 +463,9 @@ export function ScheduleBuilder({
             teacherOptions={teacherOptions.map((option) => option.name)}
             parity={parity}
             onParity={setParity}
+            subGroups={subGroups}
+            subGroup={subGroup}
+            onSubGroup={setSubGroup}
           />
           <BuilderStats entries={visibleEntries} weekParity={weekParity} />
         </div>

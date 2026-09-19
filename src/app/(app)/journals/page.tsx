@@ -54,10 +54,19 @@ export default async function JournalsPage({
 
   const currentWeek = mondayOfIso(tashkentToday());
   const isCurrent = data.week === currentWeek;
-  const done = data.lessons.filter((lesson) => lesson.status === "done").length;
-  const partial = data.lessons.filter((lesson) => lesson.status === "partial").length;
+  const cancelled = data.lessons.filter((lesson) => lesson.status === "CANCELLED").length;
+  const conducted = data.lessons.length - cancelled;
+  const done = data.lessons.filter(
+    (lesson) => lesson.status !== "CANCELLED" && lesson.attendanceStatus === "done",
+  ).length;
+  const partial = data.lessons.filter(
+    (lesson) => lesson.status !== "CANCELLED" && lesson.attendanceStatus === "partial",
+  ).length;
   const missed = data.lessons.filter(
-    (lesson) => lesson.status === "empty" && lesson.date < data.today,
+    (lesson) =>
+      lesson.status !== "CANCELLED" &&
+      lesson.attendanceStatus === "empty" &&
+      lesson.date < data.today,
   ).length;
 
   const nav = (
@@ -89,12 +98,12 @@ export default async function JournalsPage({
       <PageHeader
         eyebrow="Davomat"
         title="Kundaliklar"
-        subtitle={`${weekLabel(data.week)} · ${data.lessons.length} ta dars${
-          user.role === "ADMIN" ? " · barcha o'qituvchilar" : ""
-        }`}
+        subtitle={`${weekLabel(data.week)} · ${conducted} ta dars${
+          cancelled > 0 ? ` · ${cancelled} ta bekor qilingan` : ""
+        }${user.role === "ADMIN" ? " · barcha o'qituvchilar" : ""}`}
         action={nav}
       />
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Belgilangan" value={done} hint="To'liq belgilangan darslar" />
         <Stat label="Qisman" value={partial} hint="Qismatan belgilangan darslar" />
         <Stat
@@ -102,6 +111,7 @@ export default async function JournalsPage({
           value={missed}
           hint="O'tib ketgan, belgilanmagan darslar"
         />
+        <Stat label="Bekor qilindi" value={cancelled} hint="Statistikaga kirmaydi" />
       </div>
       <JournalWeek lessons={data.lessons} today={data.today} />
     </>

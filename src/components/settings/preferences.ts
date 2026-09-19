@@ -2,6 +2,7 @@ export type UserPreferences = {
   reminderBot: boolean;
   reminderHour: number;
   deadlineReminder: boolean;
+  emailNotify: boolean;
   showCharts: boolean;
   scheduleListView: boolean;
 };
@@ -10,6 +11,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   reminderBot: true,
   reminderHour: 8,
   deadlineReminder: true,
+  emailNotify: false,
   showCharts: true,
   scheduleListView: false,
 };
@@ -34,6 +36,7 @@ export function normalizeUserPreferences(value: unknown): UserPreferences {
     preferences.reminderHour = raw.reminderHour;
   }
   if (typeof raw.deadlineReminder === "boolean") preferences.deadlineReminder = raw.deadlineReminder;
+  if (typeof raw.emailNotify === "boolean") preferences.emailNotify = raw.emailNotify;
   if (typeof raw.showCharts === "boolean") preferences.showCharts = raw.showCharts;
   if (typeof raw.scheduleListView === "boolean") preferences.scheduleListView = raw.scheduleListView;
   return preferences;

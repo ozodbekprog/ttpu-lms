@@ -4,6 +4,7 @@ export type JournalStudent = {
   id: string;
   name: string;
   avatarUrl: string | null;
+  subGroup: string | null;
 };
 
 export type JournalSummaryRow = {

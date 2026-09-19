@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { canManageCourse } from "@/components/courses/course-access";
 import { notifyUser } from "@/server/notify";
+import { logAudit } from "@/server/audit";
 
 const gradeSchema = z.object({
   score: z.coerce.number().int().min(0),
@@ -60,6 +61,19 @@ export async function PATCH(
       link: `/courses/${submission.assignment.course.slug}/assignments/${submission.assignmentId}`,
     });
   } catch {}
+
+  await logAudit({
+    actorId: user.id,
+    action: "submission.grade",
+    entity: "Submission",
+    entityId: updated.id,
+    meta: {
+      assignmentId: submission.assignmentId,
+      studentId: submission.studentId,
+      score: parsed.data.score,
+      maxScore: submission.assignment.maxScore,
+    },
+  });
 
   return Response.json({ ok: true, data: updated });
 }

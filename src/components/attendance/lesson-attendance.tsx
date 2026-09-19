@@ -13,6 +13,7 @@ export type LessonStudent = {
   name: string;
   avatarUrl: string | null;
   groupName: string | null;
+  subGroupName: string | null;
 };
 
 const OPTIONS: {
@@ -106,6 +107,8 @@ export function LessonAttendance({
   initial,
   courses,
   selectedSlug,
+  subGroup,
+  cancelled,
 }: {
   courseId: string;
   date: string;
@@ -114,6 +117,8 @@ export function LessonAttendance({
   initial: Record<string, LessonStatus>;
   courses: CourseOption[];
   selectedSlug: string;
+  subGroup: string | null;
+  cancelled: boolean;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Record<string, LessonStatus>>({});
@@ -121,13 +126,18 @@ export function LessonAttendance({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const visibleStudents = useMemo(
+    () => (subGroup ? students.filter((student) => student.subGroupName === subGroup) : students),
+    [students, subGroup],
+  );
+
   const statuses = useMemo(() => {
     const map: Record<string, LessonStatus> = {};
-    for (const student of students) {
+    for (const student of visibleStudents) {
       map[student.id] = draft[student.id] ?? initial[student.id] ?? "PRESENT";
     }
     return map;
-  }, [draft, initial, students]);
+  }, [draft, initial, visibleStudents]);
 
   const counts = useMemo(() => {
     const summary: Record<LessonStatus, number> = {
@@ -136,11 +146,11 @@ export function LessonAttendance({
       LATE: 0,
       EXCUSED: 0,
     };
-    for (const student of students) {
+    for (const student of visibleStudents) {
       summary[statuses[student.id] ?? "PRESENT"] += 1;
     }
     return summary;
-  }, [statuses, students]);
+  }, [statuses, visibleStudents]);
 
   function setStatus(studentId: string, status: LessonStatus) {
     setDraft((prev) => ({ ...prev, [studentId]: status }));
@@ -149,7 +159,7 @@ export function LessonAttendance({
 
   function markAllPresent() {
     const next: Record<string, LessonStatus> = {};
-    for (const student of students) {
+    for (const student of visibleStudents) {
       next[student.id] = "PRESENT";
     }
     setDraft(next);
@@ -162,7 +172,7 @@ export function LessonAttendance({
   }
 
   async function save() {
-    if (students.length === 0) return;
+    if (cancelled || visibleStudents.length === 0) return;
     setSaving(true);
     setError(null);
     setMessage(null);
@@ -171,7 +181,7 @@ export function LessonAttendance({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         date,
-        entries: students.map((student) => ({
+        entries: visibleStudents.map((student) => ({
           studentId: student.id,
           status: statuses[student.id] ?? "PRESENT",
         })),
@@ -196,7 +206,13 @@ export function LessonAttendance({
       <Card className="animate-fade-up">
         <CardHeader
           title="Talabalar"
-          subtitle={`${students.length} ta talaba · holatni belgilang`}
+          subtitle={
+            cancelled
+              ? "Dars bekor qilingan — davomat belgilanmaydi"
+              : subGroup
+                ? `${visibleStudents.length} ta talaba · ${subGroup} kichik guruh`
+                : `${visibleStudents.length} ta talaba · holatni belgilang`
+          }
         />
         <CardBody className="space-y-5">
           {courses.length > 1 ? (
@@ -212,11 +228,13 @@ export function LessonAttendance({
             </div>
           ) : null}
 
-          {students.length === 0 ? (
-            <p className="text-sm text-slate-500">Kursda talaba yo&apos;q.</p>
+          {visibleStudents.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              {subGroup ? `${subGroup} kichik guruhda talaba yo'q.` : "Kursda talaba yo'q."}
+            </p>
           ) : (
             <div className="overflow-hidden rounded-2xl border border-slate-200">
-              {students.map((student) => {
+              {visibleStudents.map((student) => {
                 const status = statuses[student.id] ?? "PRESENT";
                 const activeOption = OPTIONS.find((option) => option.value === status);
                 return (
@@ -230,7 +248,7 @@ export function LessonAttendance({
                         <p className="truncate text-sm font-medium text-slate-800">{student.name}</p>
                         <p className="flex items-center gap-1.5 text-xs text-slate-400">
                           <span className={cn("size-1.5 rounded-full", activeOption?.dot)} />
-                          {student.groupName ?? activeOption?.label}
+                          {student.subGroupName ?? student.groupName ?? activeOption?.label}
                         </p>
                       </div>
                     </div>
@@ -241,11 +259,13 @@ export function LessonAttendance({
                           type="button"
                           title={option.label}
                           onClick={() => setStatus(student.id, option.value)}
+                          disabled={cancelled}
                           className={cn(
                             "inline-flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-semibold transition-all duration-150 sm:px-2.5",
                             status === option.value
                               ? option.active
                               : cn("hover:shadow-sm", option.idle),
+                            cancelled && "cursor-not-allowed opacity-50",
                           )}
                         >
                           <StatusGlyph status={option.value} />
@@ -273,7 +293,7 @@ export function LessonAttendance({
         </CardBody>
       </Card>
 
-      {students.length > 0 ? (
+      {visibleStudents.length > 0 ? (
         <div className="sticky bottom-4 z-20 mt-4">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-lift backdrop-blur">
             <div className="flex flex-wrap items-center gap-2">
@@ -295,7 +315,7 @@ export function LessonAttendance({
                 variant="secondary"
                 size="lg"
                 onClick={markAllPresent}
-                disabled={saving || students.length === 0}
+                disabled={saving || cancelled || visibleStudents.length === 0}
               >
                 <svg
                   width="15"
@@ -317,7 +337,7 @@ export function LessonAttendance({
                 onClick={() => {
                   void save();
                 }}
-                disabled={saving || students.length === 0}
+                disabled={saving || cancelled || visibleStudents.length === 0}
               >
                 {saving ? "Saqlanmoqda..." : "Saqlash"}
               </Button>

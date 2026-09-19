@@ -38,6 +38,9 @@ export function BuilderPalette({
   teacherOptions,
   parity,
   onParity,
+  subGroups,
+  subGroup,
+  onSubGroup,
 }: {
   subjects: BuilderSubject[];
   courses: BuilderCourse[];
@@ -58,6 +61,9 @@ export function BuilderPalette({
   teacherOptions: string[];
   parity: "" | "odd" | "even";
   onParity: (value: "" | "odd" | "even") => void;
+  subGroups: string[];
+  subGroup: string;
+  onSubGroup: (value: string) => void;
 }) {
   const teacherLabel = role === "TEACHER" ? fixedTeacher : teacherValue.trim() || "Tanlanmagan";
   const hasLessonType = lessonTypes.some((item) => item.name === lessonType);
@@ -150,6 +156,18 @@ export function BuilderPalette({
               <option value="">Har hafta</option>
               <option value="odd">Toq hafta</option>
               <option value="even">Juft hafta</option>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Kichik guruh</Label>
+            <Select value={subGroup} onChange={(event) => onSubGroup(event.target.value)}>
+              <option value="">Butun guruh</option>
+              {subGroups.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
             </Select>
           </div>
 

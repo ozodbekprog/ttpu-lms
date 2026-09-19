@@ -15,6 +15,8 @@ import {
   type QuestionFull,
 } from "@/components/quiz/shared";
 import { QuestionForm } from "@/components/quiz/question-form";
+import { BankImportModal } from "@/components/question-bank/import-modal";
+import type { BankQuestionItem } from "@/components/question-bank/shared";
 
 export type CourseOption = { id: string; title: string };
 
@@ -59,6 +61,7 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
   const [isPublished, setIsPublished] = useState(quiz?.isPublished ?? false);
   const [questions, setQuestions] = useState<QuestionFull[]>(quiz?.questions ?? []);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [bankOpen, setBankOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -168,6 +171,39 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
       );
     }
     setEditingId(null);
+    return null;
+  }
+
+  async function importBankQuestions(items: BankQuestionItem[]): Promise<string | null> {
+    const drafts: QuestionDraft[] = items.map((item) => ({
+      text: item.text,
+      type: item.type,
+      options: item.options,
+      correct: item.correct,
+      points: 1,
+    }));
+
+    if (quiz) {
+      const created: QuestionFull[] = [];
+      for (const draft of drafts) {
+        const result = await apiFetch<QuestionFull>(`/api/quizzes/${quiz.id}/questions`, "POST", draft);
+        if (!result.ok) return result.error;
+        created.push(result.data);
+      }
+      setQuestions((prev) => [...prev, ...created]);
+      setError(null);
+      setMessage(`${created.length} ta savol bankdan qo'shildi`);
+      return null;
+    }
+
+    const base = questions.length;
+    const locals: QuestionFull[] = drafts.map((draft, index) => {
+      tempCounter.current += 1;
+      return { id: `tmp-${tempCounter.current}`, ...draft, position: base + index + 1 };
+    });
+    setQuestions((prev) => [...prev, ...locals]);
+    setError(null);
+    setMessage(`${locals.length} ta savol bankdan qo'shildi`);
     return null;
   }
 
@@ -303,16 +339,29 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
               {questionsTotal} ball
             </span>
           </div>
-          <Button
-            variant="secondary"
-            onClick={() => setEditingId(NEW_QUESTION_ID)}
-            disabled={editingId !== null}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Savol qo&apos;shish
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setBankOpen(true)}
+              disabled={editingId !== null || courses.length === 0}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              Bankdan qo&apos;shish
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setEditingId(NEW_QUESTION_ID)}
+              disabled={editingId !== null}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Savol qo&apos;shish
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -501,6 +550,15 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
           </div>
         </div>
       </div>
+
+      {bankOpen ? (
+        <BankImportModal
+          courses={courses}
+          initialCourseId={courseId}
+          onClose={() => setBankOpen(false)}
+          onImport={importBankQuestions}
+        />
+      ) : null}
     </div>
   );
 }

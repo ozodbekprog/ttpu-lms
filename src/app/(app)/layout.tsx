@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UnreadBadge } from "@/components/chat/UnreadBadge";
 import { Logo } from "@/components/brand/logo";
-import { NavLinks } from "./nav-links";
+import { MobileTabBar, NavLinks, type MobileTab } from "./nav-links";
 
 export default async function AppLayout({
   children,
@@ -38,6 +38,7 @@ export default async function AppLayout({
         { href: "/attendance", label: "Davomat" },
         ...(modules.certificates ? [{ href: "/certificates", label: "Sertifikatlar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/journals", label: "Kundaliklar" }] : []),
+        ...(isStaff(user.role) ? [{ href: "/question-bank", label: "Savollar banki" }] : []),
       ],
     },
     {
@@ -60,6 +61,7 @@ export default async function AppLayout({
     {
       label: "Boshqaruv",
       links: [
+        ...(isStaff(user.role) ? [{ href: "/curator", label: "Kurator paneli" }] : []),
         ...(isStaff(user.role) ? [{ href: "/reports", label: "Hisobotlar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/workload", label: "Yuklama" }] : []),
         ...(user.role === "ADMIN" ? [{ href: "/admin", label: "Admin panel" }] : []),
@@ -73,6 +75,17 @@ export default async function AppLayout({
       : user.role === "TEACHER"
         ? "O'qituvchi"
         : user.group?.name ?? "Talaba";
+
+  const tabs: MobileTab[] = [
+    { href: "/dashboard", label: "Dashboard", icon: "home" },
+    { href: "/courses", label: "Kurslar", icon: "book" },
+    { href: "/schedule", label: "Jadval", icon: "calendar" },
+    { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholar", icon: "chart" },
+  ];
+
+  if (modules.chat) {
+    tabs.push({ href: "/messages", label: "Xabarlar", icon: "chat", badge: <UnreadBadge /> });
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -112,14 +125,23 @@ export default async function AppLayout({
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-slate-200/70 bg-white/90 px-4 backdrop-blur md:hidden">
-          <Link href="/dashboard">
-            <Logo size={30} withText={false} />
+          <Link href="/dashboard" className="transition-opacity hover:opacity-80">
+            <Logo size={28} withText={false} />
           </Link>
-          <NavLinks groups={groups} variant="top" />
-          <NotificationBell />
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <Link
+              href="/profile"
+              aria-label="Profil"
+              className="rounded-full transition-opacity hover:opacity-80"
+            >
+              <Avatar name={user.name} src={user.avatarUrl} size={30} />
+            </Link>
+          </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-20 md:px-8 md:pt-8 md:pb-8">{children}</main>
       </div>
+      <MobileTabBar tabs={tabs} />
     </div>
   );
 }

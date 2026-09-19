@@ -5,21 +5,24 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, Input, Label } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 
 const PANEL_FEATURES = [
-  "Shaxsiy kabinet va dars jadvali darhol ochiladi",
-  "GPA, baholar va transkript avtomatik hisoblanadi",
-  "Telegram bot orqali barcha eslatmalar yetib boradi",
-];
+  "authRegisterFeature1",
+  "authRegisterFeature2",
+  "authRegisterFeature3",
+] as const;
 
 const PANEL_STEPS = [
-  { number: "01", title: "Hisob", description: "30 soniyada yaratiladi" },
-  { number: "02", title: "Profil", description: "Guruh va fakultet tanlanadi" },
-  { number: "03", title: "O'qish", description: "Kurslar avtomatik biriktiriladi" },
+  { number: "01", titleKey: "authRegisterStep1Title" as const, textKey: "authRegisterStep1Text" as const },
+  { number: "02", titleKey: "authRegisterStep2Title" as const, textKey: "authRegisterStep2Text" as const },
+  { number: "03", titleKey: "authRegisterStep3Title" as const, textKey: "authRegisterStep3Text" as const },
 ];
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { locale, t } = useI18n();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,13 +43,13 @@ export default function RegisterPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.ok) {
-        setError(json?.error ?? "Ro'yxatdan o'tishda xatolik");
+        setError(json?.error ?? t("authRegisterError"));
         return;
       }
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Tarmoq xatosi. Qayta urinib ko'ring.");
+      setError(t("commonNetworkError"));
     } finally {
       setLoading(false);
     }
@@ -63,11 +66,10 @@ export default function RegisterPage() {
             <Logo size={40} />
           </span>
           <h2 className="mt-10 max-w-md text-3xl font-bold leading-tight tracking-tight text-white xl:text-4xl">
-            Bir daqiqada hisob yarating va o&apos;qishni boshlang
+            {t("authRegisterPanelTitle")}
           </h2>
           <p className="mt-5 max-w-md leading-relaxed text-brand-200">
-            Ro&apos;yxatdan o&apos;tish bepul va bir necha maydondan iborat. Qolganini
-            platforma o&apos;zi bajaradi.
+            {t("authRegisterPanelSubtitle")}
           </p>
           <ul className="mt-8 space-y-3.5">
             {PANEL_FEATURES.map((feature) => (
@@ -83,7 +85,7 @@ export default function RegisterPage() {
                 >
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
-                {feature}
+                {t(feature)}
               </li>
             ))}
           </ul>
@@ -95,8 +97,8 @@ export default function RegisterPage() {
                 {step.number}
               </span>
               <div className="flex min-w-0 flex-1 items-center justify-between gap-3 border-b border-white/10 pb-4">
-                <p className="text-sm font-medium text-white">{step.title}</p>
-                <p className="text-xs text-brand-300">{step.description}</p>
+                <p className="text-sm font-medium text-white">{t(step.titleKey)}</p>
+                <p className="text-xs text-brand-300">{t(step.textKey)}</p>
               </div>
             </div>
           ))}
@@ -105,47 +107,50 @@ export default function RegisterPage() {
 
       <section className="flex items-center justify-center px-4 py-12 sm:px-6">
         <div className="w-full max-w-md">
-          <div className="flex justify-center lg:hidden">
-            <Logo size={44} />
+          <div className="flex items-center justify-between gap-3">
+            <div className="lg:hidden">
+              <Logo size={44} />
+            </div>
+            <LanguageSwitcher locale={locale} className="ml-auto" />
           </div>
-          <Card className="mt-6 p-7 sm:p-9 lg:mt-0">
+          <Card className="mt-6 p-7 sm:p-9">
             <div className="text-center">
               <h1 className="text-2xl font-semibold tracking-tight text-brand-950">
-                Ro&apos;yxatdan o&apos;tish
+                {t("authRegisterTitle")}
               </h1>
               <p className="mt-1.5 text-sm text-slate-500">
-                Yangi hisob yarating va o&apos;qishni boshlang
+                {t("authRegisterSubtitle")}
               </p>
             </div>
             <form onSubmit={onSubmit} className="mt-8 space-y-5">
               <div>
-                <Label>To&apos;liq ism</Label>
+                <Label>{t("authRegisterName")}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => update("name", e.target.value)}
-                  placeholder="Ism Familiya"
+                  placeholder={t("authRegisterNamePlaceholder")}
                   autoComplete="name"
                   required
                 />
               </div>
               <div>
-                <Label>Email</Label>
+                <Label>{t("authEmail")}</Label>
                 <Input
                   type="email"
                   value={form.email}
                   onChange={(e) => update("email", e.target.value)}
-                  placeholder="email@ttpu.uz"
+                  placeholder={t("authEmailPlaceholder")}
                   autoComplete="email"
                   required
                 />
               </div>
               <div>
-                <Label>Parol</Label>
+                <Label>{t("authPassword")}</Label>
                 <Input
                   type="password"
                   value={form.password}
                   onChange={(e) => update("password", e.target.value)}
-                  placeholder="Kamida 6 belgi"
+                  placeholder={t("authRegisterPasswordPlaceholder")}
                   autoComplete="new-password"
                   minLength={6}
                   required
@@ -170,22 +175,21 @@ export default function RegisterPage() {
                 </div>
               ) : null}
               <Button type="submit" disabled={loading} size="lg" className="w-full">
-                {loading ? "Yaratilmoqda..." : "Hisob yaratish"}
+                {loading ? t("authRegisterSubmitting") : t("authRegisterSubmit")}
               </Button>
             </form>
             <p className="mt-7 text-center text-sm text-slate-500">
-              Hisobingiz bormi?{" "}
+              {t("authRegisterHasAccount")}{" "}
               <Link
                 href="/login"
                 className="font-medium text-brand-700 transition-colors duration-150 hover:text-brand-900 hover:underline"
               >
-                Kirish
+                {t("authLoginLink")}
               </Link>
             </p>
           </Card>
           <p className="mt-6 text-center text-xs text-slate-400">
-            Hisob yaratish orqali siz foydalanish shartlari va maxfiylik siyosatiga
-            rozilik bildirasiz.
+            {t("authRegisterTerms")}
           </p>
         </div>
       </section>

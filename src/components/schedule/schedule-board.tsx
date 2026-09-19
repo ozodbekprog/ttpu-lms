@@ -57,6 +57,7 @@ type NewBlockData = {
   room: string | null;
   teacher: string | null;
   color: string | null;
+  subGroup: string | null;
 };
 
 const DAYS = [1, 2, 3, 4, 5, 6];
@@ -312,6 +313,7 @@ function toBoardEntry(entry: BuilderEntry, groupName: string): BoardEntry {
     teacherRef: entry.teacherRef,
     room: entry.room,
     parity: entry.parity,
+    subGroup: entry.subGroup,
     status: entry.status,
     note: entry.note,
   };
@@ -350,6 +352,7 @@ export function ScheduleBoard({
   nowMinutes,
   palette,
   teacherOptions,
+  subGroups,
 }: {
   canEdit: boolean;
   role: "ADMIN" | "TEACHER" | "STUDENT";
@@ -365,6 +368,7 @@ export function ScheduleBoard({
   nowMinutes: number;
   palette: PaletteBlock[];
   teacherOptions: { id: string; name: string }[];
+  subGroups: string[];
 }) {
   const router = useRouter();
   const [entries, setEntries] = useState<BoardEntry[]>(initialEntries);
@@ -380,6 +384,7 @@ export function ScheduleBoard({
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const [pending, setPending] = useState(false);
   const [adminTeacherId, setAdminTeacherId] = useState("");
+  const [placeSubGroup, setPlaceSubGroup] = useState("");
   const actionRef = useRef<(() => void) | null>(null);
   const deletedRef = useRef<BoardEntry | null>(null);
 
@@ -520,7 +525,8 @@ export function ScheduleBoard({
     if (date > todayIso) return null;
     const slug = matchCourseSlug(entry.subject, teacher.courses) ?? teacher.courses[0]?.slug;
     if (!slug) return null;
-    return `/courses/${slug}/attendance/lesson?date=${date}&slot=${entry.slot}`;
+    const subGroupQuery = entry.subGroup ? `&subGroup=${encodeURIComponent(entry.subGroup)}` : "";
+    return `/courses/${slug}/attendance/lesson?date=${date}&slot=${entry.slot}${subGroupQuery}`;
   }
 
   function goWeek(week: string) {
@@ -575,6 +581,7 @@ export function ScheduleBoard({
       teacherRef: null,
       room: data.room,
       parity: null,
+      subGroup: data.subGroup,
       status: "NORMAL",
       note: null,
     };
@@ -595,6 +602,7 @@ export function ScheduleBoard({
         teacherId,
         room: data.room,
         parity: null,
+        subGroup: data.subGroup,
         status: "NORMAL",
       }),
     });
@@ -702,6 +710,7 @@ export function ScheduleBoard({
         teacherId: entry.teacherId,
         room: entry.room,
         parity: entry.parity === "odd" || entry.parity === "even" ? entry.parity : null,
+        subGroup: entry.subGroup,
         status: entry.status,
         note: entry.note,
       }),
@@ -802,6 +811,7 @@ export function ScheduleBoard({
       room: parsed.room,
       teacher: parsed.teacher,
       color: parsed.color,
+      subGroup: placeSubGroup || null,
     });
   }
 
@@ -816,6 +826,7 @@ export function ScheduleBoard({
         room: selectedBlock.room,
         teacher: teacherForBlock(selectedBlock),
         color: selectedBlock.color,
+        subGroup: placeSubGroup || null,
       });
       return;
     }
@@ -985,6 +996,11 @@ export function ScheduleBoard({
                                 ) : null}
                                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                   {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
+                                  {entry.subGroup ? (
+                                    <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-semibold text-purple-700 ring-1 ring-purple-200/70">
+                                      {entry.subGroup}
+                                    </span>
+                                  ) : null}
                                   {entry.room ? (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200/80">
                                       <PinIcon className="size-3" />
@@ -1220,6 +1236,11 @@ export function ScheduleBoard({
                                 ) : null}
                                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                   {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
+                                  {entry.subGroup ? (
+                                    <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-semibold text-purple-700 ring-1 ring-purple-200/70">
+                                      {entry.subGroup}
+                                    </span>
+                                  ) : null}
                                   {entry.parity ? (
                                     <Badge tone="slate">{PARITY_LABEL[entry.parity] ?? entry.parity}</Badge>
                                   ) : null}
@@ -1321,6 +1342,30 @@ export function ScheduleBoard({
                 <ChevronDownIcon className="size-3.5" />
               </span>
             </div>
+
+            {canEdit && mode === "group" && subGroups.length > 0 ? (
+              <div className="relative w-full sm:w-40">
+                <span className={FILTER_ICON_CLASS}>
+                  <UsersIcon className="size-3.5" />
+                </span>
+                <select
+                  aria-label="Kichik guruh"
+                  value={placeSubGroup}
+                  onChange={(event) => setPlaceSubGroup(event.target.value)}
+                  className={FILTER_CLASS}
+                >
+                  <option value="">Butun guruh</option>
+                  {subGroups.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <span className={CHEVRON_CLASS}>
+                  <ChevronDownIcon className="size-3.5" />
+                </span>
+              </div>
+            ) : null}
 
             {canEdit ? (
               <div className="relative w-full sm:w-40">

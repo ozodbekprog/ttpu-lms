@@ -32,6 +32,7 @@ export type BuilderEntry = {
   teacherRef: BuilderTeacherRef | null;
   room: string | null;
   parity: string | null;
+  subGroup: string | null;
   status: ScheduleStatus;
   note: string | null;
 };
@@ -56,6 +57,7 @@ export type BoardEntry = ScheduleEntryItem & {
   subjectRef: BuilderSubjectRef | null;
   teacherId: string | null;
   teacherRef: BuilderTeacherRef | null;
+  subGroup: string | null;
 };
 
 export type PaletteBlock = {

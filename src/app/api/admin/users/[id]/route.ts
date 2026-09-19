@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import type { Prisma } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/server/audit";
 import { userSelect } from "../select";
 
 const patchSchema = z.object({
@@ -11,6 +12,7 @@ const patchSchema = z.object({
   password: z.string().min(6).max(100).optional(),
   role: z.enum(["ADMIN", "TEACHER", "STUDENT"]).optional(),
   groupId: z.string().trim().min(1).nullable().optional(),
+  subGroupId: z.string().trim().min(1).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -40,7 +42,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     (parsed.data.email !== undefined && parsed.data.email.toLowerCase() !== target.email) ||
     parsed.data.password !== undefined ||
     (parsed.data.role !== undefined && parsed.data.role !== target.role) ||
-    (parsed.data.groupId !== undefined && (parsed.data.groupId ?? null) !== target.groupId);
+    (parsed.data.groupId !== undefined && (parsed.data.groupId ?? null) !== target.groupId) ||
+    (parsed.data.subGroupId !== undefined && (parsed.data.subGroupId ?? null) !== target.subGroupId);
 
   if (!target.isActive && (parsed.data.isActive !== true || changesOther)) {
     return Response.json(
@@ -78,6 +81,26 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       if (!group) return Response.json({ ok: false, error: "Guruh topilmadi" }, { status: 400 });
     }
     data.group = parsed.data.groupId ? { connect: { id: parsed.data.groupId } } : { disconnect: true };
+    if ((parsed.data.groupId ?? null) !== target.groupId) {
+      data.subGroup = { disconnect: true };
+    }
+  }
+
+  if (parsed.data.subGroupId !== undefined) {
+    if (parsed.data.subGroupId) {
+      const subGroup = await prisma.subGroup.findUnique({
+        where: { id: parsed.data.subGroupId },
+        select: { id: true, groupId: true },
+      });
+      if (!subGroup) return Response.json({ ok: false, error: "Kichik guruh topilmadi" }, { status: 400 });
+      const nextGroupId = parsed.data.groupId !== undefined ? parsed.data.groupId : target.groupId;
+      if (!nextGroupId || subGroup.groupId !== nextGroupId) {
+        return Response.json({ ok: false, error: "Kichik guruh boshqa guruhga tegishli" }, { status: 400 });
+      }
+      data.subGroup = { connect: { id: subGroup.id } };
+    } else {
+      data.subGroup = { disconnect: true };
+    }
   }
 
   if (parsed.data.email !== undefined) {
@@ -94,6 +117,24 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   }
 
   const updated = await prisma.user.update({ where: { id }, data, select: userSelect });
+
+  const roleChanged = parsed.data.role !== undefined && parsed.data.role !== target.role;
+  const activeChanged = parsed.data.isActive !== undefined && parsed.data.isActive !== target.isActive;
+  if (roleChanged || activeChanged) {
+    await logAudit({
+      actorId: user.id,
+      action: "admin.user.update",
+      entity: "User",
+      entityId: id,
+      meta: {
+        role: parsed.data.role ?? target.role,
+        isActive: parsed.data.isActive ?? target.isActive,
+        previousRole: target.role,
+        previousIsActive: target.isActive,
+      },
+    });
+  }
+
   return Response.json({ ok: true, data: updated });
 }
 
@@ -117,5 +158,12 @@ export async function DELETE(_request: Request, ctx: { params: Promise<{ id: str
   }
 
   await prisma.user.update({ where: { id }, data: { isActive: false } });
+  await logAudit({
+    actorId: user.id,
+    action: "admin.user.update",
+    entity: "User",
+    entityId: id,
+    meta: { role: target.role, isActive: false, previousIsActive: target.isActive },
+  });
   return Response.json({ ok: true, data: { id, isActive: false } });
 }

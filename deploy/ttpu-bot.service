@@ -1,0 +1,21 @@
+[Unit]
+Description=TTPU LMS Telegram bot
+Documentation=https://github.com/ozodbekprog/ttpu-lms
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=ttpu
+Group=ttpu
+WorkingDirectory=/opt/ttpu-lms
+EnvironmentFile=/opt/ttpu-lms/.env
+ExecStart=/usr/bin/node bot/telegram.mjs
+Restart=always
+RestartSec=10
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

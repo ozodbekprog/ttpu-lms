@@ -4,9 +4,22 @@ import { PageHeader } from "@/components/ui";
 import { BookingsBoard } from "@/components/bookings/bookings-board";
 import type { BookingItem, RoomOption } from "@/components/bookings/types";
 
-export default async function BookingsPage() {
+export default async function BookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ room?: string; date?: string; slot?: string }>;
+}) {
   const user = await requireUser();
   const staff = isStaff(user.role);
+  const params = await searchParams;
+
+  const initialRoom = typeof params.room === "string" ? params.room.trim().slice(0, 100) : "";
+  const initialDate =
+    typeof params.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.date)
+      ? params.date
+      : "";
+  const rawSlot = typeof params.slot === "string" ? Number(params.slot) : Number.NaN;
+  const initialSlot = Number.isInteger(rawSlot) && rawSlot >= 1 && rawSlot <= 8 ? rawSlot : undefined;
 
   const [rooms, rows] = await Promise.all([
     prisma.room.findMany({
@@ -54,6 +67,9 @@ export default async function BookingsPage() {
         currentUserId={user.id}
         staff={staff}
         isAdmin={user.role === "ADMIN"}
+        initialRoom={initialRoom || undefined}
+        initialDate={initialDate || undefined}
+        initialSlot={initialSlot}
       />
     </>
   );

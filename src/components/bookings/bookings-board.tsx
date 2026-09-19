@@ -46,19 +46,38 @@ export function BookingsBoard({
   currentUserId,
   staff,
   isAdmin,
+  initialRoom,
+  initialDate,
+  initialSlot,
 }: {
   rooms: RoomOption[];
   initialBookings: BookingItem[];
   currentUserId: string;
   staff: boolean;
   isAdmin: boolean;
+  initialRoom?: string;
+  initialDate?: string;
+  initialSlot?: number;
 }) {
+  const presetRoomName = initialRoom?.trim() ?? "";
+  const presetRoom = presetRoomName
+    ? rooms.find((room) => room.name.toLowerCase() === presetRoomName.toLowerCase()) ?? null
+    : null;
+
   const [items, setItems] = useState<BookingItem[]>(initialBookings);
-  const [roomMode, setRoomMode] = useState<RoomMode>(rooms.length > 0 ? "list" : "text");
-  const [roomId, setRoomId] = useState(rooms[0]?.id ?? "");
-  const [roomText, setRoomText] = useState("");
-  const [date, setDate] = useState(todayIso());
-  const [slot, setSlot] = useState(1);
+  const [roomMode, setRoomMode] = useState<RoomMode>(
+    presetRoom
+      ? "list"
+      : presetRoomName
+        ? "text"
+        : rooms.length > 0
+          ? "list"
+          : "text",
+  );
+  const [roomId, setRoomId] = useState(presetRoom?.id ?? rooms[0]?.id ?? "");
+  const [roomText, setRoomText] = useState(presetRoom ? "" : presetRoomName);
+  const [date, setDate] = useState(initialDate ?? todayIso());
+  const [slot, setSlot] = useState(initialSlot ?? 1);
   const [purpose, setPurpose] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [filterRoom, setFilterRoom] = useState("");

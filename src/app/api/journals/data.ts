@@ -96,7 +96,7 @@ export async function getWeeklyJournals(
       ? (attendanceCounts.get(`${course.id}|${date}`) ?? 0)
       : 0;
     const studentCount = course?._count.enrollments ?? 0;
-    const status: JournalLessonStatus =
+    const attendanceStatus: JournalLessonStatus =
       attendanceCount === 0
         ? "empty"
         : studentCount > 0 && attendanceCount >= studentCount
@@ -116,7 +116,9 @@ export async function getWeeklyJournals(
       courseSlug: course?.slug ?? null,
       attendanceCount,
       studentCount,
-      status,
+      status: entry.status,
+      note: entry.note,
+      attendanceStatus,
     };
   });
 

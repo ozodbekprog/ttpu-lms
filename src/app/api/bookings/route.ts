@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isStaff } from "@/lib/auth";
+import { hasScheduleConflict } from "@/components/rooms/room-data";
 
 const createSchema = z.object({
   roomName: z.string().trim().min(1).max(100),
@@ -97,6 +98,11 @@ export async function POST(request: Request) {
   });
   if (conflict) {
     return Response.json({ ok: false, error: "Bu vaqt band" }, { status: 409 });
+  }
+
+  const lessonConflict = await hasScheduleConflict(data.roomName, data.date, data.slot);
+  if (lessonConflict) {
+    return Response.json({ ok: false, error: "Bu vaqtda dars bor" }, { status: 409 });
   }
 
   const booking = await prisma.roomBooking.create({

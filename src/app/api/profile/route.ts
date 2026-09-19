@@ -1,7 +1,7 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import type { Prisma } from "@prisma/client";
-import { getCurrentUser } from "@/lib/auth";
+import { createSession, getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 const profileSchema = z.object({
@@ -51,9 +51,10 @@ export async function PATCH(request: Request) {
     const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
     const updated = await prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash },
+      data: { passwordHash, sessionEpoch: { increment: 1 } },
       include: { group: true },
     });
+    await createSession(updated);
     return Response.json({ ok: true, data: { user: publicUser(updated) } });
   }
 

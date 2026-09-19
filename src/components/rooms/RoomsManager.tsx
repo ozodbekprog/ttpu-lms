@@ -196,6 +196,7 @@ export default function RoomsManager({ rooms }: { rooms: RoomItem[] }) {
             <RoomCard
               key={room.id}
               room={room}
+              href={`/rooms/${room.id}`}
               actions={
                 <>
                   <Button size="sm" variant="secondary" onClick={() => openEdit(room)}>

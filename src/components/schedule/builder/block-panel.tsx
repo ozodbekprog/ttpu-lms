@@ -60,6 +60,7 @@ export function BlockPanel({
           ) : null}
 
           <div className="flex flex-wrap items-center gap-1.5">
+            {entry.subGroup ? <Badge tone="purple">{entry.subGroup} kichik guruh</Badge> : null}
             {entry.lessonType ? <Badge tone="blue">{entry.lessonType}</Badge> : null}
             {entry.parity ? (
               <Badge tone="amber">{entry.parity === "odd" ? "Toq hafta" : "Juft hafta"}</Badge>
