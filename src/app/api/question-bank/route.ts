@@ -6,6 +6,7 @@ import { questionTypeSchema } from "@/components/quiz/schema";
 import { bankQuestionCreateSchema } from "@/components/question-bank/schema";
 import { resolveBankTarget } from "@/components/question-bank/server";
 import { toBankQuestion } from "@/components/question-bank/shared";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 const bankInclude = {
   course: { select: { id: true, title: true } },
@@ -69,6 +70,11 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   if (user.role !== "TEACHER" && user.role !== "ADMIN") {
     return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  }
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

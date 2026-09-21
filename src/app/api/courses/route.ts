@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
+import { createAuditLog, getClientInfo } from "@/lib/audit";
 
 const createSchema = z.object({
   title: z.string().trim().min(2).max(200),
@@ -72,6 +74,19 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const clientInfo = getClientInfo(request);
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    await createAuditLog({
+      action: "USER_CREATE",
+      meta: { reason: "csrf_invalid", endpoint: "courses" },
+      ip: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+    });
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user) {
     return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -95,6 +110,15 @@ export async function POST(request: Request) {
       isPublished: parsed.data.isPublished,
       teacherId: user.id,
     },
+  });
+
+  await createAuditLog({
+    action: "USER_CREATE",
+    entity: "Course",
+    entityId: course.id,
+    meta: { title: course.title, createdBy: user.id },
+    ip: clientInfo.ip,
+    userAgent: clientInfo.userAgent,
   });
 
   return Response.json({ ok: true, data: course }, { status: 201 });

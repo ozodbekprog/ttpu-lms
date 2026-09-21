@@ -15,6 +15,7 @@ import {
   Table,
 } from "@/components/ui";
 import { fmtDate } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 export type CourseStudent = {
   id: string;
@@ -69,7 +70,7 @@ export function CourseStudents({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/courses/${resolvedCourseId}/enrollments`);
+      const res = await apiFetch(`/api/courses/${resolvedCourseId}/enrollments`);
       const json = (await res.json().catch(() => null)) as StudentsResponse;
       if (!res.ok || !json?.ok) {
         setError(json?.error ?? "Talabalar ro'yxatini yuklab bo'lmadi");
@@ -94,9 +95,8 @@ export function CourseStudents({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/courses/${resolvedCourseId}/enrollments`, {
+      const res = await apiFetch(`/api/courses/${resolvedCourseId}/enrollments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: selectedId }),
       });
       const json = (await res.json().catch(() => null)) as EnrollmentResponse;
@@ -123,7 +123,7 @@ export function CourseStudents({
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/enrollments/${enrollmentId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/enrollments/${enrollmentId}`, { method: "DELETE" });
       const json = (await res.json().catch(() => null)) as EnrollmentResponse;
       if (!res.ok || !json?.ok) {
         setError(json?.error ?? "Talabani chiqarib bo'lmadi");

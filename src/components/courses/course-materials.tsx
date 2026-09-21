@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Card, CardBody, EmptyState, Input, Label, Select, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 export type MaterialTypeValue = "TEXT" | "FILE" | "VIDEO" | "LINK";
 
@@ -115,9 +116,8 @@ export function CourseMaterials({
   ): Promise<string | null> {
     setBusy(true);
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
-        headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,
       });
       const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;

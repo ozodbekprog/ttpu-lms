@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button, Card, CardBody, CardHeader, Input, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 type ApiResult = { ok?: boolean; error?: string } | null;
 
@@ -79,7 +80,7 @@ export function PasswordForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const lengthOk = newPassword.length >= 6;
+  const lengthOk = newPassword.length >= 12;
   const matchOk = confirmPassword.length > 0 && newPassword === confirmPassword;
 
   async function onSubmit(e: React.FormEvent) {
@@ -87,8 +88,8 @@ export function PasswordForm() {
     setError(null);
     setSuccess(null);
 
-    if (newPassword.length < 6) {
-      setError("Yangi parol kamida 6 ta belgidan iborat bo'lishi kerak");
+    if (newPassword.length < 12) {
+      setError("Yangi parol kamida 12 ta belgidan iborat bo'lishi kerak");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -98,9 +99,8 @@ export function PasswordForm() {
 
     setBusy(true);
     try {
-      const res = await fetch("/api/profile", {
+      const res = await apiFetch("/api/profile", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const json = (await res.json().catch(() => null)) as ApiResult;

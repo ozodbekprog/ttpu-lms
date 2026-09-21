@@ -2,6 +2,8 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { getCurrentUser, isStaff } from "@/lib/auth";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
+import { createAuditLog, getClientInfo } from "@/lib/audit";
 
 const MAX_SIZE = 20 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "pdf", "zip", "docx", "pptx", "txt"]);
@@ -38,7 +40,26 @@ const SIGNATURES: Record<string, (buffer: Buffer) => boolean> = {
   txt: isPlainText,
 };
 
+function getUploadDir() {
+  const base = process.env.UPLOAD_DIR
+    ? path.resolve(process.env.UPLOAD_DIR)
+    : path.join(process.cwd(), "uploads");
+  return base;
+}
+
 export async function POST(request: Request) {
+  const clientInfo = getClientInfo(request);
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    await createAuditLog({
+      action: "FILE_UPLOAD",
+      meta: { reason: "csrf_invalid" },
+      ip: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+    });
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   if (!isStaff(user.role)) return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
@@ -71,15 +92,29 @@ export async function POST(request: Request) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
   if (!SIGNATURES[extension](buffer)) {
+    await createAuditLog({
+      action: "FILE_UPLOAD",
+      entity: "File",
+      meta: { fileName: file.name, extension, size: file.size, reason: "signature_mismatch" },
+      ip: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+    });
     return Response.json({ ok: false, error: "Fayl mazmuni kengaytmaga mos emas" }, { status: 400 });
   }
 
   const fileName = `${randomUUID().replace(/-/g, "")}.${extension}`;
-  const uploadDir = process.env.UPLOAD_DIR
-    ? path.resolve(process.env.UPLOAD_DIR)
-    : path.join(process.cwd(), "public", "uploads");
+  const uploadDir = getUploadDir();
   await mkdir(uploadDir, { recursive: true });
   await writeFile(path.join(uploadDir, fileName), buffer);
 
-  return Response.json({ ok: true, data: { url: `/uploads/${fileName}` } });
+  await createAuditLog({
+    action: "FILE_UPLOAD",
+    entity: "File",
+    entityId: fileName,
+    meta: { originalName: file.name, extension, size: file.size, uploadedBy: user.id },
+    ip: clientInfo.ip,
+    userAgent: clientInfo.userAgent,
+  });
+
+  return Response.json({ ok: true, data: { url: `/api/uploads/${fileName}` } });
 }

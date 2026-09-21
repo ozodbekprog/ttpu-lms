@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Card, CardBody, Input, Label } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 type CheckInResult = {
   course: { id: string; title: string; slug: string };
@@ -32,9 +33,8 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
     setStatus("loading");
     setMessage(null);
 
-    const response = await fetch("/api/attendance/check-in", {
+    const response = await apiFetch("/api/attendance/check-in", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: normalized }),
     });
     const json = (await response.json().catch(() => null)) as

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/auth";
 import { getModuleFlags } from "@/server/settings";
+import { getDictionary, getLocale } from "@/i18n";
+import { LocaleProvider } from "@/components/i18n/LocaleProvider";
 import { Avatar } from "@/components/ui";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UnreadBadge } from "@/components/chat/UnreadBadge";
@@ -14,6 +16,8 @@ export default async function AppLayout({
 }) {
   const user = await requireUser();
   const modules = await getModuleFlags();
+  const locale = await getLocale();
+  const dictionary = getDictionary(locale);
 
   const groups = [
     {
@@ -88,7 +92,8 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <LocaleProvider locale={locale} dictionary={dictionary}>
+      <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200/70 bg-white md:flex">
         <div className="flex h-16 items-center justify-between border-b border-slate-100 px-5">
           <Link href="/dashboard" className="transition-opacity hover:opacity-80">
@@ -143,5 +148,6 @@ export default async function AppLayout({
       </div>
       <MobileTabBar tabs={tabs} />
     </div>
+    </LocaleProvider>
   );
 }

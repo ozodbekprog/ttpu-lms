@@ -3,6 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isStaff } from "@/lib/auth";
 import { hasScheduleConflict } from "@/components/rooms/room-data";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
+import { createAuditLog, getClientInfo } from "@/lib/audit";
 
 const createSchema = z.object({
   roomName: z.string().trim().min(1).max(100),
@@ -70,6 +72,19 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const clientInfo = getClientInfo(request);
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    await createAuditLog({
+      action: "USER_CREATE",
+      meta: { reason: "csrf_invalid", endpoint: "bookings" },
+      ip: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+    });
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user) {
     return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -115,6 +130,15 @@ export async function POST(request: Request) {
       userId: user.id,
     },
     include: bookingInclude,
+  });
+
+  await createAuditLog({
+    action: "USER_CREATE",
+    entity: "RoomBooking",
+    entityId: booking.id,
+    meta: { roomName: booking.roomName, date: booking.date.toISOString(), slot: booking.slot, createdBy: user.id },
+    ip: clientInfo.ip,
+    userAgent: clientInfo.userAgent,
   });
 
   return Response.json({ ok: true, data: booking }, { status: 201 });

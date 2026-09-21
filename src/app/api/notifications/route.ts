@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 const patchSchema = z
   .object({
@@ -33,6 +34,11 @@ export async function PATCH(request: Request) {
   const user = await getCurrentUser();
   if (!user) {
     return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

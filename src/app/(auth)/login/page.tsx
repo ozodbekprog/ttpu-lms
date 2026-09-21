@@ -7,6 +7,7 @@ import { Button, Card, Input, Label } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { apiFetch } from "@/lib/api";
 
 const DEMO_ACCOUNTS = [
   {
@@ -97,9 +98,8 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
       const json = await res.json().catch(() => null);

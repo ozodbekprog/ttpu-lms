@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ButtonLink, Card, CardBody, CardHeader, Input, Label, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 export type CourseFormData = {
   id: string;
@@ -32,9 +33,8 @@ export function CourseForm({ course }: { course?: CourseFormData }) {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(course ? `/api/courses/${course.id}` : "/api/courses", {
+      const res = await apiFetch(course ? `/api/courses/${course.id}` : "/api/courses", {
         method: course ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description, coverColor, isPublished }),
       });
       const json = (await res.json().catch(() => null)) as ApiResult;

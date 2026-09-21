@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { Badge, Button, Card, CardBody, CardHeader, Label, Select, Table } from "@/components/ui";
 import { fmtDateTime } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 type AttendanceStatusValue = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 
@@ -64,7 +65,7 @@ export function SessionPanel({
   const [qr, setQr] = useState<{ code: string; url: string } | null>(null);
 
   const refresh = useCallback(async () => {
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/attendance/sessions?courseId=${encodeURIComponent(courseId)}`,
     );
     const json = (await response.json().catch(() => null)) as
@@ -131,9 +132,8 @@ export function SessionPanel({
   async function startSession() {
     setBusy(true);
     setError(null);
-    const response = await fetch("/api/attendance/sessions", {
+    const response = await apiFetch("/api/attendance/sessions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseId, minutes }),
     });
     const json = (await response.json().catch(() => null)) as
@@ -152,7 +152,7 @@ export function SessionPanel({
     if (!latest) return;
     setBusy(true);
     setError(null);
-    const response = await fetch(`/api/attendance/sessions/${latest.id}`, { method: "DELETE" });
+    const response = await apiFetch(`/api/attendance/sessions/${latest.id}`, { method: "DELETE" });
     const json = (await response.json().catch(() => null)) as
       | { ok?: boolean; error?: string }
       | null;

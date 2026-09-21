@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 const MAX_SIZE = 30 * 1024 * 1024;
 const ACCEPT = "image/png,image/jpeg,image/webp";
@@ -46,7 +47,7 @@ export function AvatarUpload({
     try {
       const body = new FormData();
       body.append("file", file);
-      const res = await fetch("/api/profile/avatar", { method: "POST", body });
+      const res = await apiFetch("/api/profile/avatar", { method: "POST", body });
       const json = (await res.json().catch(() => null)) as ApiResult;
       if (!res.ok || !json?.ok) {
         setError(json?.error ?? "Yuklashda xatolik yuz berdi");

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, Badge, Button, Card, CardBody, CardHeader, Label, Textarea } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 type ReviewItem = {
   id: string;
@@ -106,7 +107,7 @@ export function CourseReviews({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/courses/${courseId}/reviews`, { cache: "no-store" });
+      const res = await apiFetch(`/api/courses/${courseId}/reviews`, { cache: "no-store" });
       const json = (await res.json().catch(() => null)) as ReviewsResponse | null;
       if (!res.ok || !json?.ok || !json.data) {
         setError(json?.error ?? "Sharhlarni yuklab bo'lmadi");

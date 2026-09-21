@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 type UploadResult = { ok: true; data: { url: string } } | { ok: false; error: string };
 
@@ -48,7 +49,7 @@ export default function FileUpload({
     body.append("file", file);
 
     try {
-      const res = await fetch("/api/upload", { method: "POST", body });
+      const res = await apiFetch("/api/upload", { method: "POST", body });
       const json = (await res.json().catch(() => null)) as UploadResult | null;
       if (!res.ok || !json || !json.ok) {
         setError(json && !json.ok ? json.error : "Faylni yuklab bo'lmadi");

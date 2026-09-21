@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { normalizeUserPreferences } from "@/components/settings/preferences";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 const settingsSchema = z.strictObject({
   reminderBot: z.boolean().optional(),
@@ -23,6 +24,11 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const user = await getCurrentUser();
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
 
   const body = await request.json().catch(() => null);
   const parsed = settingsSchema.safeParse(body);

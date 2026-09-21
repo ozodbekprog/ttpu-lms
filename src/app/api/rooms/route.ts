@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isRoomType, matchesRoomType } from "@/components/rooms/room-type";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 const createSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -38,6 +39,11 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   if (user.role !== "ADMIN") return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
 
   const body = await request.json().catch(() => null);
   const parsed = createSchema.safeParse(body);

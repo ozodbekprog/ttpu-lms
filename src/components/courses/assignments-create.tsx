@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, CardBody, CardHeader, Input, Label, Textarea } from "@/components/ui";
+import { apiFetch } from "@/lib/api";
 
 export function AssignmentsCreate({ courseId }: { courseId: string }) {
   const router = useRouter();
@@ -19,9 +20,8 @@ export function AssignmentsCreate({ courseId }: { courseId: string }) {
     setSaving(true);
     setError(null);
 
-    const response = await fetch(`/api/courses/${courseId}/assignments`, {
+    const response = await apiFetch(`/api/courses/${courseId}/assignments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title,
         description: description || null,

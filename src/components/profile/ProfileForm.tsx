@@ -6,6 +6,7 @@ import { Button, Card, CardBody, CardHeader, Input, Label, Textarea } from "@/co
 import { cn } from "@/lib/utils";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { CoverUpload } from "@/components/profile/CoverUpload";
+import { apiFetch } from "@/lib/api";
 
 const BIO_MAX = 300;
 
@@ -37,9 +38,8 @@ export function ProfileForm({
     setError(null);
     setSuccess(null);
     try {
-      const res = await fetch("/api/profile", {
+      const res = await apiFetch("/api/profile", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, bio }),
       });
       const json = (await res.json().catch(() => null)) as ApiResult;

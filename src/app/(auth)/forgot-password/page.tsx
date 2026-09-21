@@ -6,6 +6,7 @@ import { Button, Card, Input, Label } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { apiFetch } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
   const { locale, t } = useI18n();
@@ -19,9 +20,8 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await apiFetch("/api/auth/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
       const json = await res.json().catch(() => null);

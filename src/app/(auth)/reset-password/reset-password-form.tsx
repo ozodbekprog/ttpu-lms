@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Label } from "@/components/ui";
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { apiFetch } from "@/lib/api";
 
 export default function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
+    if (password.length < 12) {
       setError(t("authResetErrorShort"));
       return;
     }
@@ -27,9 +28,8 @@ export default function ResetPasswordForm({ token }: { token: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await apiFetch("/api/auth/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),
       });
       const json = await res.json().catch(() => null);

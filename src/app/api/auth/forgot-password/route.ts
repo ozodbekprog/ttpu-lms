@@ -2,6 +2,8 @@ import { z } from "zod";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getAppUrl, sendMail } from "@/server/mailer";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { createAuditLog, getClientInfo } from "@/lib/audit";
 
 const schema = z.object({
   email: z.string().email(),
@@ -10,29 +12,6 @@ const schema = z.object({
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_ATTEMPTS = 3;
 const TOKEN_TTL_MS = 30 * 60 * 1000;
-
-type AttemptRecord = { count: number; resetAt: number };
-
-const attempts = new Map<string, AttemptRecord>();
-
-function pruneAttempts(now: number) {
-  for (const [key, record] of attempts) {
-    if (record.resetAt <= now) attempts.delete(key);
-  }
-}
-
-function isRateLimited(key: string) {
-  const now = Date.now();
-  pruneAttempts(now);
-  const record = attempts.get(key);
-  if (!record) {
-    attempts.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
-  }
-  if (record.count >= MAX_ATTEMPTS) return true;
-  record.count += 1;
-  return false;
-}
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -43,6 +22,7 @@ function getClientIp(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const clientInfo = getClientInfo(request);
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -51,10 +31,22 @@ export async function POST(request: Request) {
 
   const email = parsed.data.email.toLowerCase().trim();
   const limitKey = `forgot:${getClientIp(request)}:${email}`;
-  if (isRateLimited(limitKey)) {
+  const rateLimit = await checkRateLimit(limitKey, {
+    windowMs: WINDOW_MS,
+    maxAttempts: MAX_ATTEMPTS,
+    keyPrefix: "auth",
+  });
+
+  if (!rateLimit.allowed) {
+    await createAuditLog({
+      action: "PASSWORD_RESET_REQUEST",
+      meta: { email, reason: "rate_limited" },
+      ip: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+    });
     return Response.json(
       { ok: false, error: "Juda ko'p urinish. Keyinroq qayta urinib ko'ring" },
-      { status: 429 },
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } },
     );
   }
 
@@ -78,6 +70,21 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error("Email yuborishda xatolik:", error);
     }
+    await createAuditLog({
+      action: "PASSWORD_RESET_REQUEST",
+      entity: "User",
+      entityId: user.id,
+      meta: { email, emailSent: true },
+      ip: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+    });
+  } else {
+    await createAuditLog({
+      action: "PASSWORD_RESET_REQUEST",
+      meta: { email, reason: "user_not_found_or_inactive", emailSent: false },
+      ip: clientInfo.ip,
+      userAgent: clientInfo.userAgent,
+    });
   }
 
   return Response.json({ ok: true });

@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { quizCreateSchema } from "@/components/quiz/schema";
 import { publicError } from "@/components/quiz/server";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 const dueAtSchema = z.string().trim().min(1).nullable().optional();
 
@@ -66,6 +67,11 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   if (user.role !== "TEACHER" && user.role !== "ADMIN") {
     return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  }
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

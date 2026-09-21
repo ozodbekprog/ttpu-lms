@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
+import { apiFetch } from "@/lib/api";
 
 type ApiResult = { ok?: boolean; error?: string } | null;
 
@@ -16,7 +17,7 @@ export function CourseDeleteButton({ courseId, courseTitle }: { courseId: string
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/courses/${courseId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/courses/${courseId}`, { method: "DELETE" });
       const json = (await res.json().catch(() => null)) as ApiResult;
       if (!res.ok || !json?.ok) {
         setError(json?.error ?? "O'chirishda xatolik yuz berdi");

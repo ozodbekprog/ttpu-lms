@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import type { Prisma } from "@prisma/client";
 import { createSession, getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 const profileSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
@@ -12,7 +13,7 @@ const profileSchema = z.object({
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(6).max(100),
+  newPassword: z.string().min(12).max(100),
 });
 
 type ProfileUser = Prisma.UserGetPayload<{ include: { group: true } }>;
@@ -34,6 +35,11 @@ function publicUser(user: ProfileUser) {
 export async function PATCH(request: Request) {
   const user = await getCurrentUser();
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
 
   const body: unknown = await request.json().catch(() => null);
 

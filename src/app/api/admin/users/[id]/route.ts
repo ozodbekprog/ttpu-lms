@@ -5,11 +5,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/server/audit";
 import { userSelect } from "../select";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 const patchSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
   email: z.string().trim().email().optional(),
-  password: z.string().min(6).max(100).optional(),
+  password: z.string().min(12).max(100).optional(),
   role: z.enum(["ADMIN", "TEACHER", "STUDENT"]).optional(),
   groupId: z.string().trim().min(1).nullable().optional(),
   subGroupId: z.string().trim().min(1).nullable().optional(),
@@ -26,6 +27,11 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   const user = await getCurrentUser();
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   if (user.role !== "ADMIN") return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
 
   const { id } = await ctx.params;
   const target = await prisma.user.findUnique({ where: { id } });
@@ -142,6 +148,11 @@ export async function DELETE(_request: Request, ctx: { params: Promise<{ id: str
   const user = await getCurrentUser();
   if (!user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   if (user.role !== "ADMIN") return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+
+  const csrfValid = await verifyCsrfFromRequest(_request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
+  }
 
   const { id } = await ctx.params;
   if (id === user.id) {

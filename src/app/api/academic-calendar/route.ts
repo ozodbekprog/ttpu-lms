@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { verifyCsrfFromRequest } from "@/lib/csrf";
 
 export const createEventSchema = z
   .object({
@@ -32,6 +33,11 @@ export async function POST(request: Request) {
   }
   if (user.role !== "TEACHER" && user.role !== "ADMIN") {
     return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  }
+
+  const csrfValid = await verifyCsrfFromRequest(request);
+  if (!csrfValid) {
+    return Response.json({ ok: false, error: "CSRF token yaroqsiz" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

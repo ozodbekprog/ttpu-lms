@@ -7,6 +7,7 @@ import { Button, Card, Input, Label } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { useI18n } from "@/components/i18n/LocaleProvider";
+import { apiFetch } from "@/lib/api";
 
 const PANEL_FEATURES = [
   "authRegisterFeature1",
@@ -36,9 +37,8 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await apiFetch("/api/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       const json = await res.json().catch(() => null);
