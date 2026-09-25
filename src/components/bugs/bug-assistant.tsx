@@ -73,7 +73,13 @@ export function BugAssistant() {
           (action) => action.type === "navigate" && typeof action.path === "string" && action.path,
         );
         if (nav?.path) {
-          router.push(nav.path);
+          const target = nav.path;
+          router.push(target);
+          window.setTimeout(() => {
+            if (window.location.pathname !== target) {
+              window.location.assign(target);
+            }
+          }, 700);
         }
         const reply =
           typeof json?.data?.reply === "string" ? json.data.reply.trim() : "";
