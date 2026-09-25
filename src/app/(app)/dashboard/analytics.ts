@@ -30,6 +30,7 @@ const ATTENDANCE_META: Record<AttendanceStatus, { label: string; color: string }
   LATE: { label: "Kechikdi", color: "#f59e0b" },
   EXCUSED: { label: "Sababli", color: "#64748b" },
   ABSENT: { label: "Kelmadi", color: "#f43f5e" },
+  SUSPICIOUS: { label: "Shubhali", color: "#a855f7" },
 };
 
 const SUBMISSION_META: Record<SubmissionStatus, { label: string; color: string }> = {
@@ -44,7 +45,7 @@ const ROLE_META: Record<Role, { label: string; color: string }> = {
   ADMIN: { label: "Adminlar", color: "#c9a227" },
 };
 
-const ATTENDED: AttendanceStatus[] = ["PRESENT", "LATE", "EXCUSED"];
+const ATTENDED: AttendanceStatus[] = ["PRESENT", "LATE", "EXCUSED", "SUSPICIOUS"];
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -125,6 +126,7 @@ export async function getStudentAnalytics(studentId: string): Promise<StudentAna
     LATE: 0,
     EXCUSED: 0,
     ABSENT: 0,
+    SUSPICIOUS: 0,
   };
   const byCourse = new Map<string, AttendanceStatus[]>();
   for (const record of records) {
@@ -138,7 +140,7 @@ export async function getStudentAnalytics(studentId: string): Promise<StudentAna
   }
 
   const attendance: DonutChartDatum[] = (
-    ["PRESENT", "LATE", "EXCUSED", "ABSENT"] as AttendanceStatus[]
+    ["PRESENT", "LATE", "EXCUSED", "SUSPICIOUS", "ABSENT"] as AttendanceStatus[]
   ).map((status) => ({
     label: ATTENDANCE_META[status].label,
     value: statusTotals[status],

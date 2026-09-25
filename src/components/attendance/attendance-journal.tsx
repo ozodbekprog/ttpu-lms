@@ -30,6 +30,7 @@ const EMPTY_SUMMARY: JournalSummaryRow = {
   absent: 0,
   late: 0,
   excused: 0,
+  suspicious: 0,
   total: 0,
   percent: 0,
   eligible: false,
@@ -96,17 +97,18 @@ export function AttendanceJournal({
   const summary = useMemo(() => {
     const map: Record<string, JournalSummaryRow> = {};
     for (const student of visibleStudents) {
-      const counts = { present: 0, absent: 0, late: 0, excused: 0 };
+      const counts = { present: 0, absent: 0, late: 0, excused: 0, suspicious: 0 };
       for (const date of dates) {
         const status = records[student.id]?.[date];
         if (!status) continue;
         if (status === "PRESENT") counts.present += 1;
         else if (status === "ABSENT") counts.absent += 1;
         else if (status === "LATE") counts.late += 1;
-        else counts.excused += 1;
+        else if (status === "EXCUSED") counts.excused += 1;
+        else counts.suspicious += 1;
       }
-      const total = counts.present + counts.absent + counts.late + counts.excused;
-      const attended = counts.present + counts.late + counts.excused;
+      const total = counts.present + counts.absent + counts.late + counts.excused + counts.suspicious;
+      const attended = counts.present + counts.late + counts.excused + counts.suspicious;
       const percent = total > 0 ? Math.round((attended / total) * 100) : 0;
       map[student.id] = {
         ...counts,

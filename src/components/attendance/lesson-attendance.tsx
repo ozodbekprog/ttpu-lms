@@ -6,7 +6,7 @@ import { Avatar, Button, Card, CardBody, CardHeader, Label, Select } from "@/com
 import { cn } from "@/lib/utils";
 import type { CourseOption } from "@/components/attendance/lesson-utils";
 
-export type LessonStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+export type LessonStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | "SUSPICIOUS";
 
 export type LessonStudent = {
   id: string;
@@ -55,6 +55,14 @@ const OPTIONS: {
     active: "bg-slate-500 text-white shadow-md shadow-slate-500/30 ring-1 ring-slate-400/60",
     idle: "text-slate-600 hover:bg-slate-100",
     dot: "bg-slate-400",
+  },
+  {
+    value: "SUSPICIOUS",
+    short: "Sh",
+    label: "Shubhali",
+    active: "bg-violet-500 text-white shadow-md shadow-violet-500/30 ring-1 ring-violet-400/60",
+    idle: "text-violet-700 hover:bg-violet-50",
+    dot: "bg-violet-500",
   },
 ];
 
@@ -145,6 +153,7 @@ export function LessonAttendance({
       ABSENT: 0,
       LATE: 0,
       EXCUSED: 0,
+      SUSPICIOUS: 0,
     };
     for (const student of visibleStudents) {
       summary[statuses[student.id] ?? "PRESENT"] += 1;

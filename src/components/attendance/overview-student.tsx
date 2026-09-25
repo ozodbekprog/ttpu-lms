@@ -30,6 +30,7 @@ const STATUS_TILE: Record<JournalStatus, string> = {
   ABSENT: "border-rose-100 bg-rose-50/70 text-rose-600",
   LATE: "border-amber-100 bg-amber-50/70 text-amber-600",
   EXCUSED: "border-slate-200 bg-slate-50 text-slate-500",
+  SUSPICIOUS: "border-violet-100 bg-violet-50/70 text-violet-600",
 };
 
 function StatusGlyph({ status, size = 14 }: { status: JournalStatus; size?: number }) {

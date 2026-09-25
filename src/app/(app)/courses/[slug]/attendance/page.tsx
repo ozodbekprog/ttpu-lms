@@ -22,13 +22,15 @@ const STATUS_LABELS: Record<string, string> = {
   ABSENT: "Yo'q",
   LATE: "Kechikkan",
   EXCUSED: "Sababli",
+  SUSPICIOUS: "Shubhali",
 };
 
-const STATUS_TONES: Record<string, "green" | "rose" | "amber" | "blue"> = {
+const STATUS_TONES: Record<string, "green" | "rose" | "amber" | "blue" | "purple"> = {
   PRESENT: "green",
   ABSENT: "rose",
   LATE: "amber",
   EXCUSED: "blue",
+  SUSPICIOUS: "purple",
 };
 
 function dateKey(value: Date) {
