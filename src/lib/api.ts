@@ -44,8 +44,10 @@ export async function apiFetch(
   };
 
   if (isMutation) {
-    await ensureCsrfToken();
-    withCsrfHeaders(headers);
+    const token = await ensureCsrfToken();
+    if (token) {
+      headers["x-csrf-token"] = token;
+    }
   }
 
   return fetch(url, {
