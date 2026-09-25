@@ -50,8 +50,27 @@ export async function apiFetch(
     }
   }
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  if (!response.ok && !url.startsWith("/api/auth/") && !url.startsWith("/api/assistant/")) {
+    const shouldReport = response.status >= 500 || (response.status === 403 && isMutation);
+    if (shouldReport) {
+      void import("@/components/bugs/report").then(({ reportIssue }) => {
+        reportIssue({
+          message: `API xatosi ${response.status}: ${method} ${url}`,
+          label:
+            response.status === 403
+              ? "ruxsat yoki xavfsizlik tekshiruvida muammo"
+              : "serverda ichki xatolik",
+          note: `${method} ${url}`,
+          autoSend: true,
+        });
+      });
+    }
+  }
+
+  return response;
 }

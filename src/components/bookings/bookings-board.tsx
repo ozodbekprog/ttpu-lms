@@ -18,6 +18,7 @@ import {
 } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
 import { SLOT_TIMES, todayIso } from "@/components/attendance/lesson-utils";
+import { apiFetch } from "@/lib/api";
 import type { BookingItem, RoomOption } from "./types";
 
 const SLOTS = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -99,7 +100,7 @@ export function BookingsBoard({
     if (filterRoom.trim()) params.set("room", filterRoom.trim());
     const query = params.toString();
     try {
-      const response = await fetch(`/api/bookings${query ? `?${query}` : ""}`, {
+      const response = await apiFetch(`/api/bookings${query ? `?${query}` : ""}`, {
         cache: "no-store",
       });
       const payload = (await response.json().catch(() => null)) as ListPayload | null;
@@ -153,7 +154,7 @@ export function BookingsBoard({
     setConflict(false);
     setNotice(null);
     try {
-      const response = await fetch("/api/bookings", {
+      const response = await apiFetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -195,7 +196,7 @@ export function BookingsBoard({
     setConflict(false);
     setNotice(null);
     try {
-      const response = await fetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
+      const response = await apiFetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
       const payload = (await response.json().catch(() => null)) as CancelPayload | null;
       if (!response.ok || !payload || !payload.ok) {
         setError(payload && !payload.ok ? payload.error : "Bekor qilib bo'lmadi");
