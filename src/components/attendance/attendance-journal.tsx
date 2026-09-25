@@ -23,6 +23,7 @@ type EditorState = {
   date: string;
   top: number;
   left: number;
+  mobile: boolean;
 };
 
 const EMPTY_SUMMARY: JournalSummaryRow = {
@@ -173,12 +174,13 @@ export function AttendanceJournal({
     const rect = event.currentTarget.getBoundingClientRect();
     const width = 196;
     const height = 132;
+    const mobile = window.innerWidth < 640;
     const left = Math.max(8, Math.min(rect.left - 8, window.innerWidth - width - 8));
     const top =
       rect.bottom + height + 12 > window.innerHeight
         ? Math.max(8, rect.top - height - 8)
         : rect.bottom + 6;
-    setEditor({ studentId, date, top, left });
+    setEditor({ studentId, date, top, left, mobile });
   }
 
   function setStatusLocally(studentId: string, date: string, status: JournalStatus | null) {
@@ -560,8 +562,11 @@ export function AttendanceJournal({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setEditor(null)} />
           <div
-            className="animate-fade-up fixed z-50 w-48 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur"
-            style={{ top: editor.top, left: editor.left }}
+            className={cn(
+              "animate-fade-up fixed z-50 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur",
+              editor.mobile ? "inset-x-3 bottom-3" : "w-48",
+            )}
+            style={editor.mobile ? undefined : { top: editor.top, left: editor.left }}
           >
             <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-400">
               {editingStudent?.name ?? ""} · {journalDateParts(editor.date).label}
