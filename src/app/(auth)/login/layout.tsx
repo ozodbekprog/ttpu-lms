@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { getLocale } from "@/i18n";
+import { buildAuthMetadata } from "@/i18n/metadata";
 
-export const metadata: Metadata = {
-  title: "Kirish — TTPU LMS",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return buildAuthMetadata(locale, "authLoginTitle", "authLoginSubtitle");
+}
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {
   return children;
