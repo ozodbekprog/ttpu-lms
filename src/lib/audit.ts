@@ -18,7 +18,9 @@ export type AuditAction =
   | "SESSION_REVOKED"
   | "FILE_UPLOAD"
   | "FILE_DOWNLOAD"
-  | "SETTINGS_CHANGE";
+  | "SETTINGS_CHANGE"
+  | "BUG_REPORTED"
+  | "BUG_UPDATED";
 
 type JsonValue = string | number | boolean | { [key: string]: JsonValue } | JsonValue[] | null;
 

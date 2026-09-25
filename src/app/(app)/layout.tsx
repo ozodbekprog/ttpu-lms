@@ -8,6 +8,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UnreadBadge } from "@/components/chat/UnreadBadge";
 import { Logo } from "@/components/brand/logo";
 import { MobileTabBar, NavLinks, type MobileTab, type MobileTabIcon } from "./nav-links";
+import { BugAssistant } from "@/components/bugs/bug-assistant";
 
 export default async function AppLayout({
   children,
@@ -151,6 +152,7 @@ export default async function AppLayout({
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-20 md:px-8 md:pt-8 md:pb-8">{children}</main>
       </div>
       <MobileTabBar tabs={tabs} />
+      <BugAssistant />
     </div>
     </LocaleProvider>
   );
