@@ -40,6 +40,14 @@ export default async function AppLayout({
         { href: "/gpa", label: "GPA" },
         { href: "/transcript", label: "Transkript" },
         { href: "/attendance", label: "Davomat" },
+        ...(modules.qr_attendance
+          ? [
+              {
+                href: isStaff(user.role) ? "/attendance/qr" : "/attendance/check-in",
+                label: "QR davomat",
+              },
+            ]
+          : []),
         ...(modules.certificates ? [{ href: "/certificates", label: "Sertifikatlar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/journals", label: "Kundaliklar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/question-bank", label: "Savollar banki" }] : []),
@@ -89,6 +97,10 @@ export default async function AppLayout({
 
   if (modules.chat) {
     tabs.push({ href: "/messages", label: "Xabarlar", icon: "chat", badge: <UnreadBadge /> });
+  }
+
+  if (modules.qr_attendance && user.role === "STUDENT") {
+    tabs.push({ href: "/attendance/check-in", label: "QR", icon: "qr" });
   }
 
   return (

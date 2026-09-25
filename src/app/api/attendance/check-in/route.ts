@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getModuleFlags } from "@/server/settings";
 
 const checkInSchema = z.object({
   code: z.string().trim().min(4).max(12),
@@ -13,6 +14,11 @@ export async function POST(request: Request) {
   }
   if (user.role !== "STUDENT") {
     return Response.json({ ok: false, error: "Faqat talabalar belgilanishi mumkin" }, { status: 403 });
+  }
+
+  const flags = await getModuleFlags();
+  if (!flags.qr_attendance) {
+    return Response.json({ ok: false, error: "QR davomat o'chirilgan" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

@@ -1,6 +1,16 @@
 # STATUS — qurilish holati
 
-Oxirgi yangilanish: LEGO konstruktor + Jurnal 2.0 + Modul sozlamalari (Komp 1)
+Oxirgi yangilanish: To'lqin 9 — QR davomat hamma joyda (10 agent)
+
+## To'lqin 9 — QR davomat hamma joyda (10 agent)
+
+- [x] Nav'da "QR davomat" (talaba check-in, staff hub `/attendance/qr`), modul toggle hurmat qilinadi
+- [x] Dashboard quick action va bugungi darslarda QR havola
+- [x] Dars davomati sahifasida QR sessiya paneli
+- [x] `/attendance/session/[id]` — katta ekran (proyektor) rejimi, jonli belgilanishlar
+- [x] Login'dan keyin `?next=` bilan check-in sahifasiga qaytish
+- [x] Botda `/qr` (talaba kod kiritadi, o'qituvchi sessiya boshlaydi)
+- [x] SessionPanel: kod/havola nusxalash, katta ekran havolasi
 
 ## To'lqin 8 — "LEGO" qurish tizimi
 

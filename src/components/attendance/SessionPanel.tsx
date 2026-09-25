@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { Badge, Button, Card, CardBody, CardHeader, Label, Select, Table } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, CardBody, CardHeader, Label, Select, Table } from "@/components/ui";
 import { fmtDateTime } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
+import { formatRemaining, isSessionActive, normalizeQrCode, sessionProgress } from "@/components/attendance/qr-utils";
 
 type AttendanceStatusValue = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 
@@ -43,13 +44,6 @@ const MINUTE_OPTIONS = [5, 10, 15, 30, 60];
 const TIMER_RADIUS = 23;
 const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
 
-function formatRemaining(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
 export function SessionPanel({
   courseId,
   studentCount,
@@ -63,20 +57,26 @@ export function SessionPanel({
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [qr, setQr] = useState<{ code: string; url: string } | null>(null);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const copyTimer = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
-    const response = await apiFetch(
-      `/api/attendance/sessions?courseId=${encodeURIComponent(courseId)}`,
-    );
-    const json = (await response.json().catch(() => null)) as
-      | { ok?: boolean; error?: string; data?: { sessions: SessionRow[] } }
-      | null;
-    if (!response.ok || !json?.ok || !json.data) {
-      setError(json?.error ?? "Sessiyalarni yuklashda xatolik");
-      return;
+    try {
+      const response = await apiFetch(
+        `/api/attendance/sessions?courseId=${encodeURIComponent(courseId)}`,
+      );
+      const json = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; data?: { sessions: SessionRow[] } }
+        | null;
+      if (!response.ok || !json?.ok || !json.data) {
+        setError(json?.error ?? "Sessiyalarni yuklashda xatolik");
+        return;
+      }
+      setSessions(json.data.sessions);
+      setError(null);
+    } catch {
+      setError("Server bilan aloqa yo'q");
     }
-    setSessions(json.data.sessions);
-    setError(null);
   }, [courseId]);
 
   useEffect(() => {
@@ -87,6 +87,12 @@ export function SessionPanel({
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
+    };
   }, []);
 
   const latest = sessions[0] ?? null;
@@ -100,7 +106,7 @@ export function SessionPanel({
     return () => window.clearInterval(timer);
   }, [hasActive, refresh]);
 
-  const latestCode = latest?.code ?? null;
+  const latestCode = latest ? normalizeQrCode(latest.code) : null;
   useEffect(() => {
     if (!latestCode) return;
     let cancelled = false;
@@ -117,52 +123,72 @@ export function SessionPanel({
     };
   }, [latestCode]);
 
-  const remainingMs = useMemo(() => {
-    if (!latest) return 0;
-    return new Date(latest.expiresAt).getTime() - now;
-  }, [latest, now]);
-  const latestActive = Boolean(latest && remainingMs > 0);
-  const remainingRatio = useMemo(() => {
-    if (!latest) return 0;
-    const total = new Date(latest.expiresAt).getTime() - new Date(latest.createdAt).getTime();
-    if (total <= 0) return 0;
-    return Math.max(0, Math.min(1, remainingMs / total));
-  }, [latest, remainingMs]);
+  const remainingMs = latest ? new Date(latest.expiresAt).getTime() - now : 0;
+  const latestActive = latest ? isSessionActive(latest.expiresAt, now) : false;
+  const remainingRatio = latest ? sessionProgress(latest.createdAt, latest.expiresAt, now) : 0;
 
   async function startSession() {
     setBusy(true);
     setError(null);
-    const response = await apiFetch("/api/attendance/sessions", {
-      method: "POST",
-      body: JSON.stringify({ courseId, minutes }),
-    });
-    const json = (await response.json().catch(() => null)) as
-      | { ok?: boolean; error?: string }
-      | null;
-    if (!response.ok || !json?.ok) {
-      setError(json?.error ?? "Sessiya boshlashda xatolik");
+    try {
+      const response = await apiFetch("/api/attendance/sessions", {
+        method: "POST",
+        body: JSON.stringify({ courseId, minutes }),
+      });
+      const json = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+      if (!response.ok || !json?.ok) {
+        setError(json?.error ?? "Sessiya boshlashda xatolik");
+        return;
+      }
+      await refresh();
+    } catch {
+      setError("Server bilan aloqa yo'q");
+    } finally {
       setBusy(false);
-      return;
     }
-    await refresh();
-    setBusy(false);
   }
 
   async function closeSession() {
     if (!latest) return;
     setBusy(true);
     setError(null);
-    const response = await apiFetch(`/api/attendance/sessions/${latest.id}`, { method: "DELETE" });
-    const json = (await response.json().catch(() => null)) as
-      | { ok?: boolean; error?: string }
-      | null;
-    if (!response.ok || !json?.ok) {
-      setError(json?.error ?? "Sessiyani yopishda xatolik");
+    try {
+      const response = await apiFetch(`/api/attendance/sessions/${latest.id}`, {
+        method: "DELETE",
+      });
+      const json = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+      if (!response.ok || !json?.ok) {
+        setError(json?.error ?? "Sessiyani yopishda xatolik");
+        return;
+      }
+      await refresh();
+    } catch {
+      setError("Server bilan aloqa yo'q");
+    } finally {
       setBusy(false);
-      return;
     }
-    await refresh();
-    setBusy(false);
+  }
+
+  async function copyText(value: string, kind: "code" | "link") {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => {
+        setCopied(null);
+        copyTimer.current = null;
+      }, 2000);
+    } catch {
+      setCopied(null);
+    }
+  }
+
+  async function copyCheckInLink(code: string) {
+    await copyText(`${window.location.origin}/attendance/check-in?code=${code}`, "link");
   }
 
   const history = sessions.slice(1, 6);
@@ -230,7 +256,7 @@ export function SessionPanel({
             <div className="mx-auto w-full max-w-64">
               <div className="rounded-3xl border border-slate-100 bg-white p-3 shadow-lift ring-1 ring-slate-900/5">
                 <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-2">
-                  {qr && latest && qr.code === latest.code ? (
+                  {qr && latest && qr.code === latestCode ? (
                     <img
                       src={qr.url}
                       alt="Davomat uchun QR kod"
@@ -245,9 +271,41 @@ export function SessionPanel({
                 Sessiya kodi
               </p>
               <p className="mt-1 text-center font-mono text-4xl font-semibold tracking-[0.3em] text-brand-950 sm:text-5xl sm:tracking-[0.2em]">
-                {latest.code}
+                {latestCode}
               </p>
               <p className="mt-2 text-center text-xs text-slate-400">/attendance/check-in</p>
+              <div className="mt-4 flex flex-col gap-2">
+                <ButtonLink
+                  href={`/attendance/session/${latest.id}`}
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
+                >
+                  Katta ekranda
+                </ButtonLink>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
+                  disabled={busy}
+                  onClick={() => {
+                    void copyText(normalizeQrCode(latest.code), "code");
+                  }}
+                >
+                  {copied === "code" ? "Nusxalandi ✓" : "Kodni nusxalash"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  disabled={busy}
+                  onClick={() => {
+                    void copyCheckInLink(normalizeQrCode(latest.code));
+                  }}
+                >
+                  {copied === "link" ? "Nusxalandi ✓" : "Havolani nusxalash"}
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-4">

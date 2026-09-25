@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export type NavLink = { href: string; label: string; badge?: ReactNode };
 export type NavGroup = { label: string; links: NavLink[] };
 
-export type MobileTabIcon = "home" | "book" | "calendar" | "chart" | "chat";
+export type MobileTabIcon = "home" | "book" | "calendar" | "chart" | "chat" | "qr";
 export type MobileTab = { href: string; label: string; icon: MobileTabIcon; badge?: ReactNode };
 
 const TAB_ICONS: Record<MobileTabIcon, ReactNode> = {
@@ -41,6 +41,22 @@ const TAB_ICONS: Record<MobileTabIcon, ReactNode> = {
     </>
   ),
   chat: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
+  qr: (
+    <>
+      <rect x="3" y="3" width="5" height="5" rx="1" />
+      <rect x="16" y="3" width="5" height="5" rx="1" />
+      <rect x="3" y="16" width="5" height="5" rx="1" />
+      <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
+      <path d="M21 21v.01" />
+      <path d="M12 7v3a2 2 0 0 1-2 2H7" />
+      <path d="M3 12h.01" />
+      <path d="M12 3h.01" />
+      <path d="M12 16v.01" />
+      <path d="M16 12h1" />
+      <path d="M21 12v.01" />
+      <path d="M12 21v-1" />
+    </>
+  ),
 };
 
 export function MobileTabBar({ tabs }: { tabs: MobileTab[] }) {

@@ -109,15 +109,58 @@ function countForStatus(status: JournalStatus, summary: StudentAttendanceSummary
 export function StudentAttendanceOverview({
   summary,
   history,
+  qrEnabled,
 }: {
   summary: StudentAttendanceSummary;
   history: AttendanceHistoryRow[];
+  qrEnabled: boolean;
 }) {
   const { overall, courses } = summary;
   const attended = overall.present + overall.late + overall.excused;
 
   return (
     <>
+      {qrEnabled ? (
+        <Card className="animate-fade-up relative mb-6 overflow-hidden border-brand-100/80">
+          <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
+          <span className="pointer-events-none absolute -right-16 -top-20 size-52 rounded-full bg-gold-300/15 blur-3xl" />
+          <CardBody className="relative flex flex-wrap items-center justify-between gap-4 py-5">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-800 to-brand-600 text-white shadow-lg shadow-brand-900/20">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <path d="M14 14h3v3h-3zM20 14h1M14 20h1M18 20h3v-3" />
+                </svg>
+              </span>
+              <div>
+                <p className="font-semibold text-slate-900">QR davomat</p>
+                <p className="text-sm text-slate-500">
+                  O&apos;qituvchi kodini kiriting yoki QR skanerlang.
+                </p>
+              </div>
+            </div>
+            <ButtonLink
+              href="/attendance/check-in"
+              size="sm"
+              className="shadow-lg shadow-brand-900/20"
+            >
+              QR orqali belgilash
+            </ButtonLink>
+          </CardBody>
+        </Card>
+      ) : null}
+
       <Card className="animate-fade-up relative overflow-hidden border-brand-100/80">
         <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
         <span className="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-gold-300/15 blur-3xl" />
@@ -301,16 +344,22 @@ export function StudentAttendanceOverview({
           title="Oxirgi yozuvlar"
           subtitle="So'nggi 10 ta davomat yozuvi"
           action={
-            <ButtonLink href="/attendance/check-in" variant="secondary" size="sm">
-              QR check-in
-            </ButtonLink>
+            qrEnabled ? (
+              <ButtonLink href="/attendance/check-in" variant="secondary" size="sm">
+                QR check-in
+              </ButtonLink>
+            ) : undefined
           }
         />
         {history.length === 0 ? (
           <CardBody>
             <EmptyState
               title="Yozuvlar yo'q"
-              description="Davomat belgilanmagan. Darsda QR kod orqali belgilashingiz mumkin."
+              description={
+                qrEnabled
+                  ? "Davomat belgilanmagan. Darsda QR kod orqali belgilashingiz mumkin."
+                  : "Davomat hali belgilanmagan."
+              }
             />
           </CardBody>
         ) : (

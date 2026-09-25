@@ -1,4 +1,6 @@
-import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { getModuleFlags } from "@/server/settings";
 import { ButtonLink, EmptyState, PageHeader } from "@/components/ui";
 import { CheckInForm } from "@/components/attendance/check-in-form";
 
@@ -7,8 +9,28 @@ export default async function AttendanceCheckInPage({
 }: {
   searchParams: Promise<{ code?: string }>;
 }) {
-  const user = await requireUser();
   const { code } = await searchParams;
+  const initialCode = (code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  const user = await getCurrentUser();
+  const flags = await getModuleFlags();
+
+  if (!user) {
+    const base = "/attendance/check-in";
+    const loginNext = initialCode ? `${base}?code=${initialCode}` : base;
+    redirect(`/login?next=${encodeURIComponent(loginNext)}`);
+  }
+
+  if (!flags.qr_attendance) {
+    return (
+      <>
+        <PageHeader title="QR orqali davomat" subtitle="Vaqtincha o'chirilgan" />
+        <EmptyState
+          title="QR davomat o'chirilgan"
+          description="Administrator QR davomat modulini vaqtincha o'chirgan. Keyinroq qayta urinib ko'ring."
+        />
+      </>
+    );
+  }
 
   if (user.role !== "STUDENT") {
     return (
@@ -26,8 +48,6 @@ export default async function AttendanceCheckInPage({
       </>
     );
   }
-
-  const initialCode = (code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 
   return (
     <>

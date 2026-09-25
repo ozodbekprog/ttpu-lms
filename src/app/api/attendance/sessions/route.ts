@@ -2,6 +2,7 @@ import { z } from "zod";
 import { randomInt } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getModuleFlags } from "@/server/settings";
 import { canManageCourse } from "@/components/courses/course-access";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -41,6 +42,11 @@ export async function POST(request: Request) {
   }
   if (user.role !== "TEACHER" && user.role !== "ADMIN") {
     return Response.json({ ok: false, error: "Forbidden" }, { status: 403 });
+  }
+
+  const flags = await getModuleFlags();
+  if (!flags.qr_attendance) {
+    return Response.json({ ok: false, error: "QR davomat o'chirilgan" }, { status: 403 });
   }
 
   const body = await request.json().catch(() => null);

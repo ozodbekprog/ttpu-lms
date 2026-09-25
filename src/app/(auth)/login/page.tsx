@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button, Card, Input, Label } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
@@ -79,41 +79,60 @@ const PANEL_STATS = [
   { value: "98%", labelKey: "authLoginStatSatisfaction" as const },
 ];
 
+function resolveSafeNext(value: string | null): string {
+  if (!value || !value.startsWith("/")) return "/dashboard";
+  try {
+    const url = new URL(value, "https://internal.invalid");
+    if (url.origin !== "https://internal.invalid") return "/dashboard";
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return "/dashboard";
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const safeNext = resolveSafeNext(searchParams.get("next"));
   const { locale, t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  function fillDemo(demoEmail: string) {
-    setEmail(demoEmail);
-    setPassword("ttpu1234");
-    setError(null);
-  }
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function login(loginEmail: string, loginPassword: string) {
     setLoading(true);
     setError(null);
     try {
       const res = await apiFetch("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
       if (!res.ok || !json?.ok) {
         setError(json?.error ?? t("authLoginError"));
         return;
       }
-      router.push("/dashboard");
+      router.push(safeNext);
       router.refresh();
     } catch {
       setError(t("commonNetworkError"));
     } finally {
       setLoading(false);
     }
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void login(email, password);
+  }
+
+  function demoLogin(demoEmail: string) {
+    setEmail(demoEmail);
+    setPassword("ttpu1234");
+    void login(demoEmail, "ttpu1234");
   }
 
   return (
@@ -246,8 +265,9 @@ export default function LoginPage() {
                   <button
                     key={account.email}
                     type="button"
-                    onClick={() => fillDemo(account.email)}
-                    className="group flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3 transition-all duration-150 hover:border-brand-300 hover:bg-brand-50"
+                    onClick={() => demoLogin(account.email)}
+                    disabled={loading}
+                    className="group flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-2 py-3 transition-all duration-150 hover:border-brand-300 hover:bg-brand-50 disabled:opacity-60"
                   >
                     <span className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700 transition-colors duration-150 group-hover:bg-brand-100">
                       {account.icon}

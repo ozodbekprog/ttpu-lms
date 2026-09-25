@@ -4,10 +4,13 @@ import { ButtonLink, PageHeader } from "@/components/ui";
 import { attendanceCounts, getStudentAttendance } from "@/app/api/attendance/summary/data";
 import { StudentAttendanceOverview } from "@/components/attendance/overview-student";
 import { StaffAttendanceOverview } from "@/components/attendance/overview-staff";
+import { getModuleFlags } from "@/server/settings";
 import type { AttendanceStatus } from "@prisma/client";
 
 export default async function AttendancePage() {
   const user = await requireUser();
+  const flags = await getModuleFlags();
+  const qrEnabled = flags.qr_attendance;
 
   if (user.role === "STUDENT") {
     const [summary, records] = await Promise.all([
@@ -40,12 +43,18 @@ export default async function AttendancePage() {
           title="Mening davomatim"
           subtitle={`${user.group?.name ?? "Talaba"} · ${summary.courses.length} ta kurs`}
           action={
-            <ButtonLink href="/attendance/check-in" size="sm">
-              QR check-in
-            </ButtonLink>
+            qrEnabled ? (
+              <ButtonLink href="/attendance/check-in" size="sm">
+                QR check-in
+              </ButtonLink>
+            ) : undefined
           }
         />
-        <StudentAttendanceOverview summary={summary} history={history} />
+        <StudentAttendanceOverview
+          summary={summary}
+          history={history}
+          qrEnabled={qrEnabled}
+        />
       </>
     );
   }
@@ -96,8 +105,15 @@ export default async function AttendancePage() {
             ? "Administrator paneli · barcha kurslar"
             : "O'qituvchi paneli · sizning kurslaringiz"
         }
+        action={
+          qrEnabled ? (
+            <ButtonLink href="/attendance/qr" size="sm">
+              QR davomat markazi
+            </ButtonLink>
+          ) : undefined
+        }
       />
-      <StaffAttendanceOverview courses={rows} />
+      <StaffAttendanceOverview courses={rows} qrEnabled={qrEnabled} />
     </>
   );
 }

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const QUICK_LINKS: { href: string; label: string; hint: string; icon: HelpIconName }[] = [
   { href: "#boshlash", label: "Tez boshlash", hint: "6 qadamli qo'llanma", icon: "sparkles" },
   { href: "#faq", label: "FAQ", hint: "Ko'p so'raladigan savollar", icon: "help" },
-  { href: "#bot", label: "Bot buyruqlari", hint: "/jadval, /davomat va boshqalar", icon: "send" },
+  { href: "#bot", label: "Bot buyruqlari", hint: "/jadval, /davomat, /qr va boshqalar", icon: "send" },
   { href: "#aloqa", label: "Aloqa", hint: "O'quv bo'limi va tyutor", icon: "mail" },
 ];
 
@@ -121,13 +121,25 @@ const FAQ: FaqItem[] = [
     answer: (
       <div className="space-y-2.5">
         <p>
-          O&apos;qituvchi dars boshida 6 belgili kod va QR kodni ko&apos;rsatadi. Siz{" "}
-          <span className="font-medium text-slate-800">Davomat → QR orqali davomat</span> sahifasiga
-          kodni kiritasiz yoki QR havolasini skanerlaysiz.
+          <span className="font-medium text-slate-800">Talaba uchun:</span>{" "}
+          <a href="/attendance/check-in" className="font-medium text-brand-700 hover:underline">
+            /attendance/check-in
+          </a>{" "}
+          sahifasida 6 belgili kodni kiritasiz yoki QR havolani skanerlaysiz. Tizimga kirmagan
+          bo&apos;lsangiz, kiringandan so&apos;ng avtomatik shu sahifaga qaytasiz.
         </p>
         <p>
-          Har bir kod faqat shu dars uchun amal qiladi va davomat bir marta belgilanadi. Kodni
-          kechiktirmasdan kiriting.
+          <span className="font-medium text-slate-800">O&apos;qituvchi uchun:</span>{" "}
+          <a href="/attendance/qr" className="font-medium text-brand-700 hover:underline">
+            /attendance/qr
+          </a>{" "}
+          hubida kursni tanlab sessiya ochasiz, kod va QR ni ko&apos;rsatasiz, katta ekran havolasi
+          orqali proyektorga chiqarasiz va belgilanishlarni jonli kuzatasiz.
+        </p>
+        <p>
+          Har bir kod faqat shu dars uchun amal qiladi va davomat bir marta belgilanadi. Telegram
+          botda <span className="font-semibold text-slate-800">/qr</span> buyrug&apos;i orqali ham
+          belgilashingiz mumkin.
         </p>
       </div>
     ),
@@ -223,6 +235,11 @@ const BOT_COMMANDS: BotCommand[] = [
     command: "/davomat",
     description: "Davomat foizi va so'nggi belgilar",
     result: "80% qoidasi bo'yicha holat",
+  },
+  {
+    command: "/qr",
+    description: "QR davomat: talaba kod kiritadi, o'qituvchi sessiya ochadi",
+    result: "Belgilanish yoki sessiya havolasi",
   },
 ];
 
