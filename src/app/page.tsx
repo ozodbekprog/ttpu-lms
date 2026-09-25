@@ -391,7 +391,7 @@ export default function HomePage() {
                   <span className="size-2.5 rounded-full bg-rose-300" />
                   <span className="size-2.5 rounded-full bg-gold-300" />
                   <span className="size-2.5 rounded-full bg-emerald-300" />
-                  <span className="ml-2 hidden h-5 flex-1 items-center rounded-md bg-slate-100 px-2.5 text-[10px] font-medium text-slate-400 sm:flex">
+                  <span className="ml-2 hidden h-5 flex-1 items-center rounded-md bg-slate-100 px-2.5 text-[10px] font-medium text-slate-600 sm:flex">
                     lms.ttpu.uz/dashboard
                   </span>
                   <span className="size-5 rounded-md bg-brand-50" />
@@ -428,7 +428,7 @@ export default function HomePage() {
                           <p className="truncate text-[11px] font-semibold text-slate-800">
                             Salom, Ozodbek
                           </p>
-                          <p className="truncate text-[10px] text-slate-400">
+                          <p className="truncate text-[10px] text-slate-600">
                             AI2-26 · 2-semestr
                           </p>
                         </div>
@@ -443,7 +443,7 @@ export default function HomePage() {
                           key={stat.label}
                           className="rounded-xl border border-slate-100 bg-white px-3 py-2.5"
                         >
-                          <p className="text-[10px] font-medium text-slate-400">{stat.label}</p>
+                          <p className="text-[10px] font-medium text-slate-600">{stat.label}</p>
                           <p className="mt-0.5 text-sm font-semibold tracking-tight text-brand-900">
                             {stat.value}
                           </p>
@@ -455,7 +455,7 @@ export default function HomePage() {
                         <p className="text-[11px] font-semibold text-slate-700">
                           Haftalik faollik
                         </p>
-                        <span className="text-[10px] font-medium text-slate-400">6/7 kun</span>
+                        <span className="text-[10px] font-medium text-slate-600">6/7 kun</span>
                       </div>
                       <div className="mt-3 flex h-20 items-end gap-1.5">
                         {DASH_BARS.map((bar) => (
@@ -471,7 +471,7 @@ export default function HomePage() {
                               }
                               style={{ height: `${bar.value}%` }}
                             />
-                            <span className="text-[9px] font-medium text-slate-400">
+                            <span className="text-[9px] font-medium text-slate-600">
                               {bar.day}
                             </span>
                           </div>
@@ -492,7 +492,7 @@ export default function HomePage() {
                             <p className="truncate text-[11px] font-semibold text-slate-800">
                               {item.title}
                             </p>
-                            <p className="text-[10px] text-slate-400">{item.room}</p>
+                            <p className="text-[10px] text-slate-600">{item.room}</p>
                           </div>
                           <span className="size-1.5 shrink-0 rounded-full bg-slate-200" />
                         </div>
@@ -518,7 +518,7 @@ export default function HomePage() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold text-slate-800">GPA 3.8</p>
-                  <p className="text-[10px] text-slate-400">Semestr reytingi</p>
+                  <p className="text-[10px] text-slate-600">Semestr reytingi</p>
                 </div>
               </div>
 
@@ -538,7 +538,7 @@ export default function HomePage() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold text-slate-800">Topshiriq baholandi</p>
-                  <p className="text-[10px] text-slate-400">Matematika · 92 ball</p>
+                  <p className="text-[10px] text-slate-600">Matematika · 92 ball</p>
                 </div>
               </div>
             </div>
@@ -778,14 +778,14 @@ export default function HomePage() {
                   </svg>
                   Toshkent, O&apos;zbekiston
                 </li>
-                <li className="text-xs text-slate-400">Dushanba — Shanba, 09:00 — 18:00</li>
+                <li className="text-xs text-slate-600">Dushanba — Shanba, 09:00 — 18:00</li>
               </ul>
             </div>
           </div>
         </div>
         <div className="border-t border-slate-100">
           <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 sm:flex-row sm:px-6">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               © 2026 Turin Politexnika Universiteti. Barcha huquqlar himoyalangan.
             </p>
           </div>

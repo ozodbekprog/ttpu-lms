@@ -22,7 +22,7 @@ export function Logo({
       {withText ? (
         <span className="leading-tight">
           <span className="block text-sm font-bold tracking-tight text-brand-900">TTPU LMS</span>
-          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-slate-600">
             Turin Polytechnic
           </span>
         </span>
