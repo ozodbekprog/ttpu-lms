@@ -1,0 +1,28 @@
+### SESSION ses_f277202d6ffe4SxmCU76lXyVIc — Source map exposure audit (@general subagent)
+
+[09-25 17:32 user]
+Проведи read-only проверку https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 на публичные source maps и исходные файлы. Возьми только URL из HTML/JS, максимум 10 same-origin GET/HEAD, не скачивай большие архивы и не выводи содержимое секретов. Проверь .map, исходный JS/CSS, исходные пути. Верни только подтверждённую утечку исходников/секретов с evidence, severity, confidence и repro.
+
+[09-25 17:33 assistant]
+Friday. Проверяю только GET/HEAD same-origin, начиная с указанной страницы; лимит — 10 запросов, тело — до 2 МБ.
+
+[09-25 17:33 assistant]
+Извлекаю из уже полученного HTML только same-origin пути к JS/CSS и кандидаты source map; это локальный анализ, сетевых запросов не добавляет.
+
+[09-25 17:34 assistant]
+В HTML обнаружено 8 JS-путей. Запрашиваю их параллельно (запросы 2–9), без redirect-follow и с тем же лимитом 2 МБ; затем останется один запрос для подтверждённого `.map`-кандидата.
+
+[09-25 17:34 assistant]
+Все 8 JS-ответов — 200 application/javascript. Теперь локально проверяю их на `sourceMappingURL`, `.map`, `sourcesContent` и исходные пути; значения потенциальных секретов не вывожу.
+
+[09-25 17:34 assistant]
+Ни в одном из 8 JS нет `sourceMappingURL` или `sourcesContent`. Последним запросом проверяю стандартный `.map`-sibling для JS-пути из HTML (`22i43cg4l4-dq.js.map`), без перехода по редиректу.
+
+[09-25 17:34 assistant]
+Лимит исчерпан (10/10). Дополнительно анализирую только сохранённые ответы: ищу подтверждённые маркеры исходников и высокоуверенных секретов, выводя лишь названия категорий и количества.
+
+[09-25 17:36 assistant]
+Подтверждённой утечки исходников или секретов не обнаружено.  
+Evidence: 10/10 same-origin GET; 8 JS — `200`, без `sourceMappingURL`, `sourcesContent` и high-confidence secret markers; `.map` sibling — `404`.  
+Severity: N/A · Confidence: высокая для проверенных JS/map; CSS-URLы найдены, но не запрашивались из-за лимита.  
+Repro: `GET /` → JS-URL из HTML → `GET /_next/static/chunks/22i43cg4l4-dq.js.map` → `404`.

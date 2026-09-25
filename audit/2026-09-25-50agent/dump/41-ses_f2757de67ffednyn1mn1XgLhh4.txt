@@ -1,0 +1,43 @@
+### SESSION ses_f2757de67ffednyn1mn1XgLhh4 — Server fingerprint audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи минимальный read-only fingerprinting TLS/HTTP/server headers на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: server, powered-by, framework, version, error pages, OPTIONS/HEAD. Не сканируй порты и не исследуй уязвимости. Максимум 5 запросов. Верни только подтверждённую информацию, которая реально повышает атакуемость, с evidence/severity/confidence; обычное раскрытие стека помечай info.
+
+[09-25 18:01 assistant]
+Проведу fingerprinting. Запускаю параллельно: TLS-сертификат (не HTTP-запрос), HEAD и OPTIONS.
+
+[09-25 18:01 assistant]
+Next.js подтверждён через `link: </_next/static/...>`, при этом `server`/`x-powered-by` отсутствуют. Проверяю тело `/` и 404-страницу.
+
+[09-25 18:01 assistant]
+4 HTTP-запроса использовано. Анализирую полученные файлы локально (без новых запросов).
+
+[09-25 18:02 assistant]
+## Fingerprint: `ozodbeks-macbook-pro.tail91a187.ts.net:8443`
+
+**Расход:** 4 HTTP-запроса (HEAD `/`, OPTIONS `/`, GET `/`, GET `/nonexistent-9f3a2b.html`) + 1 TLS-handshake через `openssl s_client` (не HTTP). Сканирование портов не проводилось.
+
+### Что подтверждено
+
+| # | Находка | Evidence | Severity | Confidence |
+|---|---|---|---|---|
+| 1 | `script-src 'unsafe-inline'` в CSP | `content-security-policy` в ответе на `/` и `404` | **Low** | High (факт) / Med (эффект) |
+| 2 | Фреймворк Next.js, App Router | `link: </_next/static/media/…>`, `/_next/static/chunks/*.js`, маркер `self.__next_f` (RSC), отсутствие `__NEXT_DATA__`/`buildId` | info | High |
+| 3 | Назначение приложения раскрыто | `<title>Sahifa topilmadi — TTPU LMS</title>`, `TTPU LMS — O'quv boshqaruv tizimi` | info | High |
+| 4 | Версия нигде не раскрывается | ни в заголовках, ни в теле `/`, ни в 404 | info (позитив) | High |
+
+**Детали к №1.** Корневая причина одна: отсутствие nonce/hash в `script-src`. Побочные следствия — `script-src-attr` не задан и наследует `unsafe-inline` (inline-обработчики `on*=` разрешены), Trusted Types не включены. Всё остальное в политике сделано корректно: `frame-ancestors 'none'` + `X-Frame-Options: DENY`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `connect-src 'self'`. CSP не является контролем доступа — без подтверждённой точки инъекции это hardening-разрыв, а не эксплуатируемая уязвимость, поэтому severity Low, а не Medium.
+
+### Отрицательные результаты (тоже значимы)
+
+- `server` и `x-powered-by` **отсутствуют** во всех ответах — стек не утекает через заголовки.
+- 404 отдаёт кастомную страницу приложения, **не** дефолтную страницу Next.js; стектрейсов, путей `node_modules`, номеров строк в теле нет.
+- `OPTIONS /` → `400`, без заголовка `Allow` и без каких-либо `Access-Control-*` — CORS не открыт, методы не перечислены.
+- Заголовки hardening полные: HSTS (`max-age=31536000; includeSubDomains; preload`), `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (9 директив).
+- TLS: Let's Encrypt (`YE2`), сертификат выпущен **сегодня** 25.09.2026 08:29 UTC, валиден до 24.12.2026, SAN ограничен одним FQDN хвоста. Утечки внутренних имён в сертификате нет.
+
+### Итог
+
+Заявленного в запросе «повышения атакуемости» по существу не найдено — единственный пункт выше info (№1) является ослаблением защиты, а не уязвимостью, и требует наличия XSS-инъекции для реализации. Стек Next.js определён, но версия не утекает, поэтому привязать CVE по этому сценарию нельзя. Сканер непроверенных путей, RSC-эндпоинтов и клиентских чанков не проводился — для этого нужен отдельный запрос.
+
+Файлы ответов сохранены в `/tmp/opencode/` (`root.html`, `404.html`, `404.hdr`) для дальнейшего разбора.

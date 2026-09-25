@@ -1,0 +1,16 @@
+### SESSION ses_f2757eb7effefDFM2q3vVhZfvm — Privacy and PII audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи read-only privacy/PII exposure audit публичных страниц и bundles сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Ищи email, телефон, внутренние URL, user IDs, персональные данные, debug info и публичные demo credentials; секретные значения маскируй. Не используй найденные учётные данные, максимум 10 same-origin resources. Верни evidence, severity, confidence, repro и отдельно низкорисковые observations.
+
+[09-25 18:01 assistant]
+Провожу только read-only проверку указанного публичного origin; ограничусь 10 same-origin resources, не буду входить, использовать найденные учётные данные или менять состояние сайта.
+
+[09-25 18:01 assistant]
+Корень уже содержит публичные контактные данные и демонстрационные персональные/учебные значения; отдельно проверяю `/login` и `/register`, затем адресно — только содержательные JS-бандлы (без загрузки шрифтов, иконок и CSS).
+
+[09-25 18:02 assistant]
+В login-бандле обнаружены три demo email, вшитые в клиентский код; паролей там нет и запросы авторизации не выполняю. Проверяю ещё общий runtime, публичную `/help` и манифест, оставаясь в пределах лимита.
+
+[09-25 18:02 assistant]
+Остался один ресурс в лимите; беру общий client entry-bundle, чтобы проверить конфигурацию API/окружения и возможные утечки, не обращаясь к защищённому dashboard и не вызывая auth endpoints.

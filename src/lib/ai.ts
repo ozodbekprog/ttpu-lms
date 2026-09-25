@@ -4,6 +4,17 @@ const API_URL = "https://api.deepseek.com/chat/completions";
 
 export type AiMessage = { role: "system" | "user" | "assistant"; content: string };
 
+export type AiToolCall = { name: string; args: Record<string, unknown> };
+
+export type AiTool = {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+};
+
 export type BugAnalysis = {
   summary: string;
   cause: string;
@@ -38,6 +49,62 @@ export async function askAi(
       | null;
     const content = json?.choices?.[0]?.message?.content;
     return typeof content === "string" && content.trim() ? content.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function askAiWithTools(
+  messages: AiMessage[],
+  tools: AiTool[],
+  options?: { timeoutMs?: number; maxTokens?: number },
+): Promise<{ content: string | null; toolCalls: AiToolCall[] } | null> {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) return null;
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages,
+        tools,
+        max_tokens: options?.maxTokens ?? 400,
+        temperature: 0.3,
+      }),
+      signal: AbortSignal.timeout(options?.timeoutMs ?? 25000),
+    });
+    if (!response.ok) return null;
+    const json = (await response.json().catch(() => null)) as
+      | {
+          choices?: {
+            message?: {
+              content?: string | null;
+              tool_calls?: { function?: { name?: string; arguments?: string } }[];
+            };
+          }[];
+        }
+      | null;
+    const message = json?.choices?.[0]?.message;
+    const content =
+      typeof message?.content === "string" && message.content.trim() ? message.content.trim() : null;
+    const toolCalls: AiToolCall[] = Array.isArray(message?.tool_calls)
+      ? message.tool_calls
+          .map((call) => {
+            let args: Record<string, unknown> = {};
+            try {
+              args = JSON.parse(call.function?.arguments ?? "{}") as Record<string, unknown>;
+            } catch {
+              args = {};
+            }
+            return { name: call.function?.name ?? "", args };
+          })
+          .filter((call) => call.name)
+      : [];
+    return { content, toolCalls };
   } catch {
     return null;
   }

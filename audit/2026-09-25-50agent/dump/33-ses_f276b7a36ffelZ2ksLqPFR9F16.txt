@@ -1,0 +1,61 @@
+### SESSION ses_f276b7a36ffelZ2ksLqPFR9F16 — Password policy audit (@general subagent)
+
+[09-25 17:40 user]
+Проведи статический read-only аудит password/registration policy на /register и /forgot-password сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: min/max length, client/server clues, autocomplete, reset flow, password exposure in HTML/JS, inconsistent requirements. Не отправляй формы и не используй demo credentials; максимум 5 GET. Верни конкретные verified findings с evidence/severity/confidence/repro.
+
+[09-25 17:40 assistant]
+Friday. Проведу только GET-аудит: сначала `/register` и `/forgot-password`, затем при необходимости просмотрю опубликованные JS-ресурсы; лимит — 5 GET, без отправки форм и credentials.
+
+[09-25 17:40 assistant]
+В HTML уже видны `minLength=12`, `autocomplete=new-password` и текст «30 минут» в клиентском словаре; теперь проверяю два page-specific JS-чанка, чтобы отделить клиентские проверки от серверных/API-подсказок и найти reset-flow.
+
+[09-25 17:40 assistant]
+Остался один GET. Использую его на публичный `/reset-password` без токена: это позволит проверить, доступен ли reset UI и какие ограничения/autocomplete заявлены, не раскрывая и не подбирая токен.
+
+[09-25 17:43 assistant]
+Friday. Проведено ровно **5 GET**, без отправки форм, POST-запросов и demo credentials:
+
+`/register`, `/forgot-password`, два auth-JS-чанка и `/reset-password` без токена.
+
+### Проверенная политика
+
+| Поверхность | min | max | autocomplete |
+|---|---:|---:|---|
+| `/register` | 12 — HTML `minLength="12"` и JS `m.password.length<12` | Не задан/не обнаружен в клиентском коде | `new-password` |
+| `/forgot-password` | Пароль не вводится | — | `email` |
+| `/reset-password` | В словаре указано 12 | Не проверено: без токена форма не рендерится | Не проверено |
+
+### Findings
+
+1. **Нет клиентской верхней границы длины пароля**  
+   **Severity:** Low, hardening; **Confidence:** High для клиента / Medium для серверного impact.  
+   **Evidence:** В `/register` есть `minLength="12"`, но нет `maxLength`; в `1py2zjofjc50q.js` есть только проверка `<12`, верхнего ограничения нет.  
+   **Repro:** GET `/register`, затем GET `/_next/static/chunks/1py2zjofjc50q.js`; проверить password input и обработчик. Серверный лимит не проверялся.
+
+2. **Наблюдаемая проверка длины — клиентская; серверная политика не подтверждена**  
+   **Severity:** Potential Medium только если сервер тоже не проверяет; **Confidence:** Low/не подтверждено.  
+   **Evidence:** JS отправляет JSON напрямую в `/api/auth/register` и `/api/auth/login`; реализация API в GET-артефактах отсутствует.  
+   **Repro:** Статически видны только `minLength` и JS-проверка. Нельзя утверждать без POST/исходников сервера, что короткий пароль принимается.
+
+3. **Пароль не захардкожен, но передаётся в JS-runtime и дважды сериализуется**  
+   **Severity:** Info; **Confidence:** High.  
+   **Evidence:** HTML содержит `value=""`; в JS используется состояние `m.password`, затем `JSON.stringify({..., password:m.password})` для `/api/auth/register` и повторно для `/api/auth/login`. В URL/query, HTML-значении или `console.log` проверенных чанках пароля нет.  
+   **Repro:** GET `/register` и его page-specific chunk. Это обычная runtime-передача по HTTPS, но расширяет поверхность обработки до двух endpoint’ов.
+
+4. **Reset-flow имеет публичную заглушку для запроса без токена**  
+   **Severity:** Info, положительный контроль; **Confidence:** High.  
+   **Evidence:** GET `/reset-password` без токена возвращает «Havola yaroqsiz» («Ссылка недействительна») и ссылку на `/forgot-password`; password form отсутствует.  
+   **Repro:** GET `/reset-password` без query/token. Это не доказывает криптографическую проверку, single-use или фактический TTL.
+
+5. **TTL 30 минут — только UI-утверждение, сервер не проверен**  
+   **Severity:** Unrated / verification gap; **Confidence:** High для текста, Low для enforcement.  
+   **Evidence:** RSC dictionary: `Havola 30 daqiqa amal qiladi`. Фактическая обработка `/api/auth/reset-password` не была получена: reset-чанк `1w1yj0uj0bdvb.js` обнаружен, но не загружен из-за лимита 5 GET.
+
+6. **Ошибка после успешной регистрации может вводить в заблуждение**  
+   **Severity:** Low; **Confidence:** High.  
+   **Evidence:** После успешного `/api/auth/register` клиент вызывает `/api/auth/login`; при ошибке login показывает «email уже зарегистрирован», хотя регистрация уже прошла.  
+   **Repro:** Статически проследить ветку в `1py2zjofjc50q.js`; форма не отправлялась.
+
+### Итог
+
+Явного противоречия по минимальной длине не найдено: `/register` и reset-словарь оба указывают **12**. Максимум, серверный min/max, реальный TTL reset-ссылки, single-use и autocomplete reset-полей не подтверждены GET-only аудитом.

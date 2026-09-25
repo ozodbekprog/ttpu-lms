@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
@@ -14,6 +15,7 @@ const GREETING =
   "Salom! 😊 Men AI yordamchiman. TTPU LMS saytida qanday yordam bera olaman? Muammo yoki savolingizni yozing — birgalikda hal qilamiz.";
 
 export function BugAssistant() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -32,30 +34,52 @@ export function BugAssistant() {
     setMessages((prev) => [...prev, { role: "ai", text }]);
   }, []);
 
-  const askAiReply = useCallback(async (pending: ChatMessage[]): Promise<string> => {
-    try {
-      const res = await apiFetch("/api/assistant/chat", {
-        method: "POST",
-        body: JSON.stringify({
-          messages: pending.slice(-8).map((message) => ({
-            role: message.role === "ai" ? "assistant" : "user",
-            content: message.text,
-          })),
-          context: captured.current
-            ? { url: captured.current.url, errorMessage: captured.current.message }
-            : undefined,
-        }),
-      });
-      const json = (await res.json().catch(() => null)) as
-        | { ok?: boolean; data?: { reply?: string } }
-        | null;
-      const reply = json?.data?.reply;
-      if (typeof reply === "string" && reply.trim()) return reply.trim();
-    } catch {
-      void 0;
-    }
-    return "Kechirasiz, hozir javob bera olmadim. Birozdan so'ng qayta yozing — adminga ham xabar berildi.";
-  }, []);
+  const askAiReply = useCallback(
+    async (pending: ChatMessage[]): Promise<string> => {
+      try {
+        const res = await apiFetch("/api/assistant/chat", {
+          method: "POST",
+          body: JSON.stringify({
+            messages: pending.slice(-8).map((message) => ({
+              role: message.role === "ai" ? "assistant" : "user",
+              content: message.text,
+            })),
+            context: captured.current
+              ? { url: captured.current.url, errorMessage: captured.current.message }
+              : undefined,
+          }),
+        });
+        const json = (await res.json().catch(() => null)) as
+          | {
+              ok?: boolean;
+              data?: {
+                reply?: string;
+                actions?: { type?: string; path?: string; title?: string }[];
+              };
+            }
+          | null;
+        const actions = json?.data?.actions ?? [];
+        const nav = actions.find(
+          (action) => action.type === "navigate" && typeof action.path === "string" && action.path,
+        );
+        if (nav?.path) {
+          router.push(nav.path);
+        }
+        const reply =
+          typeof json?.data?.reply === "string" ? json.data.reply.trim() : "";
+        if (reply) {
+          return nav?.path
+            ? `${reply}\n\n➡️ Sahifani ochdim: ${nav.title || nav.path}`
+            : reply;
+        }
+        if (nav?.path) return `Sahifani ochdim: ${nav.title || nav.path} ✅`;
+      } catch {
+        void 0;
+      }
+      return "Kechirasiz, hozir javob bera olmadim. Birozdan so'ng qayta yozing — adminga ham xabar berildi.";
+    },
+    [router],
+  );
 
   const sendReport = useCallback(async (): Promise<void> => {
     setBusy(true);

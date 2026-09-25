@@ -1,0 +1,49 @@
+### SESSION ses_f276b9952ffek970zxNrUb68kg — Localization consistency audit (@general subagent)
+
+[09-25 17:39 user]
+Проведи read-only аудит локализации /, /login и /register на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: lang, hreflang, lang-specific controls, mixed/untranslated strings, encoding and RTL readiness. Не меняй язык через state-changing actions, максимум 3 страницы. Верни только конкретные подтверждённые дефекты с evidence/severity/confidence/repro.
+
+[09-25 17:40 assistant]
+Проверяю только GET-ответы этих трёх URL: HTTP/HTML-метаданные, элементы локализации и подключённый клиентский код; переключатели и формы не активирую.
+
+[09-25 17:40 assistant]
+Теперь сверяю объявленные UZ/RU/EN с реализацией в клиентском коде (только чтение статических JS-файлов), чтобы отличить реально доступные локализации от неработающих кнопок.
+
+[09-25 17:42 assistant]
+Для проверки именно выбора локализации делаю отдельные stateless GET с `Cookie: locale=ru/en` в том же браузерном контексте без кликов, форм и POST; это не меняет серверное состояние.
+
+[09-25 17:49 assistant]
+1. **Неверный `lang` для RU/EN**
+   - **Evidence:** `/login` с `locale=ru` показывает русский `Вход в систему`, но `<html lang="uz">`; `/register` с `locale=en` показывает `Sign up`, но `lang` также `uz`. `Content-Language` отсутствует.
+   - **Severity:** High · **Confidence:** High
+   - **Repro:** GET `/login` с `Cookie: locale=ru` и `/register` с `Cookie: locale=en`; без кликов и POST.
+
+2. **Локализованные `<title>` и `description` остаются узбекскими**
+   - **Evidence:** RU `/login`: `<title>Kirish — TTPU LMS</title>`; EN `/register`: `<title>Ro'yxatdan o'tish — TTPU LMS</title>`; description также остаётся на узбекском.
+   - **Severity:** Medium · **Confidence:** High
+   - **Repro:** Те же GET; сравнить заголовок/meta description с локализованным body.
+
+3. **На `/register` есть硬编码 Uzbek-строки**
+   - **Evidence:** В RU/EN ответе остаётся `Kamida 12 belgi`; в `1py2zjofjc50q.js` также захардкожены `Ismni to'liq...`, `Email manzilni...`, `Parol kamida...`.
+   - **Severity:** Medium · **Confidence:** High
+   - **Repro:** GET `/register` с `Cookie: locale=en`; строка видна без отправки формы.
+
+4. **Выбор языка не применяется к `/`**
+   - **Evidence:** селектор записывает `locale=...; path=/`; `/login` с `locale=ru` русский, но `/` с тем же GET-заголовком остаётся полностью узбекским и не содержит переключателя.
+   - **Severity:** Medium · **Confidence:** High
+   - **Repro:** Сравнить GET `/login` и `/` с `Cookie: locale=ru`.
+
+5. **Доступное имя переключателя языка не локализовано**
+   - **Evidence:** на `/login` и `/register` всегда `role="group" aria-label="Language"`, включая UZ/RU; в словаре есть `commonLanguage`, но компонент его не использует.
+   - **Severity:** Low · **Confidence:** High
+   - **Repro:** GET `/login` без cookie и проверить `aria-label` группы.
+
+6. **Нет `hreflang` для заявленных RU/EN-вариантов**
+   - **Evidence:** во всех трёх `<head>` отсутствуют `link rel="alternate" hreflang`; RU/EN доступны только как cookie-варианты одного URL.
+   - **Severity:** Low · **Confidence:** High
+   - **Repro:** GET `/`, `/login`, `/register` и проверить alternate-ссылки.
+
+7. **RTL readiness не реализована**
+   - **Evidence:** на всех страницах отсутствует `dir`; нет RTL-правил, при этом используются физические `left/right/ml-auto` utilities. Текущие UZ/RU/EN — LTR, дефект проявится при RTL-локали.
+   - **Severity:** Low · **Confidence:** High
+   - **Repro:** Проверить `dir` в HTML и directional CSS/assets без изменения состояния.

@@ -1,0 +1,13 @@
+### SESSION ses_f2786a60bffexISEc3qJAYKhyq — HTTP methods audit (@general subagent)
+
+[09-25 17:10 user]
+Проведи безопасную read-only проверку HTTP methods для https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: HEAD/GET/OPTIONS и только TRACE/DELETE/PUT на несуществующем безопасном пути, не на реальном ресурсе; не изменяй данные. До 5 запросов. Проверь неожиданно разрешённые методы, method override и утечку ошибок. Верни только подтверждённые результаты с evidence/repro/severity/confidence.
+
+[09-25 17:15 assistant]
+Лимит в 5 запросов не вмещает все 6 методов. Проверю `HEAD/GET/OPTIONS` на `/`, затем `TRACE` и `DELETE` на случайном пути; для override использую безопасный `X-HTTP-Method-Override: GET`, `If-None-Match: *` и без тела. `PUT` не отправляю, чтобы не превысить лимит и не рисковать записью.
+
+[09-25 17:16 assistant]
+- `HEAD /` → `200`; `GET /` → `200`; `OPTIONS /` → `405`, `Allow: HEAD`, body `Method Not Allowed`. Evidence: GET разрешён, но `Allow` неполон. Severity: Low. Confidence: High.
+- `TRACE /__opencode_safe_method_probe_a11834eff2ac4df098f03885126aa7c0` → `404`; отражения TRACE не подтверждено. Severity: Info. Confidence: High.
+- `DELETE` того же пути с `X-HTTP-Method-Override: GET`, `If-None-Match: *`, без тела → `304`, пустое тело; изменение данных и успешный override не подтверждены. Severity: Info. Confidence: High.
+- `X-Powered-By: Next.js` раскрывается в HEAD/GET/TRACE. Severity: Low. Confidence: High. `PUT` не отправлялся: лимит 5 запросов исчерпан.

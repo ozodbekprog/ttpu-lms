@@ -1,0 +1,42 @@
+### SESSION ses_f2771e2c6ffekPIy920n6SNBJT — PWA and service worker audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи read-only проверку PWA/service worker/manifest на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: manifest.webmanifest, icons, service worker references, scope, cache/update behavior from publicly linked files. Не регистрируй SW через браузер и не изменяй данные; максимум 8 same-origin GET/HEAD. Ищи broken PWA, overly broad scope, sensitive cache или stale assets только с доказательством. Верни evidence/repro/severity/confidence.
+
+[09-25 17:33 assistant]
+Проверю PWA только через HTTP GET/HEAD, строго учитывая максимум 8 запросов к указанному origin.
+
+[09-25 17:33 assistant]
+Обнаружена регистрация `/sw.js`; проверяю сам worker, точные scope/cache-правила и оба manifest-icon.
+
+[09-25 17:34 assistant]
+Осталась одна целевая проверка: `start_url=/dashboard`, чтобы оценить, может ли общий navigation-cache захватывать пользовательские HTML-ответы.
+
+[09-25 17:37 assistant]
+Проверено **7/8 same-origin GET**, только через `curl`; браузер и регистрация SW не использовались.
+
+### Findings
+
+1. **Medium — private/no-store navigation responses сохраняются в Cache Storage**
+   - **Evidence:** `sw.js` направляет все same-origin navigation в `networkFirst()`; любая `response.ok` сохраняется через `cache.put(request, response.clone())`. Исключение — только URL с `/api/`.
+   - `GET /dashboard` вернул `200` с `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate`; этот response однозначно удовлетворяет условию кэширования. Offline fallback — `caches.match(request)`.
+   - `Vary` не включает `Cookie`, а logout/cache purge отсутствует. Поэтому при offline возможен возврат ранее сохранённой страницы URL, включая потенциально пользовательский HTML.
+   - **Repro:** `curl -sS "$BASE/sw.js"` и `curl -sS -D - -o /dev/null "$BASE/dashboard"`.
+   - **Confidence:** High для нарушения `no-store`; PII-утечка непосредственно не подтверждена без авторизованной сессии.
+
+2. **Low — activation удаляет все Cache Storage этого origin**
+   - **Evidence:** `keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))` удаляет любые чужие cache buckets, а не только кэши с префиксом `ttpu-lms-`.
+   - **Repro:** та же публичная загрузка `sw.js`; браузер не нужен.
+   - **Confidence:** High; наличие посторонних buckets не проверялось.
+
+3. **Low — precache без revalidation допускает stale manifest/icons**
+   - **Evidence:** `/sw.js`, `/manifest.webmanifest`, `/logo.svg`, `/icon.svg` обрабатываются `cacheFirst()`; revalidation нет, `CACHE_NAME` фиксирован как `ttpu-lms-static-v1`. Обновление произойдёт только при установке изменённого worker либо очистке cache.
+   - Фактически устаревшая версия не наблюдалась — это подтверждённая политика stale-risk, а не доказанный stale deployment.
+   - **Confidence:** High.
+
+### Проверено без finding
+
+- Manifest, оба SVG-icon и `/sw.js`: `200`, корректные MIME; broken references не найдены.
+- Регистрация: публичный chunk вызывает `navigator.serviceWorker.register("/sw.js")`.
+- Scope worker по умолчанию `/`; manifest также `/`. Расширения за пределы origin нет: cross-origin fetch сразу пропускается.
+- Обновление: install → `allSettled` precache + `skipWaiting`; activate → удаление caches + `clients.claim()`; navigation → network-first; остальные precache → cache-first. Фактическую browser-installability не проверял.

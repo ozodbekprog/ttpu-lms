@@ -1,0 +1,23 @@
+### SESSION ses_f276b7511ffe1abb0N9L53fPO3 — Client input validation audit (@general subagent)
+
+[09-25 17:40 user]
+Проведи read-only аудит клиентской валидации форм на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 по HTML/JS: required, type, pattern, maxlength, email normalization, disabled submit, validation messages. Не отправляй формы, максимум 5 страниц/ресурсов. Ищи только воспроизводимые функциональные дефекты или расхождения, severity/confidence/repro.
+
+[09-25 17:44 assistant]
+Проверено ровно 5 ресурсов: `/`, `/login`, `/register` и их client-chunks `2izzx1ognwu95.js` / `1py2zjofjc50q.js`. Формы и API не отправлялись.
+
+1. **Low · Confidence High — разные правила email**  
+   `/register`: HTML `type="email"` допускает `a@b`, но JS-регекс `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` требует доменную точку и отклоняет его. Правило нигде не документировано.  
+   **Repro:** `a@b`: `input.validity.valid === true`, но `regex.test("a@b") === false`; JS показывает ошибку до `apiFetch`.
+
+2. **Low · Confidence High — «12 символов» считаются как UTF-16 code units**  
+   И HTML `minLength=12`, и JS `.length < 12` считают emoji/combining sequences по code units.  
+   **Repro:** шесть `😀` имеют `.length === 12` и проходят клиентскую проверку, хотя отображаются как шесть символов.
+
+3. **Low · Confidence High — сообщения валидации не соответствуют языку интерфейса**  
+   Ошибки required/email/minlength генерирует браузер на своём языке; JS-сообщения регистрации жёстко заданы на узбекском. Кроме того, при пароле короче 12 символов HTML-блокировка выполняется раньше `onSubmit`, поэтому JS-сообщение о длине пароля недостижимо обычным способом.  
+   **Repro:** выбрать EN, оставить обязательное поле пустым или ввести 11 символов пароля; сообщение будет не на EN. Имя `A` даёт JS-сообщение на узбекском.
+
+4. **Low · Confidence High — «Полное имя» принимает строку без имени**  
+   Проверка регистрации требует только `trim().length >= 2`; `pattern` отсутствует.  
+   **Repro:** `name="!!"` проходит обязательное и собственное JS-валидирование имени.

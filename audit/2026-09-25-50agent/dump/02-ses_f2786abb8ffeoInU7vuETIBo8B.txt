@@ -1,0 +1,31 @@
+### SESSION ses_f2786abb8ffeoInU7vuETIBo8B — CORS policy audit (@general subagent)
+
+[09-25 17:10 user]
+Проверь CORS на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 в read-only режиме. Используй только безопасный Origin header и OPTIONS/GET, максимум 5 запросов; не отправляй credentials и не вноси изменения. Проверь Access-Control-Allow-Origin/Methods/Headers/Credentials и отражённые origins. Верни evidence, severity, confidence, точный repro; не считай нормальное отсутствие CORS багом без контекста.
+
+[09-25 17:10 assistant]
+Проведу 4 read-only запроса: `OPTIONS` и `GET` для двух разных Origin из зарезервированного домена `.example`; без cookies, auth и follow-redirects. Проверю только заголовки и статус.
+
+[09-25 17:11 assistant]
+Проверено ровно 4 запроса к `/`: `OPTIONS` и `GET` для `https://cors-a.example` и `https://cors-b.example`; без cookies, auth и redirect-following.
+
+**Evidence**
+- `OPTIONS` для обоих Origin: `405`, `Allow: GET`, `Allow: HEAD`.
+- В обоих ответах отсутствуют `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, `Access-Control-Allow-Credentials`.
+- `GET` для обоих Origin: `200`; `Access-Control-Allow-Origin` отсутствует, Origin не отражён.
+- `Access-Control-Allow-Credentials: true` не обнаружен; credentialed CORS не разрешён.
+
+**Оценка:** `Informational`, не самостоятельная security-уязвимость; при необходимости cross-origin API — функциональная проблема `Low`. Уверенность: высокая.
+
+```bash
+BASE='https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/'
+for origin in https://cors-a.example https://cors-b.example; do
+  curl -skS --netrc-file /dev/null --proto '=https' --max-time 20 \
+    -D - -o /dev/null -X OPTIONS "$BASE" \
+    -H "Origin: $origin" \
+    -H 'Access-Control-Request-Method: GET' \
+    -H 'Access-Control-Request-Headers: content-type'
+  curl -skS --netrc-file /dev/null --proto '=https' --max-time 20 \
+    -D - -o /dev/null -X GET "$BASE" -H "Origin: $origin"
+done
+```

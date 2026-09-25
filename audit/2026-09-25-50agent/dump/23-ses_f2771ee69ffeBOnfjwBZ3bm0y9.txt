@@ -1,0 +1,31 @@
+### SESSION ses_f2771ee69ffeBOnfjwBZ3bm0y9 — Path normalization audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи безопасную read-only проверку нормализации путей и route confusion на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: percent-encoding, duplicate slashes, dot segments, semicolon/encoded slash, case, trailing slash. Используй только GET/HEAD, не обращайся к файлам/секретам и не обходи авторизацию; максимум 12 запросов. Ищи только подтверждённый auth bypass или неожиданный доступ. Верни URL/status/Location, severity, confidence, repro.
+
+[09-25 17:33 assistant]
+Проверю только публичные маршруты: сначала базовый URL, затем ограниченный набор вариантов нормализации; автоматические редиректы отключу, чтобы запросы не размножались.
+
+[09-25 17:33 assistant]
+База отвечает `200` и похожа на Next.js. Чтобы не угадывать закрытые пути, извлеку из корневого HTML только ссылки/маршруты, затем проверю только их и явно безопасные варианты пути.
+
+[09-25 17:33 assistant]
+Выполню 9 дополнительных `GET` (всего до 11 из 12), с `--path-as-is`, без следования редиректам; выведу только URL, код, `Location`, тип и размер ответа.
+
+[09-25 17:34 assistant]
+Проверено **11/12 запросов**, только `GET`, без следования редиректам; файлы/секреты не запрашивались.
+
+| URL | Status | Location | Severity | Confidence | Repro |
+|---|---:|---|---|---|---|
+| `https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/` | 200 | — | none | High | `GET /` |
+| `.../login` | 200 | — | none | High | baseline public login |
+| `.../login/` | 308 | `.../login` | info | High | trailing slash, normal canonicalization |
+| `...//login` | 308 | `.../login` | info | High | duplicate slash, normal canonicalization |
+| `.../%6c%6f%67%69%6e` | 404 | — | none | High | encoded route rejected |
+| `.../login%2f` | 404 | — | none | High | encoded slash rejected |
+| `.../%2e%2e/login` | 200 | — | none | Medium | dot segment; response size matches public `/login` |
+| `.../login/../login` | 200 | — | none | Medium | dot segment; response size matches public `/login` |
+| `.../login;foo` | 404 | — | none | High | semicolon rejected |
+| `.../LOGIN` | 404 | — | none | High | case-sensitive route |
+
+**Итог:** подтверждённого auth bypass или неожиданного доступа нет. Для воспроизведения: `curl --path-as-is --max-redirs 0 -o /dev/null -w 'status=%{http_code} location=%{redirect_url}\n' -X GET '<URL>'`.

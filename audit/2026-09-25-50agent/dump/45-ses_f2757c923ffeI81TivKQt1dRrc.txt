@@ -1,0 +1,13 @@
+### SESSION ses_f2757c923ffeI81TivKQt1dRrc — Independent finding validation (@general subagent)
+
+[09-25 18:01 user]
+Сделай независимую финальную перепроверку только этих уже заявленных областей на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: публичные demo credentials (не использовать), enforced CSP unsafe-inline/eval, Service Worker caching no-store, /api/csrf headers, protected-route 200 shell, malformed URL 400, mobile header wrapping. Используй только GET/HEAD, максимум 15 запросов, без payload/brute force/login. Для каждого пункта дай confirmed/not confirmed, точные headers/snippets, severity, confidence и repro.
+
+[09-25 18:01 assistant]
+Провожу независимую пассивную проверку с жёстким бюджетом: только `GET/HEAD`, без переходов, авторизации и отправки данных; каждый запрос учитываю отдельно.
+
+[09-25 18:02 assistant]
+Первый `GET /` занял 1/15. Теперь точечно проверяю login (только публичный HTML), SW, CSRF, защищённый маршрут и один некорректно экранированный путь — ещё 5 запросов.
+
+[09-25 18:02 assistant]
+Использовано 6/15. Результаты уже показывают: CSRF-защита на месте, `/dashboard` отвечает `307`, а malformed path на HTTP/2 завершился `PROTOCOL_ERROR`; отдельно уточняю HTTP/1.1-ветку, публичный demo-код в клиентском bundle и возможную admin-защиту.

@@ -1,0 +1,31 @@
+### SESSION ses_f2771fd11ffeDVswgkp3G3bouX — Third-party dependency audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи read-only обзор внешних third-party resources сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: найди внешние scripts/images/fonts/iframes/connect targets из HTML и bundle references, проверь доступность и потенциальную передачу referrer/data. Не загружай подозрительные внешние URL, максимум 5 локальных запросов; внешние адреса только извлеки и оцени контекст. Не считай домен сам по себе багом. Верни evidence/severity/confidence.
+
+[09-25 17:33 assistant]
+Friday — проведу обзор: запрошу только указанный сайт (до 5 запросов), извлеку внешние ссылки из HTML/JS и оценю их без загрузки.
+
+[09-25 17:33 assistant]
+Страница получена (1 запрос). Сейчас локально разбираю сохранённый HTML: внешние URL, типы ресурсов и сетевые вызовы; это не обращается к найденным адресам.
+
+[09-25 17:33 assistant]
+В HTML абсолютных third-party URL нет: все найденные ресурсы — same-origin. Читаю четыре наиболее содержательных JS-чанка (до общего лимита 5 запросов), не обращаясь к внешним CDN/API.
+
+[09-25 17:39 assistant]
+## Итог
+
+Активных внешних third-party resources в проверенном scope не обнаружено. Домен `*.ts.net:8443` сам по себе не классифицирую как проблему.
+
+### Evidence / Severity / Confidence
+
+| Область | Evidence | Severity | Confidence |
+|---|---|---:|---:|
+| Scripts | HTML: 8 `script src`, все `/_next/static/chunks/...`; внешних `http(s)`/protocol-relative URL нет | Info | High |
+| Images/fonts | 3× `/logo.svg`, 2× same-origin `.woff2`, 2 same-origin CSS; внешних URL нет | Info | High |
+| Iframes | `<iframe>` отсутствует | Info | High |
+| Connect/API | HTML не содержит `fetch`, XHR, WebSocket, beacon или EventSource. В `2-rtuqsgzmno4.js` — RSC fetch с `credentials:"same-origin"` и URL относительно `location.origin`; внешних API не найдено | Info | Medium |
+| Referrer/data | `Referrer-Policy: strict-origin-when-cross-origin`; потенциальная внешняя передача не наблюдается | None | Medium |
+| Изображения | CSP: `img-src 'self' data: blob: https:` — внешние HTTPS-изображения разрешены политикой; при появлении такого URL third party увидит как минимум origin, но не path/query | Low | High, условно |
+
+Доступность: корневой документ получил `HTTP/2 200`; 4 JS-чанка успешно получены. Внешние URL не запрашивались. Не проверены из-за лимита 5 запросов: ещё 4 JS-чанка, `sw.js`, CSS, fonts и изображения; поэтому итоговая confidence — **Medium**. `Telegram bot`, `Open API` и контактные строки — текст, не активные ресурсы.

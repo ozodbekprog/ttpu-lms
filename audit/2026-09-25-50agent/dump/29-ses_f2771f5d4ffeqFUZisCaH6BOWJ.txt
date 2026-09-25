@@ -1,0 +1,53 @@
+### SESSION ses_f2771f5d4ffeqFUZisCaH6BOWJ — API access control audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи только GET/HEAD/OPTIONS безопасную проверку обнаруженных публичных API-маршрутов https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 (до 15 same-origin, без cookies/credentials и без POST). Ищи случайно открытые user/admin/data routes, неверные status/cache/content-type. Не brute-force и не меняй данные. Верни только реально подтверждённые находки с evidence, repro, severity, confidence; не используй demo credentials.
+
+[09-25 17:33 assistant]
+Проведу не более 15 запросов только к указанному origin, без redirect-follow, cookies и авторизации; каждый ответ проверю и дам только подтверждённые находки.
+
+[09-25 17:33 assistant]
+Корень — Next.js 200 с корректными security headers; теперь проверяю публичную `/login` только для извлечения реально опубликованных same-origin API-путей, без входа.
+
+[09-25 17:34 assistant]
+Публичные login-скрипты раскрыли два page-specific chunk; читаю их как опубликованный клиентский код, чтобы не угадывать API-маршруты.
+
+[09-25 17:34 assistant]
+Публичный код подтверждает GET `/api/csrf` и POST-only `/api/auth/login`; проверяю только GET-маршрут и его заголовки, не сохраняя выданный cookie/token.
+
+[09-25 17:34 assistant]
+`/dashboard` не редиректит (200), поэтому повторно читаю его body: нужно подтвердить, это лишь client-side login redirect или реально выданные данные.
+
+[09-25 17:35 assistant]
+`/dashboard` подтверждён как 200 без `Location`, но body содержит только серверный redirect-shell; теперь извлекаю API-строки из трёх уже опубликованных dashboard chunks, без обращения к ним как к данным.
+
+[09-25 17:35 assistant]
+Из dashboard chunks подтверждены три read/attendance API-пути; проверяю их анонимным GET, включая bodies только для доказательства открытости и корректности типа ответа.
+
+[09-25 17:35 assistant]
+Осталось 3 запроса из лимита; делаю только три заранее выбранных conventional read-route (`users`, `admin/users`, `data`), не перебирая имена и не отправляя POST.
+
+[09-25 17:37 assistant]
+Проверено ровно 15 запросов: только `GET`, без cookies/credentials, redirect-follow и `POST`; demo credentials не использовались.
+
+### 1. Некорректный status защищённой страницы
+- **Evidence:** `GET /dashboard` → `HTTP/2 200`, без `Location`; body содержит `<meta http-equiv="refresh" content="1;url=/login">` и `NEXT_REDIRECT;replace;/login;307;`.
+- **Repro:**
+  ```bash
+  curl --noproxy '*' --netrc-file /dev/null --max-redirs 0 -i \
+    'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/dashboard'
+  ```
+- **Severity:** Low · **Confidence:** High  
+- Защищённая страница сообщает успешный HTTP-статус вместо redirect/401; protected data не обнаружена.
+
+### 2. Неполный `405` API-ответ
+- **Evidence:** `GET /api/attendance/check-in` → `HTTP/2 405`, пустое тело, отсутствуют `Allow` и `Content-Type`.
+- **Repro:**
+  ```bash
+  curl --noproxy '*' --netrc-file /dev/null --max-redirs 0 -i \
+    'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/api/attendance/check-in'
+  ```
+- **Severity:** Info/Low · **Confidence:** High  
+- GET отклонён корректно; finding — неполный HTTP error contract.
+
+Открытых user/admin/data маршрутов не подтверждено: `/api/admin/users` вернул `401`, `/api/users` и `/api/data` — `404`.

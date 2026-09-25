@@ -1,0 +1,52 @@
+### SESSION ses_f27869954ffeM8ieLonm1Q5Nmg — Cache behavior audit (@general subagent)
+
+[09-25 17:10 user]
+Проведи read-only проверку cache/proxy behavior на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Сравни публичные GET, cache-control, ETag/Last-Modified, Vary, CDN headers и возможную персонализацию без входа. Максимум 5 запросов, без флуда. Ищи только доказанные проблемы (например, кэш приватного/персонализированного контента) с evidence и repro.
+
+[09-25 17:10 assistant]
+Проведу 5 запросов максимум, только чтение.
+
+[09-25 17:16 assistant]
+## Итог: доказанных проблем не найдено
+
+5 запросов, все read-only (только GET/HEAD-класса, без логина, без записи состояния).
+
+| # | Запрос | Status | Cache-Control | ETag | Ключевое |
+|---|---|---|---|---|---|
+| 1 | `GET /` | 200 | `s-maxage=31536000` | `shq12xh53b229r` | `x-nextjs-cache: HIT`, `x-nextjs-prerender: 1` |
+| 2 | `GET /` + Cookie | 200 | `s-maxage=31536000` | `102aq30blwj229r` | body sha256 `d50dcaf7…` |
+| 3 | `GET /` anon | 200 | `s-maxage=31536000` | `102aq30blwj229r` | body sha256 `d50dcaf7…` — **байт-в-байт идентичен** запросу с cookie |
+| 4 | `GET /` + `If-None-Match` | **304** | `s-maxage=31536000` | эхо | валидаторы работают корректно |
+| 5 | `GET /dashboard` + Cookie | 200 | `private, no-cache, no-store, max-age=0, must-revalidate` | — | персонализированный маршрут |
+
+### Что проверено и подтверждено
+
+- **Утечки кэша нет.** `/` отдаётся как статический prerender (`x-nextjs-prerender: 1`), тело ответа идентично с cookie и без — diff пустой. Кэшировать нечего приватного.
+- **Персонализированный маршрут защищён корректно.** `/dashboard` с cookie получил `private, no-store, must-revalidate` → в shared cache не попадает принципиально.
+- **Валидаторы честные.** 304 на совпадение ETag, размер тела 0.
+- **CDN перед приложением нет.** Ни `age`, ни `via`, ни `cf-cache-status`, ни `x-cache` ни в одном ответе. `s-maxage` выставляет сам Next.js; реально отвечает ISR-кэш Next.js. То есть риск от 1-летнего `s-maxage` сейчас латентный, а не эксплуатируемый.
+- **Cookie нигде не проставляется** (нет `Set-Cookie` ни в одном ответе) — приложение не создавало сессию от моих фейковых значений.
+
+### Наблюдения (не vulnerabilities, требуют source-level проверки)
+
+1. **ETag нестабилен в пределах ~1 минуты**: `shq12xh53b229r` (req 1) → `102aq30blwj229r` (req 2–4). Суффикс `229r` (hex mtime в Next.js ISR) совпадает, различается только хеш содержимого. Тело req 1 я не сохранял, поэтому подтвердить, что различалось содержимое или только ETag, не могу. Практическое следствие ограниченное: клиент с устаревшим ETag получит полный 200 вместо 304.
+2. **`Vary` никогда не включает `Cookie`** — приемлемо для текущей раскладки (п. 1–2 выше), но в связке с `s-maxage=31536000` на `/` это footgun: любая будущая страница, читающая auth на этапе prerender, будет запечена в общий кэш на год.
+3. `Last-Modified` отсутствует — единственный валидатор это ETag. Не проблема.
+4. Плюсы по безопасности на месте: HSTS с preload, `frame-ancestors 'none'` + `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, полный набор `Permissions-Policy`.
+
+### Repro
+
+```bash
+H=ozodbeks-macbook-pro.tail91a187.ts.net:8443
+# 1) базовый prerender
+curl -sS -o /dev/null -D - https://$H/
+# 2) vs анонимный — тела должны совпасть
+curl -sS https://$H/ | sha256sum
+curl -sS -H 'Cookie: session=PROBE_A' https://$H/ | sha256sum
+# 3) персонализированный маршрут обязан быть private/no-store
+curl -sS -o /dev/null -D - -H 'Cookie: session=PROBE_A' https://$H/dashboard
+# 4) ревалидация
+curl -sS -o /dev/null -D - -H 'If-None-Match: "102aq30blwj229r"' https://$H/   # ожидается 304
+```
+
+Если хочешь, могу отдельно проверить API-роуты (например, `/api/*`) на `Cache-Control` — там риск выше, чем у HTML-страниц, но это будет ещё один батч запросов.
