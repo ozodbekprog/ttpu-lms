@@ -30,6 +30,16 @@ export function BugAssistant() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, open, busy]);
 
+  useEffect(() => {
+    if (!open) return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   const aiSay = useCallback((text: string) => {
     setMessages((prev) => [...prev, { role: "ai", text }]);
   }, []);
@@ -206,7 +216,7 @@ export function BugAssistant() {
       ) : null}
 
       {open ? (
-        <div className="fixed bottom-20 right-3 z-50 flex w-[min(23rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-900/5 md:bottom-6 md:right-6">
+        <div className="fixed inset-0 z-50 flex h-full w-full flex-col overflow-hidden bg-white md:inset-auto md:bottom-6 md:right-6 md:h-auto md:w-[23rem] md:rounded-3xl md:border md:border-slate-200 md:shadow-2xl md:ring-1 md:ring-slate-900/5">
           <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/80 px-4 py-3">
             <div className="flex items-center gap-2">
               <span className="flex size-7 items-center justify-center rounded-full bg-brand-900 text-[10px] font-semibold text-white">
@@ -227,7 +237,7 @@ export function BugAssistant() {
             </button>
           </div>
 
-          <div ref={listRef} className="max-h-72 space-y-2.5 overflow-y-auto px-4 py-3.5">
+          <div ref={listRef} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto overscroll-contain px-4 py-3.5 md:max-h-72 md:flex-none">
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
@@ -248,7 +258,7 @@ export function BugAssistant() {
             ) : null}
           </div>
 
-          <div className="space-y-2 border-t border-slate-100 px-4 py-3">
+          <div className="space-y-2 border-t border-slate-100 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-3">
             <div className="flex gap-2">
               <Input
                 value={input}
