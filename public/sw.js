@@ -1,4 +1,4 @@
-const CACHE_NAME = "ttpu-lms-static-v2";
+const CACHE_NAME = "ttpu-lms-static-v3";
 const PRECACHE_URLS = ["/sw.js", "/manifest.webmanifest", "/logo.svg", "/icon.svg"];
 
 const OFFLINE_HTML = `<!doctype html>
@@ -48,7 +48,15 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      // Faqat shu ilovaning eski versiyalangan keshlarini o'chiramiz. Xuddi shu
+      // origin'dagi boshqa ilova/xizmatlar keshlari (boshqa nom bilan) tegilmaydi.
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith("ttpu-lms-") && key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
+      )
       .then(() => self.clients.claim())
   );
 });
