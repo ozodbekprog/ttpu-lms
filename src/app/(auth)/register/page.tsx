@@ -34,16 +34,40 @@ export default function RegisterPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const name = form.name.trim();
+    const email = form.email.trim();
+    if (name.length < 2) {
+      setError("Ismni to'liq kiriting (kamida 2 belgi)");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Email manzilni to'g'ri kiriting");
+      return;
+    }
+    if (form.password.length < 12) {
+      setError("Parol kamida 12 belgidan iborat bo'lishi kerak");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify({ name, email, password: form.password }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.ok) {
         setError(json?.error ?? t("authRegisterError"));
+        return;
+      }
+      const loginRes = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password: form.password }),
+      });
+      if (!loginRes.ok) {
+        setError(
+          "Bu email allaqachon ro'yxatdan o'tgan bo'lishi mumkin. \"Kirish\" bo'limidan parolingiz bilan kiring.",
+        );
         return;
       }
       router.push("/dashboard");
@@ -152,9 +176,10 @@ export default function RegisterPage() {
                   onChange={(e) => update("password", e.target.value)}
                   placeholder={t("authRegisterPasswordPlaceholder")}
                   autoComplete="new-password"
-                  minLength={6}
+                  minLength={12}
                   required
                 />
+                <p className="mt-1.5 text-xs text-slate-400">Kamida 12 belgi</p>
               </div>
               {error ? (
                 <div className="flex items-start gap-2.5 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
