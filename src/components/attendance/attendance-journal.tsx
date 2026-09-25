@@ -154,10 +154,8 @@ export function AttendanceJournal({
   useEffect(() => {
     if (!editor || editor.mobile) return;
     const close = () => setEditor(null);
-    window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     return () => {
-      window.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };
   }, [editor]);
