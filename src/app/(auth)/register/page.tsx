@@ -37,15 +37,15 @@ export default function RegisterPage() {
     const name = form.name.trim();
     const email = form.email.trim();
     if (name.length < 2) {
-      setError("Ismni to'liq kiriting (kamida 2 belgi)");
+      setError(t("authRegisterErrorName"));
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Email manzilni to'g'ri kiriting");
+      setError(t("authRegisterErrorEmail"));
       return;
     }
     if (form.password.length < 12) {
-      setError("Parol kamida 12 belgidan iborat bo'lishi kerak");
+      setError(t("authRegisterErrorPassword"));
       return;
     }
     setLoading(true);
@@ -64,14 +64,13 @@ export default function RegisterPage() {
         method: "POST",
         body: JSON.stringify({ email, password: form.password }),
       });
-      if (!loginRes.ok) {
-        setError(
-          "Bu email allaqachon ro'yxatdan o'tgan bo'lishi mumkin. \"Kirish\" bo'limidan parolingiz bilan kiring.",
-        );
+      if (loginRes.ok) {
+        router.push("/dashboard");
+        router.refresh();
         return;
       }
-      router.push("/dashboard");
-      router.refresh();
+      setError(t("authRegisterLoginPending"));
+      return;
     } catch {
       setError(t("commonNetworkError"));
     } finally {
@@ -146,7 +145,7 @@ export default function RegisterPage() {
                 {t("authRegisterSubtitle")}
               </p>
             </div>
-            <form onSubmit={onSubmit} className="mt-8 space-y-5">
+            <form onSubmit={onSubmit} noValidate className="mt-8 space-y-5">
               <div>
                 <Label>{t("authRegisterName")}</Label>
                 <Input
@@ -177,6 +176,7 @@ export default function RegisterPage() {
                   placeholder={t("authRegisterPasswordPlaceholder")}
                   autoComplete="new-password"
                   minLength={12}
+                  maxLength={100}
                   required
                 />
                 <p className="mt-1.5 text-xs text-slate-400">Kamida 12 belgi</p>
