@@ -1,7 +1,7 @@
 import { ButtonLink } from "@/components/ui";
 
 export const metadata = {
-  title: "Sahifa topilmadi — TTPU LMS",
+  title: "Sahifa topilmadi",
 };
 
 export default function NotFound() {

@@ -11,7 +11,7 @@ import type { BotCommand } from "@/components/help/bot-commands";
 import { ContactCards } from "@/components/help/contact";
 
 export const metadata: Metadata = {
-  title: "Yordam markazi — TTPU LMS",
+  title: "Yordam markazi",
   description: "TTPU LMS bo'yicha qo'llanmalar, savol-javoblar, bot buyruqlari va aloqa ma'lumotlari",
 };
 

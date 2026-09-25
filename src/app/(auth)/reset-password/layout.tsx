@@ -4,9 +4,9 @@ import { buildAuthMetadata } from "@/i18n/metadata";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  return buildAuthMetadata(locale, "authRegisterTitle", "authRegisterSubtitle");
+  return buildAuthMetadata(locale, "authResetTitle", "authResetSubtitle");
 }
 
-export default function RegisterLayout({ children }: { children: React.ReactNode }) {
+export default function ResetPasswordLayout({ children }: { children: React.ReactNode }) {
   return children;
 }
