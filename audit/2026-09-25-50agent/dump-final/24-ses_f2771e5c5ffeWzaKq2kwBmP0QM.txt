@@ -1,0 +1,29 @@
+### SESSION ses_f2771e5c5ffeWzaKq2kwBmP0QM — Compression and encoding audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи read-only аудит сжатия и кодирования ответов на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: Accept-Encoding, Content-Encoding, Vary, charset, BOM, compression oracle/DoS indicators без флуда. Максимум 6 GET/HEAD разных ресурсов. Ищи только реальные несоответствия/утечки, не считай обычное сжатие багом. Верни evidence/severity/confidence/repro.
+
+[09-25 17:33 assistant]
+Проверю корень одним GET с явным `Accept-Encoding`, сохраню сырые заголовки и тело, затем точечно сравню только несколько различных ресурсов (в пределах 6 запросов).
+
+[09-25 17:33 assistant]
+Корень вернул gzip, `Vary: ... Accept-Encoding`, UTF‑8 без BOM. Теперь проверю пять других ресурсов: JS/CSS, уже сжатый шрифт, HTML с `identity` и manifest — последовательно, без перехода по ссылкам и без повторов.
+
+[09-25 17:35 assistant]
+## Аудит: реальных несоответствий не найдено
+
+**Severity:** none · **Confidence:** medium  
+Проверено ровно **6 GET**, HTTP/1.1, без редиректов/повторов/флуда.
+
+| Ресурс | `Accept-Encoding` | Evidence |
+|---|---|---|
+| `/` | `gzip, br, deflate, zstd` | `Content-Encoding: gzip`; gzip валиден; `Vary` включает `Accept-Encoding`; UTF‑8, BOM нет; 14 773→96 542 B |
+| `/_next/static/chunks/0cz1d0mv5g_q7.js` | `br, gzip` | Валидный gzip; `Vary: Accept-Encoding`; UTF‑8, BOM нет; 39 627→112 594 B |
+| `/_next/static/chunks/1j8da5-m7k9mj.css` | `gzip, br, deflate` | Валидный gzip; `Vary: Accept-Encoding`; UTF‑8, BOM нет; 26 200→208 381 B |
+| WOFF2 | `gzip, br` | `Content-Encoding` отсутствует; корректный `wOF2`; отсутствие `Vary` here не является mismatch |
+| `/login` | `identity` | `Content-Encoding` отсутствует; HTML UTF‑8, BOM нет; `Vary` включает `Accept-Encoding` |
+| `/manifest.webmanifest` | `br, gzip, deflate` | JSON UTF‑8, BOM нет; `Vary: Accept-Encoding` присутствует |
+
+**Oracle/DoS:** признаков не обнаружено; коэффициент сжатия в samples — обычный (до ~8×), decoded size максимум 208 381 B. Проверка не исключает BREACH/CRIME на приватных или зависящих от пользовательского ввода маршрутах.
+
+**Repro:** `curl --http1.1 -H 'Accept-Encoding: <значение из таблицы>' -D - -o body '<URL>'`; затем проверить `gzip -t`, UTF‑8 и BOM.

@@ -1,5 +1,8 @@
 # TTPU LMS — 50-agent black-box audit hisoboti
 
+> **Yakuniy xulosa:** audit tugagach `YAKUNIY-XULOSA.md` ham qo'shildi
+> (tuzatilganlar + qolgan ishlar ro'yxati). Xom natijalar: `dump-final/`.
+
 - **Sana:** 2026-09-25 (17:06–18:05 UTC+5)
 - **Nishon:** `https://ozodbeks-macbook-pro.tail91a187.ts.net:8443`
 - **Usul:** opencode 50 parallel subagent (black-box, faqat o'qish; yozmagan/kirmagan)

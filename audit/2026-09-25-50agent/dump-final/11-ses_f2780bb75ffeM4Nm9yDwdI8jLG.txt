@@ -1,0 +1,70 @@
+### SESSION ses_f2780bb75ffeM4Nm9yDwdI8jLG — GraphQL discovery audit (@general subagent)
+
+[09-25 17:16 user]
+Проверь, есть ли публично обнаживаемый GraphQL endpoint на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443, используя только безопасный discovery/OPTIONS/минимальный introspection и ссылки из страницы. Не изменяй данные, не используйте mutation, максимум 5 запросов. Если endpoint есть, оцени только не мутирующие public fields; секреты маскируй. Верни verified evidence, severity, confidence, repro.
+
+[09-25 17:16 assistant]
+Задача — defensive security check на Tailscale-хосте с ограничением на не мутирующие запросы. Начинаю с одного GET корня, чтобы посмотреть ссылки на странице и понять, что за сервис.
+
+[09-25 17:17 assistant]
+Next.js app. Анализирую уже скачанный HTML локально (это не запрос к серверу) — ищу ссылки на GraphQL.
+
+[09-25 17:17 assistant]
+GraphQL не упоминается в HTML. Страница — Next.js LMS (`TTPU LMS`). Проверяю канонические пути для Next.js через OPTIONS (без побочных эффектов).
+
+[09-25 17:17 assistant]
+Все 404. Прежде чем тратить последний запрос, анализирую локально RSC-данные Next.js (`self.__next_f`) — там перечислены реальные маршруты приложения.
+
+[09-25 17:17 assistant]
+Есть упоминание «Open API» в тексте страницы. Смотрю контекст локально.
+
+[09-25 17:17 assistant]
+Бюджет запросов исчерпан (5/5). Отчёт:
+
+## Результат: GraphQL endpoint НЕ обнаружен
+
+**Severity:** N/A (Informational — negative result)
+**Confidence:** Medium-High для проверенного scope, **не** абсолютное отрицание
+
+### Verified evidence
+
+| # | Метод | Путь | Результат |
+|---|-------|------|-----------|
+| 1 | GET | `/` | `200`, 96 289 B, `text/html`, `x-powered-by: Next.js` |
+| 2 | HEAD | `/` | `200`, HSTS, CSP, `x-frame-options: DENY` |
+| 3 | OPTIONS | `/api/graphql` | `404`, заголовка `Allow` нет |
+| 4 | OPTIONS | `/graphql` | `404`, заголовка `Allow` нет |
+| 5 | OPTIONS | `/api/graphql/graphql` | `404`, заголовка `Allow` нет |
+
+**Доказательства из тела страницы (запрос 1, анализ локальный):**
+- Вхождений `graphql` в HTML: **0** (`grep -ic` → 0)
+- Ссылки с `href` из страницы: `/`, `/help`, `/login`, `/register`, `/manifest.webmanifest`, плюс `/_next/static/*` — **ни одного `/api/*`**
+- Бейдж «Open API» — это `<span>` без `href` (маркетинговый текст в блоке «Platforma»), **не** ссылка на спецификацию
+- В RSC-потоке (`self.__next_f`) упоминаний `api`/`query`/`mutation`/`gql`/`apollo`/`urql`/`trpc`/`prisma` — **0**
+
+### Почему introspection не отправлялся
+Introspection POST имеет смысл только после подтверждения живого endpoint. Оба канонических пути вернули `404` без `Allow`, поэтому запрос был бы пустой тратой из лимита — цели сохранил, отчёт честный.
+
+### Public fields / секреты
+Не оценивались — GraphQL-поверхности нет. Единственные «поля», попавшие в prerendered HTML, — маркетинговые счётчики (`20 000+` активных пользователей, `1 800+` курсов, `120+` …). Это статический текст лендинга, не данные API и не секреты. Токенов, ключей, session-коуков в ответе нет.
+
+### Границы отрицательного результата
+Проверено **только**: 3 стандартных пути GraphQL + ссылки со страницы. **Не** проверено:
+- другие порты на 8443 (например, отдельный GraphQL на `:4000`, `:8000/graphql`)
+- нестандартные пути (`/api/ttpu/graphql`, `/gql`, `/query`)
+- `/api/docs`, `/openapi.json`, `/api/health` — косвенные признаки REST+API слоя
+- `__typename`-only / persisted-query режим
+
+Так что корректная формулировка: **на стандартных путях публично обнажимого GraphQL нет**. Если нужен полный ответ — расширю лимит и проверю остальные порты и `/api/*` (всё так же только GET/OPTIONS).
+
+### Repro
+```bash
+H='https://ozodbeks-macbook-pro.tail91a187.ts.net:8443'
+curl -sk "$H/" | grep -ic graphql              # -> 0
+for p in /api/graphql /graphql /api/graphql/graphql; do
+  printf '%-24s ' "$p"
+  curl -sk -o /dev/null -X OPTIONS -w 'HTTP:%{http_code}\n' "$H$p"
+done                                            # -> 404 / 404 / 404
+```
+
+Сертификат самоподписанный (Tailscale), поэтому `-k`.

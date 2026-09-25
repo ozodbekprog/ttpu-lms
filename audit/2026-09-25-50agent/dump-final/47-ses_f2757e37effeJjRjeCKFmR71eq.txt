@@ -1,0 +1,56 @@
+### SESSION ses_f2757e37effeJjRjeCKFmR71eq — Dependency advisory audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи read-only fingerprinting/version audit публично доступных JS chunks и framework headers на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Определи только точные обнаруженные версии; не угадывай и не используй уязвимости без подтверждённого advisory. Можно сверить официальные advisories через web search, максимум 10 локальных запросов, без exploitation. Верни доказанные CVE/outdated components с evidence, confidence и repro; если версия не установлена — скажи.
+
+[09-25 18:01 assistant]
+Friday. Проведу только GET/HEAD-аудит без эксплуатации; первый запрос — корневой документ для фиксации заголовков и ссылок на chunks.
+
+[09-25 18:02 assistant]
+Корень (1/10) показал Next.js/Turbopack-структуру и 8 публичных JS URL; framework version header не заявлен. Сейчас заберу эти chunks (8 запросов) с сохранением заголовков для точного анализа.
+
+[09-25 18:02 assistant]
+Запросы к цели исчерпаны на 9/10; дальше анализирую только сохранённые ответы локально. Извлеку version-like строки, package identifiers и source-map/comment markers, не обращаясь к хосту.
+
+[09-25 18:03 assistant]
+В chunks обнаружены точные строки `window.next.version="16.3.5"` и React/ReactDOM `19.3.0-canary-cbb046ab-20260731`; отдельно встречается `core-js 3.38.1`. Проверю только официальные security advisories/NVD, без новых запросов к цели.
+
+[09-25 18:06 assistant]
+## Результат
+
+Аудит выполнен read-only: **9/10 локальных запросов** к цели (1 HTML + 8 JS chunks), без POST, fuzzing, auth bypass или exploitation.
+
+### Обнаруженные компоненты
+
+| Компонент | Точная обнаруженная версия | Evidence |
+|---|---:|---|
+| Next.js | **16.3.5** | `27t_qfc-3_lzs.js`, offset `12063`: `window.next={version:"16.3.5",appDir:!0}`; SHA-256 `f71552684e86daa3e94faad9002fb69d4e8d308a997ca88fdde74e54b5191870` |
+| React | **19.3.0-canary-cbb046ab-20260731** | `19mx3mg6lkumu.js`, `r.version="19.3.0-canary-cbb046ab-20260731"` |
+| ReactDOM | **19.3.0-canary-cbb046ab-20260731** | `27t_qfc-3_lzs.js`: `rendererPackageName:"react-dom"` и тот же version |
+| core-js marker | **3.38.1** | `0cz1d0mv5g_q7.js`, offset `2834`: `versions.push({version:"3.38.1"...})` |
+
+Turbopack обнаружен, но его **точная версия не установлена**. `Satori`, `next/og`, `ImageResponse`, `react-server-dom-turbopack`, Node.js и Sharp в загруженных client chunks не обнаружены; их версии не определяю.
+
+### Доказанный CVE
+
+**CVE-2026-94545 / GHSA-vcvr-r3jv-pc5j — Remote Code Execution in `next/og` ImageResponse**
+
+- Next.js affected: `>=16.2.0 <16.3.6`
+- Обнаруженная версия `16.3.5` **точно попадает в диапазон**
+- Patch: **16.3.6**
+- Severity: Critical, CVSS 4.0 **9.5**
+- Условия: Node.js `ImageResponse` из `next/og` и attacker-controlled значения в SVG content/attributes/styles
+- Confidence: **высокая** для version-match; **не подтверждена** для фактической эксплуатируемости данного приложения
+- На sampled public chunks нет `next/og`/`ImageResponse`; это не доказывает отсутствие server route, поэтому exploitability не заявляю
+
+Официальные источники: [Next.js advisory](https://github.com/vercel/next.js/security/advisories/GHSA-vcvr-r3jv-pc5j), [Next.js security release](https://nextjs.org/blog/nextjs-security-update-september-22-2026), [upstream Satori advisory](https://github.com/vercel/satori/security/advisories/GHSA-wx4j-mvgx-mqwp).
+
+### Outdated без доказанного CVE
+
+- **Next.js 16.3.5** — устарел относительно security patch **16.3.6**.
+- **core-js 3.38.1** — устаревший встроенный marker; upstream latest на момент проверки: **3.50.0**. Официальных advisories/CVE для core-js не найдено; bundle provenance не установлена, поэтому security impact не заявляю.
+- React canary version не классифицирую как CVE-находку: официальные RSC advisories относятся к `react-server-dom-*`, а их серверная версия здесь не раскрыта.
+
+### Framework headers
+
+В текущем HTML и JS responses не обнаружены `x-powered-by`, `server` или version header. Framework/version определены по публичным chunks; `HTTP/2 200`, `application/javascript`, immutable caching и security headers присутствуют.

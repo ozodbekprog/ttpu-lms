@@ -1,0 +1,55 @@
+### SESSION ses_f2771f836ffe2qNAKhzomNssss — Effective CSP audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи read-only анализ эффективной CSP на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: сравни enforced и report-only, найди несовпадения, опасные directives, nonce/hash reuse или permissive sources только по фактическим headers и доступному HTML/JS. Не пытайся эксплуатировать XSS и не отправляй payloads; максимум 5 запросов. Верни verified findings с exact header, severity, confidence, repro.
+
+[09-25 17:33 assistant]
+Friday проведёт пассивную проверку: сначала один GET главной страницы с заголовками, затем при необходимости — только реально подключённые JS, всего до 5 запросов.
+
+[09-25 17:33 assistant]
+Разбираю локально сохранённый HTML без новых запросов: посчитаю inline-скрипты, атрибуты `nonce` и реально подключённые JS, чтобы выбрать только необходимые GET.
+
+[09-25 17:33 assistant]
+Выполняю оставшиеся 4 GET параллельно: два прикладных чанка, runtime Turbopack и основной client chunk. Это исчерпает лимит и позволит проверить CSP-заголовки ресурсов и статические признаки eval/dynamic code без отправки payloads.
+
+[09-25 17:34 assistant]
+Локально извлекаю короткие контексты вокруг sinks/динамической загрузки из минифицированных JS; это не выполняет код и не создаёт сетевых запросов.
+
+[09-25 17:36 assistant]
+Проверено ровно **5 GET**, без payloads, авторизации и эксплуатации: `/` и 4 из 8 подключённых JS. Все ответы `200`; meta-CSP отсутствует.
+
+```http
+content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+content-security-policy-report-only: default-src 'self'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'nonce-dynamic'; style-src 'self' 'nonce-dynamic'
+```
+
+### Findings
+
+1. **HIGH — enforced CSP допускает произвольный inline JavaScript**
+   - **Exact clause:** `script-src 'self' 'unsafe-inline'`
+   - HTML содержит **4 inline `<script>` без nonce**, поэтому сейчас разрешены именно через `'unsafe-inline'`.
+   - Потенциальная инъекция inline-скрипта или event handler не блокировалась бы CSP.
+   - **Confidence:** High; наличие разрешения и DOM-контекста подтверждены, XSS-предусловие не проверялось.
+   - **Repro:** `GET /` → проверить enforced header → разобрать HTML: 4 inline scripts, `nonce` отсутствует.
+
+2. **MEDIUM — report-only нельзя безопасно перенести в enforced; telemetry отсутствует**
+   - **Exact clauses:** `script-src 'self' 'nonce-dynamic'; style-src 'self' 'nonce-dynamic'`
+   - `'nonce-dynamic'` — фиксированный nonce-source, а не генератор nonce. В HTML нет `nonce="dynamic"`.
+   - Все 4 inline-скрипта не соответствуют RO-политике. Кроме того, nonce не авторизует `style=""`; в HTML таких атрибутов **10** (9 уникальных).
+   - Политика не содержит `report-uri`/`report-to`, и `Report-To` header также отсутствует — автоматический сбор violations не настроен.
+   - **Confidence:** High.
+   - **Repro:** сравнить два заголовка; проверить nonce-атрибуты и 10 `style`-атрибутов; проверить отсутствие reporting directives/header.
+
+3. **LOW — разрешён inline CSS**
+   - **Exact clause:** `style-src 'self' 'unsafe-inline'`
+   - Политика разрешает style blocks/attributes; это сохраняет риск CSS-injection, UI redress и возможной экстракции через CSS.
+   - **Confidence:** High для permissive directive; Medium для практического impact.
+   - **Repro:** `GET /` → найти 10 атрибутов `style`.
+
+4. **LOW — любые HTTPS-изображения разрешены**
+   - **Exact clause:** `img-src 'self' data: blob: https:`
+   - `https:` допускает загрузку с любого HTTPS origin и может служить каналом экстракции при наличии HTML/URL-инъекции. Такой sink не подтверждён.
+   - **Confidence:** High для разрешения; Medium для impact.
+   - **Repro:** проверить exact clause в обоих заголовках.
+
+**Nonce/hash reuse не подтверждён:** nonce-атрибутов и CSP hash-source нет; четыре inline-тела уникальны. Повторяющийся литерал `nonce-dynamic` присутствует во всех 5 ответах, но DOM его не использует. В четырёх проверенных JS не найдено `eval`, `new Function` или HTML-инъекционных sinks.

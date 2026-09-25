@@ -1,0 +1,46 @@
+### SESSION ses_f2780e5e2ffeEjadqcyi4uytA1 — Keyboard focus audit (@general subagent)
+
+[09-25 17:16 user]
+Проведи статический read-only аудит клавиатурной доступности главной страницы https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: focus order, tabindex, visible focus, aria-hidden focusable elements, controls without accessible names. Максимум 3–5 запросов, без интерактивного изменения данных. Верни конкретные подтверждённые проблемы с HTML-элементом/атрибутом, severity, confidence, repro.
+
+[09-25 17:16 assistant]
+Проведу только чтение: сначала получу HTML главной страницы, затем при необходимости проверю связанные ресурсы в пределах 3–5 запросов. Интерактивные действия и изменение данных выполнять не буду.
+
+[09-25 17:17 assistant]
+HTML получен; сейчас локально разбираю сохранённый ответ без новых сетевых запросов, чтобы отделить реальные интерактивные элементы от декоративной разметки.
+
+[09-25 17:17 assistant]
+В HTML нет `tabindex`, `button` или полей ввода; основные интерактивные элементы — обычные ссылки. Для проверки видимого фокуса дополнительно читаю только два подключённых CSS-файла (запросы 2–3 из лимита).
+
+[09-25 17:18 assistant]
+Статический разбор уже показывает 19 ссылок, все из которых в исходном HTML находятся внутри скрытого контейнера. Для проверки клиентских дополнений возьму ещё два JS-чанка (запросы 4–5), не открывая `/login` или `/register`.
+
+[09-25 17:23 assistant]
+Проведено 5 read-only запросов: HTML, 2 CSS и 2 JS; интерактивные действия и изменения данных не выполнялись.
+
+### Подтверждённые проблемы
+
+1. **Контент и все ссылки зависят от гидратации JS**
+   - **Severity:** Medium; High при недоступном/заблокированном JS
+   - **Confidence:** High
+   - **HTML:** все 19 `<a>` находятся внутри `<div hidden id="S:0">`; рядом остаётся только `<div class="fixed inset-0 z-50 …">Yuklanmoqda...</div>`. CSS: `[hidden] { display:none!important }`; `<noscript>` отсутствует.
+   - **Repro:** отключить JS или заблокировать `/_next/static/chunks/*.js`, затем нажать Tab. До гидратации ссылок для клавиатуры нет.
+
+2. **Нет skip-link к `main`**
+   - **Severity:** Low/Medium
+   - **Confidence:** High
+   - **HTML:** нет ссылки типа `href="#main"`; `<main class="flex-1">` не имеет `id`. На desktop первый порядок: logo → 4 ссылки `nav` → header `Kirish` → header `Register` → только затем CTA в hero.
+   - **Repro:** загрузить страницу при ширине ≥768 px и последовательно нажимать Tab: 7 первых остановов остаются в header.
+
+3. **Основная навигация исчезает на узких viewport без замены**
+   - **Severity:** Low
+   - **Confidence:** High
+   - **HTML/CSS:** `<nav class="hidden … md:flex">`; `.hidden { display:none }`. Кнопки/меню для мобильной навигации нет; header login также скрыт ниже `sm`.
+   - **Repro:** viewport 375 px или 400% zoom, затем Tab — ссылки `Imkoniyatlar`, `Qanday boshlash`, `Statistika`, `Aloqa` пропускаются; доступны только поздние дубликаты в footer.
+
+### Проверки без подтверждённой проблемы
+
+- `tabindex`: авторских значений нет; положительного/отрицательного переупорядочивания нет.
+- `aria-hidden`: только декоративный loader-SVG; focusable descendants отсутствуют.
+- Accessible names: 19/19 ссылок имеют текст или `img[alt]`; кнопок/полей в SSR нет.
+- Visible focus: `outline-none`/`focus:outline-none` у ссылок не найден; явного подавления UA focus ring нет. Фактическую контрастность и clipping браузером статический аудит не подтверждает.

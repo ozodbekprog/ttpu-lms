@@ -1,0 +1,68 @@
+### SESSION ses_f2757cddfffeNo7YWsZqnK2Ny9 — Performance measurement audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи измерение производительности публичной главной и auth pages https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 в read-only режиме: TTFB, размер HTML/CSS/JS, количество запросов, long tasks/CPU из headless browser, cache/loading issues. Один холодный и один повторный bounded load, без стресс-теста и без форм. Верни только воспроизводимые bottlenecks с evidence, severity, confidence и условиями; не выставляй субъективные оценки.
+
+[09-25 18:01 assistant]
+Сначала проверю доступные headless-инструменты и публичную структуру сайта, затем выполню по одному ограниченному холодному и повторному GET-загрузке без отправки форм.
+
+[09-25 18:02 assistant]
+Обнаружены Chromium и Playwright в локальном проекте. Использую отдельный временный профиль для каждого холодного измерения, тот же профиль для повторного, блокирую все не-GET/HEAD-запросы и жду фиксированное окно после `load`; это не меняет серверные данные.
+
+[09-25 18:04 assistant]
+Запускаю один диагностический прогон: `/`, `/login`, `/register`; для каждого — новый context/cache, затем второй GET в том же context. Скрипт сохранит сырые network/Performance/CDP-наблюдения в `/tmp/opencode` для проверки evidence.
+
+[09-25 18:05 assistant]
+Прогон завершён без ошибок навигации; теперь извлекаю из сырого JSON только агрегаты и сравнение cold/repeat, чтобы не смешать размеры тела, transfer size и cache-hit данные.
+
+[09-25 18:08 assistant]
+Проверяю отдельно, не обращаясь к сайту повторно, влияет лиUsed read-only route interception на Chromium cache-hit; иначеFinding о cache нельзя считать свойством сервера.
+
+[09-25 18:14 assistant]
+**Условия:** Chromium `153.0.8010.12`, headless, `1365×768`, без throttling; `cold` — новый context + `Network.clearBrowserCache`, `repeat` — новая page в том же context; Service Worker заблокирован; `load` + 3 с; только GET/HEAD,非-read запросов — 0; формы не заполнялись. Серверный/CDN cache не сбрасывался.  
+Шкала: `S1` — executable resource вернул 4xx/5xx; `S2` — document TTFB ≥500 мс или non-document GET ≥400; `S3` — deterministic cache policy. Confidence: `H` — прямые данные в обоих load; `M` — прямое наблюдение, но transient.
+
+### S1 — `/login`: cold-load не загрузил два JS-ресурса
+- `GET /_next/static/chunks/2cxfh6cppays_.js` → `500`, `Content-Type: text/plain`, 21 байт.
+- `GET /_next/static/chunks/22i43cg4l4-dq.js` → `500`, `Content-Type: text/plain`, 21 байт.
+- Chromium зафиксировал `Refused to execute script ... MIME type ('text/plain') is not executable`; `decodedBodySize=0`.
+- На repeat эти URL вернули `200`; причина временной 5xx-ошибки не установлена.  
+**Confidence: M.**
+
+### S2 — `/login`: RSC-prefetch возвращает 502
+На repeat без взаимодействия автоматически выполнены:
+- `GET /register?_rsc=sW2A7HEmFQnSVIMx` → `502`, body `0`.
+- `GET /forgot-password?_rsc=sW2A7HEmFQnSVIMx` → `502`, body `0`.
+
+В консоли — два `Failed to load resource ... 502`; document load при этом завершился.  
+**Confidence: M.**
+
+### S2 — высокий document TTFB
+`TTFB = PerformanceNavigationTiming.responseStart`, мс:
+
+| Page | Cold | Repeat | Load cold/repeat | FCP cold/repeat |
+|---|---:|---:|---:|---:|
+| `/` | 1117.6 | 286.0 | 1986.0 / 1814.1 | 2452 / 960 |
+| `/login` | 1074.4 | 302.3 | 2414.3 / 1798.1 | 1620 / 1172 |
+| `/register` | 954.6 | 246.7 | 2974.6 / 1334.7 | 1712 / 896
+
+Во всех трёх routes cold TTFB ≥954.6 мс; `Server-Timing` отсутствует, поэтому server/network split не определяется.  
+**Confidence: H для измерений, M для атрибуции.**
+
+### S3 — документы и RSC принудительно запрещены в cache
+Документы `/`, `/login`, `/register` и RSC-ответы имели:
+`Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate`.
+
+На repeat документ снова передавался полностью: `16 040` B (`/`), `7 855` B (`/login`), `7 636` B (`/register`). CSS/JS/fonts имели `public, max-age=31536000, immutable`; static cache-hit не классифицировался из-за read-only route interception.  
+**Confidence: H для header evidence.**
+
+### Размеры и запросы
+`E/D` = encoded body / decoded body, bytes.
+
+| Page/load | HTML E/D | CSS E/D | JS E/D | Requests | Non-2xx |
+|---|---:|---:|---:|---:|---:|
+| `/` cold/repeat | 15 740 / 96 456 | 27 331 / 212 865 | 138 670 / 465 190 | 19 / 19 | 0 / 0 |
+| `/login` cold/repeat | 7 555 / 28 266 | 27 331 / 212 865 | 147 382 / 490 887 | 22 / 20 | 2 / 2 |
+| `/register` cold/repeat | 7 336 / 26 662 | 27 331 / 212 865 | 147 162 / 489 710 | 18 / 18 | 0 / 0 |
+
+Long tasks: `0` во всех шести loads. CDP `TaskDuration`: `143.9–189.5 ms`; `ScriptDuration`: `30.5–39.0 ms`; `LayoutDuration`: `5.9–28.9 ms`. CPU bottleneck не подтверждён. Сырые данные: `/tmp/opencode/ozodbeks-performance.json`.

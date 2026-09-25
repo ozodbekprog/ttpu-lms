@@ -1,0 +1,32 @@
+### SESSION ses_f276b9213ffes7HJ0y4ocH55nA — 404 and error UX audit (@general subagent)
+
+[09-25 17:40 user]
+Проведи read-only UX-аудит 404/error pages на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 для случайных безопасных путей и malformed URL. Проверь status, title, навигацию, утечку stack traces/внутренних путей, cache и оформление. Не сканируй и не отправляй payload; максимум 5 запросов. Верни verified bugs с evidence/severity/confidence/repro.
+
+[09-25 17:40 assistant]
+Проверю ровно 5 безопасных GET-запросов: два случайных пути и три malformed path; без обхода редиректов, payload’ов и загрузки ресурсов страницы. Соберу только заголовки, статус и HTML, чтобы проверить утечки, навигацию, cache и стили.
+
+[09-25 17:42 assistant]
+Проверено: 5 GET-запросов, без redirect’ов, payload’ов и загрузки ресурсов; TLS-проверка отключена (`-k`).
+
+### Verified bugs
+
+1. **P2 / Medium — malformed URL bypasses приложение и показывает raw proxy error**
+   - **Evidence:** `/%`, `/%E0%A4%A`, `/%zz` → `400 Bad Request`, `Content-Type: text/plain; charset=utf-8`, body: `400 Bad Request`.
+   - Нет HTML, `<title>`, навигации, брендинга и CSS.
+   - **Confidence:** High.
+   - **Repro:** `curl --path-as-is -k -i 'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/%'` (аналогично для `%E0%A4%A`, `%zz`).
+
+2. **P3 / Low — 404 не отражён в document title**
+   - **Evidence:** 404 содержит `<title>TTPU LMS — O'quv boshqaruv tizimi</title>`, тогда как `<h1>` — `Sahifa topilmadi`.
+   - Вкладка, история и assistive context не показывают, что открыта ошибка.
+   - **Confidence:** High.
+   - **Repro:** `curl --path-as-is -k -i 'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/__ux_audit_7f3c1a9e'`
+
+### Проверено без бага
+
+- Случайные пути корректно возвращают `404`; malformed paths — `400`.
+- На обычном 404 есть ссылки `/dashboard` и `/`; их назначения не открывались из-за лимита.
+- Stack traces, server filesystem paths и отражение введённого пути не обнаружены. Есть только публичные `/_next/...`, `_not-found` и opaque build ID.
+- `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate`; cache-утечки не обнаружено.
+- Разметка обычного 404 адаптивная, локализованная (`lang="uz"`) и оформлена централизованно; malformed-страница оформления не имеет.

@@ -1,0 +1,24 @@
+### SESSION ses_f2780c0d1ffe3j6z3JtNR8sLJS — Public auth surface audit (@general subagent)
+
+[09-25 17:16 user]
+Проведи безопасный read-only обзор публичной поверхности authentication на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: login/register/reset links, client-side auth flow, redirects, cookies, account enumeration indicators. Не входи, не подбирай пароли, не отправляй формы, максимум 5 GET/HEAD. Не используй найденные demo credentials. Верни только подтверждённые баги с evidence/severity/confidence/repro.
+
+[09-25 17:17 assistant]
+Friday проверит только чтение: выполню до 5 запросов `GET/HEAD`, не перейду автоматически по редиректам и не отправлю формы. Сначала получу корневую страницу с заголовками и телом, чтобы определить безопасные следующие ссылки.
+
+[09-25 17:17 assistant]
+Корень отдал 200 без `Set-Cookie`; в HTML подтверждены `/login` и `/register`, а также публично выведен demo-account текст (использовать его не буду). Второй запрос — только `/login`, без перехода по редиректу.
+
+[09-25 17:17 assistant]
+`/login` — 200, `Set-Cookie` отсутствует; страница содержит клиентскую форму, `/forgot-password`, demo-кнопки и текст о demo email/password. Третий запрос — `/forgot-password`, только чтобы зафиксировать reset-flow и текст anti-enumeration без отправки email.
+
+[09-25 17:17 assistant]
+`/forgot-password` — 200, без cookie; HTML подтверждает нейтральную анти-enumeration формулировку («если email зарегистрирован…»), но серверный результат не проверялся. Четвёртый запрос — `/register`, чтобы зафиксировать публичную регистрацию и поля без отправки.
+
+[09-25 17:17 assistant]
+Остался один разрешённый GET. Для проверки клиентского auth-flow запрошу общий auth chunk, который подключается на `/login`, `/register` и `/forgot-password`; это статический JavaScript, не выполнение и не API-вызов.
+
+[09-25 17:20 assistant]
+- **Публичное раскрытие demo-учётных данных** — **severity: Medium**; **confidence: High** для факта публикации, валидность/привилегии не проверялись.  
+  **Evidence:** `GET /` → `200`, HTML/RSC содержит `Demo: [email] / [password]`; `GET /login` → `200` содержит кнопки Talaba/O‘qituvchi/Admin и автозаполнение email/пароля. Пароль не приводил и не использовал.  
+  **Repro:** один `GET https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/` без `-L`, cookies и отправки формы; в ответе искать `Demo:`.

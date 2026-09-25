@@ -1,0 +1,45 @@
+### SESSION ses_f276ba57dffezYtggxAQfEdLYo — Reduced motion audit (@general subagent)
+
+[09-25 17:39 user]
+Проведи read-only проверку prefers-reduced-motion и анимаций на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Анализируй CSS/HTML и, если возможно, browser emulation; не меняй состояние. Ищи бесконечные/интенсивные animations без media-query отключения, только с доказуемым функциональным/accessibility impact. Верни evidence, selector, severity, confidence, repro.
+
+[09-25 17:40 assistant]
+Проведу только read-only анализ: загружу HTML/CSS и проверю доступные media-query/emulation-сигналы, не выполняя формы, клики или изменения состояния.
+
+[09-25 17:40 assistant]
+В HTML уже видны загрузочные классы `animate-*`; второй CSS-ответ временно вернул 502, поэтому проверю ресурс напрямую и повторю получение без изменения сервера.
+
+[09-25 17:40 assistant]
+Сделаю статический cross-check: из текущего HTML соберу все CSS/JS-ссылки, затем просмотрю определения `@keyframes`, `animation` и `prefers-reduced-motion`; это только GET-запросы к уже опубликованным ресурсам.
+
+[09-25 17:40 assistant]
+Текущий ответ уже отличается от первого кэша: актуальный stylesheet содержит глобальное `prefers-reduced-motion`. Уточняю каскад и реальные классы, чтобы не выдать устаревший 404/502 за finding.
+
+[09-25 17:41 assistant]
+Firefox доступен, поэтому попробую headless runtime-проверку через его Remote Agent: это позволит сравнить `matchMedia`/computed animation в обычном режиме и при `reduce`, не кликая по странице.
+
+[09-25 17:49 assistant]
+Runtime-тест уже подтвердил разницу: при `reduce` те же selectors получили `0.00001s` и `1` iteration вместо бесконечных. Проверю ещё post-load transitions и публичный `/help`, чтобы исключить анимацию вне loader overlay.
+
+[09-25 17:50 assistant]
+Проверка завершена: подтверждённых accessibility-impact findings нет. Остановлю только запущенные мной headless-процессы; сайт не изменялся.
+
+[09-25 17:51 assistant]
+Итог: **0 подтверждённых accessibility/functional findings**; severity — `none`, confidence — **high (0.95)**. Проверял только GET/headless, без кликов, форм и изменения состояния сайта.
+
+**Evidence**
+- HTML loader: `.fixed.inset-0.z-50` → `.animate-fade-in`, `.animate-pulse-ring`, `.animate-spin-slow`, `.animate-shimmer`; декоративный SVG имеет `aria-hidden="true"`.
+- CSS `/_next/static/chunks/1g-bve198pzp1.css`: бесконечные `spin 2.6s`, `pulse-ring 2.2s`, `shimmer 1.6s`, но присутствует глобальное правило:
+  ```css
+  @media (prefers-reduced-motion:reduce){*,:before,:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+  ```
+- Firefox 156 emulation: normal → `2.2s/2.6s/1.6s`, `infinite`; reduce → `0.00001s`, `1`; после загрузке `document.getAnimations().length === 0`, transitions также `0.00001s`.
+
+| Selector | Severity | Confidence | Repro |
+|---|---:|---:|---|
+| `.animate-spin-slow` | none | high | DevTools → Rendering → `prefers-reduced-motion: reduce`, reload |
+| `.animate-pulse-ring` | none | high | То же; проверяется initial loader |
+| `.animate-shimmer` | none | high | То же; 3 узла loader |
+| `.animate-fade-in`, `.transition-*` | none | high | После загрузки — только мгновенные transitions |
+
+Анимации конечные/декоративные и не являются необходимыми для функциональности; интенсивного движения, не снимаемого `prefers-reduced-motion`, не обнаружено. Chunk ID сервера меняется; использован финальный HTML/CSS-пара `200/200`.

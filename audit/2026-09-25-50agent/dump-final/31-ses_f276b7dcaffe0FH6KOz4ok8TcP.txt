@@ -1,0 +1,12 @@
+### SESSION ses_f276b7dcaffe0FH6KOz4ok8TcP — Rate limit observation audit (@general subagent)
+
+[09-25 17:40 user]
+Проведи минимальную безопасную observation check rate limiting на публичном /api/csrf и login-related GET/HEAD маршрутах https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Не отправляй login POST, не подбирай пароли, максимум 3–4 одинаковых запроса, без флуда. Проверь наличие Retry-After/429 и отсутствие stack/log leakage; не делай вывод о DDoS. Верни только evidence-based findings.
+
+[09-25 17:40 assistant]
+Friday. Проведу последовательно: 4 GET к `/api/csrf` и до 3 GET к каждому из `/login`, `/api/login`, `/api/auth/login`; без POST, cookies, redirect-following и payloads.
+
+[09-25 17:41 assistant]
+- `/api/csrf`: 4/4 GET → `200`; `/login`: 3/3 GET → `200`; `/api/login`: GET → `404`; `/api/auth/login`: 3/3 GET → `405` с пустым телом.
+- Во всех 11 ответах не обнаружены `429`, `Retry-After`, `RateLimit-*` или `X-RateLimit-*`.
+- В телах ответов не обнаружены stack traces или application/access-log фрагменты; `/api/csrf` вернул JSON с полями `ok` и `token`.

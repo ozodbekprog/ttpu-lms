@@ -1,0 +1,8 @@
+### SESSION ses_f2786b2bdffeI7VQYRyzTqnT4A — Cookie and session audit (@general subagent)
+
+[09-25 17:10 user]
+Проведи read-only проверку cookies/session behavior на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Смотри Set-Cookie, Secure, HttpOnly, SameSite, срок жизни, утечку чувствительных данных в публичном HTML/ресурсах. Не входи в аккаунты, не подбирай пароли, максимум 5 запросов. Верни только доказанные баги с evidence и repro, либо 'баг не подтверждён'.
+
+[09-25 17:12 assistant]
+**Подтверждённая утечка учётных данных:** публичный `GET /` содержит `ozodbek@ttpu.uz / ttpu1234`; публичный JS `/_next/static/chunks/0eldo20jp3j36.js` содержит email-адреса студента, преподавателя и `admin@ttpu.uz`, а также автозаполнение всех demo-аккаунтов паролем `ttpu1234`.  
+**Repro:** `curl -k 'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/'` и `curl -k 'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/_next/static/chunks/0eldo20jp3j36.js'`; вход не выполнялся.

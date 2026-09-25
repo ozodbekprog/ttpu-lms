@@ -1,0 +1,63 @@
+### SESSION ses_f276b9f0bffe727fPv13wd96ST — Zoom and reflow audit (@general subagent)
+
+[09-25 17:39 user]
+Проведи read-only WCAG reflow/zoom audit сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 на 320px и 400% zoom, включая главную/login/register без входа. Ищи горизонтальный скролл, обрезание, наложение, потерю функций. Используй browser или CSS evidence, не кликай submit. Верни конкретные findings с URL/viewport/element, severity, confidence, repro.
+
+[09-25 17:40 assistant]
+Проверю страницы в headless-браузере на 320 CSS px и эквиваленте 400% zoom, используя только DOM/CSS, навигацию и снимки — без отправки форм.
+
+[09-25 17:40 assistant]
+Firefox доступен; проверяю наличие драйвера, чтобы снять фактические размеры, переполнение и скриншоты, а не ограничиваться предположениями по HTML.
+
+[09-25 17:40 assistant]
+Установлю Selenium только во временное окружение `/tmp/opencode`; системные пакеты и сайт не изменяются. Это позволит программно измерить `scrollWidth`, границы элементов, видимость и сделать скриншоты.
+
+[09-25 17:41 assistant]
+Запущу один headless Firefox через Selenium с временным cache драйвера и отключённой сертификационной проверкой для Tailscale; переходов и кликов не будет.
+
+[09-25 17:42 assistant]
+Сначала калибрую реальный browser zoom: 1280 physical px × 400% должен дать layout viewport около 320 CSS px и `devicePixelRatio≈4`; это отделяет zoom от искусственного CSS `zoom`.
+
+[09-25 17:42 assistant]
+В Firefox zoom хранится отдельно от CSS; проверяю схему временного профиля, чтобы установить именно глобальный Full Zoom 4×, а не имитировать его стилем.
+
+[09-25 17:43 assistant]
+Создам временное локальное WebExtension, использующее штатный `browser.tabs.setZoom(..., 4)`; она не имеет доступа к странице и не взаимодействует с формами.
+
+[09-25 17:44 assistant]
+Соберу структурированные evidence по трём режимам (1280 px baseline, 320 px @100%, 1280 physical @400%) и трём URL: scroll bounds, видимые/скрытые controls, переполненные и перекрытые элементы, computed styles и screenshots.
+
+[09-25 17:44 assistant]
+Запускаю аудит; он выполнит только GET `/`, `/login`, `/register` в новых неавторизованных сессиях и сохранит evidence в `/tmp/opencode`.
+
+[09-25 17:45 assistant]
+Выявлено ограничение: Firefox не уменьшил 100%-окно ниже 494 px, поэтому этот прогон невалиден как 320 px. 400%-прогон валиден (`dpr=4`, layout viewport 318.5 px); для честных 320 px применю WebDriver BiDi viewport override и повторю.
+
+[09-25 17:47 assistant]
+Повторяю прогон с точным BiDi override `320×800`, `devicePixelRatio=1`; он заменит только что невалидные 494-px evidence.
+
+[09-25 17:48 assistant]
+Горизонтальный скролл и парные перекрытия не обнаружены. Теперь классифицирую оставшиеся кандидаты: скрытые responsive-контролы и внутренние `overflow:hidden`, чтобы отделить реальную потерю функций от декоративного обрезания.
+
+[09-25 17:49 assistant]
+Проверю клавиатурный порядок `Tab` без Enter/кликов: не скрывает ли sticky-header 400%-режима фокус, и остаются ли все controls достижимыми.
+
+[09-25 17:50 assistant]
+## Итог
+
+**0 подтверждённых нарушений WCAG 2.2 SC 1.4.10 Reflow.** Найдена **1 низкоприоритетная UX-observation**, не подтверждённая как WCAG-failure.
+
+| URL / viewport | Element / evidence | Severity | Confidence | Repro |
+|---|---|---:|---:|---|
+| `/` — 320px @100% и 400% | `<nav class="hidden … md:flex">`: скрыты 4 section-links. Header-login `hidden sm:inline-flex` также скрыт. Остаются logo и Register | **Low**, UX only | High | Сравнить header при 1280px и 320px/400%. DOM: 20 видимых controls → 15; `display:none` у 5 ссылок |
+| `/` — 320px | `inner/client/scrollWidth=320/314/314`, `maxScrollX=0`; out-of-bounds=0, overlaps=0 | **None / PASS** | High | Загрузить `/`, scrolls right;DevTools: `scrollTo(99999,0); scrollX === 0` |
+| `/` — 400% | Actual browser zoom: `dpr=4`, `innerWidth=320`; `client/scrollWidth=319/319`, `maxScrollX=0` | **None / PASS** | High | 1280×900 physical, zoom 400%; проверить metrics и screenshots |
+| `/login` — 320px | 11/11 controls достижимы Tab’ом; inputs 224px, 3 demo-buttons ≈69px; overflow/clipping/overlap=0 | **None / PASS** | High | Пройти Tab до Register-link, не нажимая; scrolls right отсутствует |
+| `/login` — 400% | 11/11 controls Tab-reachable; `dpr=4`, `maxScrollX=0`; без обрезания | **None / PASS** | High | Тот же repro при zoom 400% |
+| `/register` — 320px | 8/8 controls Tab-reachable; inputs 230px; overflow/clipping/overlap=0 | **None / PASS** | High | Пройти Tab до Login-link, не нажимая |
+| `/register` — 400% | 8/8 controls Tab-reachable; `client/scrollWidth=319/319`, `maxScrollX=0` | **None / PASS** | High | Тот же repro при zoom 400% |
+
+Внутренний `overflow:hidden` главной затрагивает только пустые декоративные элементы с `pointer-events:none`;_functional content не обрезан. Формы не заполнялись, submit/Enter не нажимались.
+
+Evidence: `/tmp/opencode/wcag-reflow-evidence.json`  
+Screenshots: `/tmp/opencode/wcag-reflow-screenshots/`
