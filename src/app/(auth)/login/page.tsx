@@ -89,7 +89,6 @@ export default function LoginPage() {
 
   function fillDemo(demoEmail: string) {
     setEmail(demoEmail);
-    setPassword("ttpu1234");
     setError(null);
   }
 

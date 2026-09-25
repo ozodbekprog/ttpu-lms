@@ -176,8 +176,8 @@ export default function GeneratorManager({ initial }: { initial: GeneratorStats 
             <p className="font-semibold tracking-tight text-amber-900">Ogohlantirish</p>
             <p className="mt-0.5 text-sm leading-relaxed text-amber-800/90">
               Bu amal bazaga yangi demo ma&apos;lumotlarni qo&apos;shadi. Mavjud yozuvlar o&apos;chirilmaydi va
-              takroriy generatsiya dublikat yaratmaydi. Yaratilgan foydalanuvchilarning paroli —{" "}
-              <span className="font-semibold">ttpu1234</span>.
+              takroriy generatsiya dublikat yaratmaydi. Yaratilgan foydalanuvchilarga standart demo parol
+              o&apos;rnatiladi.
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {RESULT_ITEMS.map((item) => (

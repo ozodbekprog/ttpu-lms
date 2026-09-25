@@ -13,7 +13,7 @@ export const uz = {
   authEmailPlaceholder: "email@ttpu.uz",
   authPasswordPlaceholder: "••••••••",
   authDemoTitle: "Demo hisoblar",
-  authDemoHint: "Bosilganda demo email va parol avtomatik to'ldiriladi",
+  authDemoHint: "Bosilganda demo email avtomatik to'ldiriladi",
   authRoleStudent: "Talaba",
   authRoleTeacher: "O'qituvchi",
   authRoleAdmin: "Admin",

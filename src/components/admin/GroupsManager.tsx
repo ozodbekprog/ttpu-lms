@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 import { Badge, Button, Card, CardBody, CardHeader, EmptyState, Input, Label, Select, Table } from "@/components/ui";
 
 export type AdminGroup = {
@@ -75,7 +76,7 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
     setError(null);
     setNotice(null);
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,

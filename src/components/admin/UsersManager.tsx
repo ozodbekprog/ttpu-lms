@@ -17,6 +17,7 @@ import {
   Table,
 } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 
 export type AdminUser = {
   id: string;
@@ -125,7 +126,7 @@ export default function UsersManager({
     setError(null);
     setNotice(null);
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,

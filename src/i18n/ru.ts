@@ -15,7 +15,7 @@ export const ru: Dictionary = {
   authEmailPlaceholder: "email@ttpu.uz",
   authPasswordPlaceholder: "••••••••",
   authDemoTitle: "Демо-аккаунты",
-  authDemoHint: "При нажатии демо-почта и пароль заполняются автоматически",
+  authDemoHint: "При нажатии демо-почта заполняется автоматически",
   authRoleStudent: "Студент",
   authRoleTeacher: "Преподаватель",
   authRoleAdmin: "Администратор",
