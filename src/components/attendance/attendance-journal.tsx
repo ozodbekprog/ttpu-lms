@@ -11,6 +11,7 @@ import {
   journalMonthKey,
   journalMonthKeys,
   journalMonthLabel,
+  shortName,
 } from "@/components/attendance/journal-utils";
 import type {
   JournalStatus,
@@ -369,7 +370,7 @@ export function AttendanceJournal({
               <table className="w-full border-separate border-spacing-0 text-left text-sm">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 top-0 z-30 min-w-36 border-b border-r border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[2px_0_10px_-8px_rgba(15,23,42,0.45)] sm:min-w-44">
+                    <th className="sticky left-0 top-0 z-30 min-w-32 border-b border-r border-slate-200 bg-slate-50 px-2 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[2px_0_10px_-8px_rgba(15,23,42,0.45)] sm:min-w-44 sm:px-3">
                       Talaba
                     </th>
                     {visibleDates.map((date) => {
@@ -403,7 +404,7 @@ export function AttendanceJournal({
                         </th>
                       );
                     })}
-                    <th className="sticky right-0 top-0 z-30 min-w-28 border-b border-l border-slate-200 bg-slate-50 px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.45)]">
+                    <th className="sticky right-0 top-0 z-30 min-w-20 border-b border-l border-slate-200 bg-slate-50 px-2 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.45)] sm:min-w-28 sm:px-3">
                       Keldi %
                     </th>
                   </tr>
@@ -428,13 +429,14 @@ export function AttendanceJournal({
                               src={student.avatarUrl}
                               className="size-7! text-[10px]"
                             />
-                            <span
+                             <span
                               className={cn(
-                                "max-w-24 truncate text-sm font-medium text-slate-800 sm:max-w-none",
+                                "max-w-20 truncate text-sm font-medium text-slate-800 sm:max-w-none",
                                 isMe && "text-brand-900",
                               )}
                             >
-                              {student.name}
+                              <span className="sm:hidden">{shortName(student.name)}</span>
+                              <span className="hidden sm:inline">{student.name}</span>
                             </span>
                             {isMe ? (
                               <span className="shrink-0 text-[10px] font-semibold text-brand-600">
@@ -479,7 +481,7 @@ export function AttendanceJournal({
                         })}
                         <td
                           className={cn(
-                            "sticky right-0 z-10 border-b border-l border-slate-100 px-3 py-1.5 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)] transition-colors duration-150",
+                            "sticky right-0 z-10 border-b border-l border-slate-100 px-2 py-1.5 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)] transition-colors duration-150 sm:px-3",
                             rowBg,
                           )}
                         >
@@ -489,7 +491,7 @@ export function AttendanceJournal({
                             </span>
                             <Badge
                               tone={rowSummary.eligible ? "green" : "rose"}
-                              className="px-1.5 py-0.5 text-[10px]"
+                              className="hidden px-1.5 py-0.5 text-[10px] sm:inline-flex"
                             >
                               {rowSummary.eligible ? "Ruxsat" : "Ruxsat yo'q"}
                             </Badge>
@@ -519,7 +521,7 @@ export function AttendanceJournal({
                         </td>
                       );
                     })}
-                    <td className="sticky right-0 z-10 border-l border-slate-100 bg-slate-50 px-3 py-2.5 text-right text-[10px] font-semibold tabular-nums text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)]">
+                    <td className="sticky right-0 z-10 border-l border-slate-100 bg-slate-50 px-2 py-2.5 text-right text-[10px] font-semibold tabular-nums text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)] sm:px-3">
                       {overall.attended}/{overall.total}
                     </td>
                   </tr>
