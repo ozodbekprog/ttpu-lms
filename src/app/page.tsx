@@ -426,7 +426,7 @@ export default function HomePage() {
                         </span>
                         <div className="min-w-0">
                           <p className="truncate text-[11px] font-semibold text-slate-800">
-                            Salom, Ozodbek
+                            Salom, Aziza
                           </p>
                           <p className="truncate text-[10px] text-slate-600">
                             AI2-26 · 2-semestr

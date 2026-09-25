@@ -30,7 +30,16 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url))))
+      .then((cache) =>
+        Promise.allSettled(
+          PRECACHE_URLS.map(async (url) => {
+            const response = await fetch(url, { cache: "no-cache" });
+            if (isCacheable(response)) {
+              await cache.put(url, response);
+            }
+          }),
+        ),
+      )
       .then(() => self.skipWaiting())
   );
 });
