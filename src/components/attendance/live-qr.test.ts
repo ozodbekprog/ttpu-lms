@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkInPathForToken, formatSecondsLeft } from "./live-qr";
+import { checkInPathForToken, formatSecondsLeft, tokenFromQr } from "./live-qr";
 
 describe("formatSecondsLeft", () => {
   it("0 ms uchun 00:00 qaytaradi", () => {
@@ -29,5 +29,25 @@ describe("checkInPathForToken", () => {
     expect(checkInPathForToken(token)).toBe(
       `/attendance/check-in?t=${encodeURIComponent(token)}`,
     );
+  });
+});
+
+describe("tokenFromQr", () => {
+  it("havoladan tokenni ajratib oladi", () => {
+    expect(
+      tokenFromQr("https://example.com/attendance/check-in?t=v1.abc.def"),
+    ).toBe("v1.abc.def");
+  });
+
+  it("xom token matnini qabul qiladi", () => {
+    expect(tokenFromQr("v1.abc.def")).toBe("v1.abc.def");
+  });
+
+  it("tokensiz havola uchun null qaytaradi", () => {
+    expect(tokenFromQr("https://example.com/")).toBeNull();
+  });
+
+  it("begona matn uchun null qaytaradi", () => {
+    expect(tokenFromQr("shunchaki matn")).toBeNull();
   });
 });

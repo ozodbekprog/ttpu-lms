@@ -6,6 +6,7 @@ import { BarChart, DonutChart, LineChart } from "@/components/charts";
 import { cn, dayName, fmtDate, initials } from "@/lib/utils";
 import { getAdminAnalytics, getStudentAnalytics, getTeacherAnalytics } from "./analytics";
 import type { AdminAnalytics, StudentAnalytics, TeacherAnalytics } from "./analytics";
+import { CheckInForm } from "@/components/attendance/check-in-form";
 import {
   SLOT_TIMES,
   dateFromIso,
@@ -747,6 +748,12 @@ export default async function DashboardPage() {
   return (
     <>
       <Hero name={user.name} firstName={firstName} roleLabel={roleLabel} now={now} actions={actions} />
+
+      <SectionHeading
+        title="QR davomat"
+        subtitle="Darsdagi QR kodni skanerlab davomatni belgilang"
+      />
+      <CheckInForm />
 
       <SectionHeading
         title="Bugungi holat"

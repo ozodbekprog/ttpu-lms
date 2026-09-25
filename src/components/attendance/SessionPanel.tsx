@@ -271,7 +271,7 @@ export function SessionPanel({
     <Card>
       <CardHeader
         title="QR davomat sessiyasi"
-        subtitle="Talabalar QR kodni skanerlaydi yoki kodni kiritadi"
+        subtitle="Talabalar QR kodni skanerlaydi"
         action={
           <Button
             variant="ghost"
@@ -341,13 +341,9 @@ export function SessionPanel({
                   )}
                 </div>
               </div>
-              <p className="mt-5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Sessiya kodi
+              <p className="mt-5 text-center text-xs text-slate-400">
+                Talabalar QR kodni telefon kamerasi bilan skanerlaydi
               </p>
-              <p className="mt-1 text-center font-mono text-4xl font-semibold tracking-[0.3em] text-brand-950 sm:text-5xl sm:tracking-[0.2em]">
-                {latest.code}
-              </p>
-              <p className="mt-2 text-center text-xs text-slate-400">/attendance/check-in</p>
             </div>
 
             <div className="space-y-4">
@@ -476,8 +472,7 @@ export function SessionPanel({
             <Table>
               <thead>
                 <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
-                  <th className="py-2.5 pr-3 text-left font-medium">Kod</th>
-                  <th className="px-3 py-2.5 text-left font-medium">Sana</th>
+                  <th className="py-2.5 pr-3 text-left font-medium">Sana</th>
                   <th className="px-3 py-2.5 text-left font-medium">Holat</th>
                   <th className="px-3 py-2.5 text-right font-medium">Belgilangan</th>
                 </tr>
@@ -488,12 +483,7 @@ export function SessionPanel({
                     key={session.id}
                     className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/70"
                   >
-                    <td className="py-2.5 pr-3">
-                      <span className="rounded-lg bg-slate-100 px-2 py-0.5 font-mono text-xs tracking-wider text-slate-700">
-                        {session.code}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-slate-500">
+                    <td className="py-2.5 pr-3 text-xs text-slate-500">
                       {fmtDateTime(session.createdAt)}
                     </td>
                     <td className="px-3 py-2.5">

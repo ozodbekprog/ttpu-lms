@@ -15,6 +15,20 @@ export function checkInPathForToken(token: string): string {
   return `/attendance/check-in?t=${encodeURIComponent(token)}`;
 }
 
+export function tokenFromQr(data: string): string | null {
+  const value = data.trim();
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const token = url.searchParams.get("t");
+    if (token) return token;
+  } catch {
+    void 0;
+  }
+  if (/^[\w-]+\.[\w-]+\.[\w-]+$/.test(value)) return value;
+  return null;
+}
+
 export function requestBrowserLocation(): Promise<BrowserLocation | null> {
   return new Promise((resolve) => {
     try {
