@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ const GREETING =
 export function BugAssistant() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,6 +26,10 @@ export function BugAssistant() {
   const captured = useRef<Captured | null>(null);
   const lastAutoAt = useRef(0);
   const listRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const el = listRef.current;
@@ -206,7 +212,9 @@ export function BugAssistant() {
     aiSay(reply);
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {!open ? (
         <button
@@ -301,6 +309,7 @@ export function BugAssistant() {
           </div>
         </div>
       ) : null}
-    </>
+    </>,
+    document.body,
   );
 }
