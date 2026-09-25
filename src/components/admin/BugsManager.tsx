@@ -48,8 +48,7 @@ export function BugsManager({ reports }: { reports: BugItem[] }) {
   async function update(
     id: string,
     payload: { status?: BugStatus; adminNote?: string | null },
-  ) {
-    setBusyId(id);
+  ) {    setBusyId(id);
     setError(null);
     try {
       const res = await apiFetch(`/api/bugs/${id}`, {
@@ -78,8 +77,32 @@ export function BugsManager({ reports }: { reports: BugItem[] }) {
     }
   }
 
-  if (items.length === 0) {
-    return (
+  async function fixAction(id: string, action: "request" | "deploy" | "cancel") {
+    setBusyId(id);
+    setError(null);
+    try {
+      const res = await apiFetch(`/api/bugs/${id}/fix`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; data?: { report: { meta?: Record<string, unknown> } } }
+        | null;
+      if (!res.ok || !json?.ok || !json.data) {
+        setError(json?.error ?? "Amalni bajarib bo'lmadi");
+        return;
+      }
+      const meta = json.data.report.meta ?? {};
+      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, meta } : item)));
+    } catch {
+      setError("Tarmoqda xatolik");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (items.length === 0) {    return (
       <EmptyState
         title="Xatolik xabarlari yo'q"
         description="Foydalanuvchilar AI yordamchi orqali xatolik yuborganda shu yerda paydo bo'ladi."
@@ -101,6 +124,12 @@ export function BugsManager({ reports }: { reports: BugItem[] }) {
           cause?: string;
           fixHint?: string;
           severity?: string;
+        } | null;
+        const fix = (item.meta?.fix ?? null) as {
+          status?: string;
+          summary?: string;
+          files?: number;
+          log?: string;
         } | null;
         const statusMeta = STATUS_META[item.status];
         const busy = busyId === item.id;
@@ -136,6 +165,33 @@ export function BugsManager({ reports }: { reports: BugItem[] }) {
                       {SEVERITY_LABELS[ai.severity] ?? ai.severity}
                     </p>
                   ) : null}
+                </div>
+              ) : null}
+
+              {fix ? (
+                <div className="space-y-1 rounded-xl bg-emerald-50/70 px-3 py-2 text-sm text-emerald-950">
+                  <p className="font-semibold">
+                    {fix.status === "queued"
+                      ? "⏳ AI tuzatish navbatda"
+                      : fix.status === "working"
+                        ? "🤖 AI tuzatmoqda…"
+                        : fix.status === "ready"
+                          ? "🛠️ Tuzatish tayyor — tasdiqlashingiz mumkin"
+                          : fix.status === "deploying"
+                            ? "🚀 Deploy qilinmoqda…"
+                            : fix.status === "deployed"
+                              ? "✅ Deploy qilindi"
+                              : fix.status === "failed"
+                                ? "⚠️ Tuzatishda xatolik"
+                                : "Tuzatish bekor qilingan"}
+                  </p>
+                  {fix.summary ? <p>{fix.summary}</p> : null}
+                  {typeof fix.files === "number" ? (
+                    <p>
+                      <span className="font-medium">O&apos;zgargan fayllar:</span> {fix.files} ta
+                    </p>
+                  ) : null}
+                  {fix.log ? <p className="text-xs text-emerald-900/70">Log: {fix.log}</p> : null}
                 </div>
               ) : null}
 
@@ -204,6 +260,29 @@ export function BugsManager({ reports }: { reports: BugItem[] }) {
                 >
                   Rad etish
                 </Button>
+                {fix && ["queued", "working", "deploying"].includes(fix.status ?? "") ? null : fix?.status ===
+                  "ready" ? (
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => {
+                      void fixAction(item.id, "deploy");
+                    }}
+                  >
+                    🚀 Tasdiqlash va deploy
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      void fixAction(item.id, "request");
+                    }}
+                  >
+                    🤖 AI tuzatsin
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"

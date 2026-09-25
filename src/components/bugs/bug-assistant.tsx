@@ -5,6 +5,7 @@ import { Button, Input } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
 import { friendlyBugLine } from "./bug-utils";
+import { BUG_ASSISTANT_EVENT } from "./report";
 
 type ChatMessage = { role: "ai" | "user"; text: string };
 type Stage = "ask" | "confirm" | "sent";
@@ -32,21 +33,41 @@ export function BugAssistant() {
   }, []);
 
   const capture = useCallback(
-    (message: string, stack?: string) => {
+    (message: string, stack?: string, label?: string, autoSend = false) => {
       const now = Date.now();
       if (now - lastAutoAt.current < 20000) return;
       lastAutoAt.current = now;
       captured.current = { message, stack, url: window.location.pathname };
-      note.current = "";
+      note.current = label ? `Avtomatik: ${label}` : "";
       setMessages([
         { role: "ai", text: "Salom! Men saytning AI yordamchisiman 🤖" },
         {
           role: "ai",
-          text: `Sahifada kutilmagan holat yuz berdi (${friendlyBugLine(message, stack)}). Nima qilayotganingizda bu sodir bo'ldi?`,
+          text: label
+            ? `Sahifada muammo aniqlandi: ${label}.`
+            : `Sahifada kutilmagan holat yuz berdi (${friendlyBugLine(message, stack)}).`,
         },
       ]);
       setStage("ask");
       setOpen(true);
+      void (async () => {
+        setBusy(true);
+        const reply = await askAiReply([
+          {
+            role: "user",
+            text:
+              `Sahifada quyidagi muammo yuz berdi: ${label ?? friendlyBugLine(message, stack)}. ` +
+              "Menga qisqa tushuntir (2-3 gap) va qanday hal qilishni ayt.",
+          },
+        ]);
+        setBusy(false);
+        if (reply) aiSay(reply);
+        if (autoSend) {
+          await sendReport();
+        } else {
+          setStage("confirm");
+        }
+      })();
     },
     [],
   );
@@ -64,6 +85,18 @@ export function BugAssistant() {
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onReject);
     };
+  }, [capture]);
+
+  useEffect(() => {
+    const onIssue = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{ message?: string; label?: string; note?: string; autoSend?: boolean }>
+      ).detail;
+      if (!detail?.message) return;
+      capture(detail.message, undefined, detail.label ?? detail.note, detail.autoSend ?? true);
+    };
+    window.addEventListener(BUG_ASSISTANT_EVENT, onIssue);
+    return () => window.removeEventListener(BUG_ASSISTANT_EVENT, onIssue);
   }, [capture]);
 
   function openManually() {

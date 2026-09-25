@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
 import { Button } from "@/components/ui";
 import { tokenFromQr } from "./live-qr";
+import { reportIssue } from "@/components/bugs/report";
 
 export function QrScanner({
   onDetected,
@@ -67,6 +68,11 @@ export function QrScanner({
       try {
         if (!navigator.mediaDevices?.getUserMedia) {
           setError("Bu brauzerda kamera ishlamaydi. Boshqa brauzerda urinib ko'ring.");
+          reportIssue({
+            message: "Brauzerda getUserMedia mavjud emas (kamera qo'llab-quvvatlanmaydi)",
+            label: "brauzer kamerani qo'llab-quvvatlamaydi",
+            autoSend: true,
+          });
           return;
         }
         stream = await navigator.mediaDevices.getUserMedia({
@@ -80,6 +86,11 @@ export function QrScanner({
         raf = window.requestAnimationFrame(tick);
       } catch {
         setError("Kameraga ruxsat kerak. Brauzerda ruxsat berib, qayta urinib ko'ring.");
+        reportIssue({
+          message: "Kamera ochilmadi: ruxsat berilmagan (NotAllowedError)",
+          label: "kameraga ruxsat berilmagan",
+          autoSend: true,
+        });
       }
     }
 
