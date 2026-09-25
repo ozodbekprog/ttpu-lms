@@ -26,8 +26,8 @@ export const LETTER_META: Record<
   },
   C: {
     label: "Qoniqarli",
-    gradient: "bg-gradient-to-br from-gold-300 to-gold-600 text-white shadow-gold-500/30",
-    soft: "border-gold-300/70 bg-gold-300/15 text-gold-600",
+    gradient: "bg-gradient-to-br from-gold-300 to-gold-600 text-brand-950 shadow-gold-500/30",
+    soft: "border-gold-300/70 bg-gold-300/15 text-gold-800",
     bar: "bg-gold-400",
   },
   D: {

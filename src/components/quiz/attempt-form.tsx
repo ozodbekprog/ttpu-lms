@@ -148,7 +148,7 @@ export function AttemptForm({
   const critical = remaining !== null && remaining <= 60;
   const timerTone =
     remaining === null
-      ? "text-slate-400"
+      ? "text-slate-600"
       : remaining <= 60
         ? "text-rose-600"
         : remaining <= 300
@@ -194,7 +194,7 @@ export function AttemptForm({
               critical ? "bg-rose-50 ring-1 ring-rose-200" : "ring-1 ring-transparent",
             )}
           >
-            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-600">
               Qolgan vaqt
             </p>
             {remaining !== null ? (
@@ -208,7 +208,7 @@ export function AttemptForm({
                 {formatClock(remaining)}
               </p>
             ) : (
-              <p className="py-1 text-sm text-slate-400">Cheklovsiz</p>
+              <p className="py-1 text-sm text-slate-600">Cheklovsiz</p>
             )}
           </div>
         </div>
@@ -238,7 +238,7 @@ export function AttemptForm({
                   {QUESTION_TYPE_LABEL[question.type]}
                 </Badge>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-300/25 px-2.5 py-1 text-xs font-semibold text-gold-600">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-300/25 px-2.5 py-1 text-xs font-semibold text-gold-800">
                 {question.points} ball
               </span>
             </div>

@@ -102,9 +102,9 @@ export default async function CourseForumPage({
                   <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                     <Avatar name={topic.author.name} className="size-5! text-[9px]" />
                     <span>{topic.author.name}</span>
-                    <span className="text-slate-300">·</span>
+                    <span className="text-slate-500">·</span>
                     <span>{fmtDateTime(topic.createdAt)}</span>
-                    <span className="text-slate-300">·</span>
+                    <span className="text-slate-500">·</span>
                     <span className="inline-flex items-center gap-1">
                       <svg
                         width="12"

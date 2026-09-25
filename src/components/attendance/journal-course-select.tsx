@@ -30,7 +30,7 @@ export function JournalCourseSelect({
             ))}
           </Select>
         </div>
-        <p className="pb-2 text-xs text-slate-400">
+        <p className="pb-2 text-xs text-slate-600">
           Guruhni jurnal ichida tanlaysiz · katakka bosib belgilashni o&apos;zgartirasiz
         </p>
       </CardBody>

@@ -8,7 +8,7 @@ const BADGE_SIZES = {
 };
 
 export function gradeBadgeTone(percent: number | null) {
-  if (percent == null) return "bg-slate-100 text-slate-300 ring-1 ring-slate-200/70";
+  if (percent == null) return "bg-slate-100 text-slate-600 ring-1 ring-slate-200/70";
   if (percent >= 80)
     return "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-sm shadow-emerald-500/30";
   if (percent >= 60)

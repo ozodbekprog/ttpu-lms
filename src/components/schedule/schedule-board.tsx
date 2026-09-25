@@ -91,13 +91,13 @@ const SUBJECT_TONES = [
 const BLOCK_SHADOW = "shadow-[0_1px_2px_rgba(16,24,40,0.05),0_10px_22px_-14px_rgba(29,52,96,0.32)]";
 
 const ATTENDANCE_CLASS = "border border-slate-200 text-brand-700! hover:border-brand-300! hover:bg-brand-50!";
-const DELETE_CLASS = "text-slate-400! hover:bg-rose-50! hover:text-rose-600!";
+const DELETE_CLASS = "text-slate-600! hover:bg-rose-50! hover:text-rose-600!";
 const EXPORT_CLASS =
   "inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm transition-all duration-150 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900";
 const FILTER_CLASS =
   "h-9 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-xs font-medium text-slate-700 shadow-sm transition focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10 disabled:bg-slate-50 disabled:text-slate-400";
-const FILTER_ICON_CLASS = "pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400";
-const CHEVRON_CLASS = "pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400";
+const FILTER_ICON_CLASS = "pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-600";
+const CHEVRON_CLASS = "pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-600";
 
 function SvgIcon({ className, children }: { className?: string; children: ReactNode }) {
   return (
@@ -870,7 +870,7 @@ export function ScheduleBoard({
   }
 
   const legend = (
-    <div className="hidden items-center gap-3 text-[11px] text-slate-400 lg:flex">
+    <div className="hidden items-center gap-3 text-[11px] text-slate-600 lg:flex">
       <span className="inline-flex items-center gap-1.5">
         <span className="size-2 rounded-full bg-brand-500" />
         Dars
@@ -899,13 +899,13 @@ export function ScheduleBoard({
             ? "Blokni katakka sudrab tashlang yoki blokni bosib, katakni bosing"
             : selectedGroupName ?? undefined
         }
-        action={pending ? <span className="text-xs font-medium text-slate-400">Saqlanmoqda…</span> : legend}
+        action={pending ? <span className="text-xs font-medium text-slate-600">Saqlanmoqda…</span> : legend}
       />
       <CardBody>
         <Table className="[&>table]:min-w-[900px]">
           <thead>
             <tr className="border-b border-slate-200">
-              <th className="w-28 px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <th className="w-28 px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
                 Vaqt
               </th>
               {DAYS.map((day) => {
@@ -915,7 +915,7 @@ export function ScheduleBoard({
                     key={day}
                     className={cn(
                       "relative px-3 pb-3 text-left text-xs font-semibold uppercase tracking-wide",
-                      isToday ? "bg-brand-50 text-brand-800" : "text-slate-400",
+                      isToday ? "bg-brand-50 text-brand-800" : "text-slate-600",
                     )}
                   >
                     {isToday ? <span className="absolute inset-x-0 top-0 h-0.5 bg-gold-400" /> : null}
@@ -952,7 +952,7 @@ export function ScheduleBoard({
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-slate-400">{SLOT_TIMES[slot]}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-600">{SLOT_TIMES[slot]}</p>
                   </td>
                   {DAYS.map((day) => {
                     const cellEntries = entriesAt(day, slot);
@@ -1095,7 +1095,7 @@ export function ScheduleBoard({
                                 "flex min-h-[72px] items-center justify-center rounded-xl border border-dashed text-lg font-semibold transition-all duration-150",
                                 isHover || selectedBlockId
                                   ? "border-brand-300 bg-brand-50/70 text-brand-500"
-                                  : "border-slate-200/80 text-slate-300 opacity-60",
+                                  : "border-slate-200/80 text-slate-500 opacity-60",
                               )}
                             >
                               {isHover ? "+" : selectedBlockId ? "Qo'yish" : "+"}
@@ -1157,18 +1157,18 @@ export function ScheduleBoard({
                     <p className={cn("text-sm font-semibold", isToday ? "text-brand-900" : "text-slate-700")}>
                       {dayName(day)}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-600">
                       {dayEntries.length > 0 ? `${dayEntries.length} ta dars` : "Darslar yo'q"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">{formatDayShort(dateIso)}</span>
+                  <span className="text-xs text-slate-600">{formatDayShort(dateIso)}</span>
                   {isToday ? <Badge tone="blue">bugun</Badge> : null}
                 </div>
               </header>
               {dayEntries.length === 0 ? (
-                <p className="px-4 py-5 text-center text-xs text-slate-400">{"Bu kunda dars yo'q"}</p>
+                <p className="px-4 py-5 text-center text-xs text-slate-600">{"Bu kunda dars yo'q"}</p>
               ) : (
                 <div className="px-4 py-4">
                   {dayEntries.map((entry, index) => {
@@ -1184,7 +1184,7 @@ export function ScheduleBoard({
                       <div key={entry.id} className="flex gap-3">
                         <div className="w-14 shrink-0 pt-1 text-right">
                           <p className="text-xs font-semibold text-slate-600">{from ?? `${entry.slot}-par`}</p>
-                          {to ? <p className="text-[10px] text-slate-400">{to}</p> : null}
+                          {to ? <p className="text-[10px] text-slate-600">{to}</p> : null}
                         </div>
                         <div
                           className={cn(
@@ -1226,13 +1226,13 @@ export function ScheduleBoard({
                                   {entry.teacher ? <span>{entry.teacher}</span> : null}
                                   {entry.room ? (
                                     <span className="inline-flex items-center gap-1">
-                                      <PinIcon className="size-3 text-slate-400" />
+                                      <PinIcon className="size-3 text-slate-600" />
                                       {entry.room}
                                     </span>
                                   ) : null}
                                 </p>
                                 {entry.note ? (
-                                  <p className="mt-1 text-[11px] text-slate-400">{entry.note}</p>
+                                  <p className="mt-1 text-[11px] text-slate-600">{entry.note}</p>
                                 ) : null}
                                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                   {mode !== "group" ? <Badge tone="purple">{entry.groupName}</Badge> : null}
@@ -1290,7 +1290,7 @@ export function ScheduleBoard({
                 <p className="truncate text-sm font-semibold tracking-tight text-brand-950">
                   {formatWeekRange(weekStart)}
                 </p>
-                <p className="text-xs text-slate-400">{`${weekNumber}-hafta · ${visibleEntries.length} ta dars`}</p>
+                <p className="text-xs text-slate-600">{`${weekNumber}-hafta · ${visibleEntries.length} ta dars`}</p>
               </div>
               <Badge tone={parity === "even" ? "blue" : "gold"} className="hidden sm:inline-flex">
                 {parityLabel}
@@ -1428,7 +1428,7 @@ export function ScheduleBoard({
                   value={roomQuery}
                   onChange={(event) => setRoomQuery(event.target.value)}
                   placeholder="Masalan: 205"
-                  className={cn(FILTER_CLASS, "placeholder:font-normal placeholder:text-slate-400")}
+                  className={cn(FILTER_CLASS, "placeholder:font-normal placeholder:text-slate-500")}
                 />
               </div>
             ) : null}

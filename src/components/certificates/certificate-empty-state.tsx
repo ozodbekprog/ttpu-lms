@@ -18,7 +18,7 @@ export function CertificateEmptyState({
         <span className="relative mb-2 inline-flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-gold-300/35 via-white to-brand-50 ring-1 ring-gold-400/50">
           <svg
             viewBox="0 0 48 48"
-            className="size-9 text-gold-500"
+            className="size-9 text-gold-700"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.6"

@@ -31,7 +31,7 @@ const RING_STYLES: Record<RingTone, { stroke: string; track: string; text: strin
   slate: {
     stroke: "stroke-slate-300",
     track: "stroke-slate-100",
-    text: "text-slate-400",
+    text: "text-slate-600",
     glow: "from-slate-300/20",
   },
 };
@@ -99,7 +99,7 @@ export function ScoreRing({
           <span className={cn("font-semibold tabular-nums", percentClass, tone.text)}>
             {percent != null ? `${percent}%` : "—"}
           </span>
-          <span className={cn("font-medium text-slate-400", scoreClass)}>
+          <span className={cn("font-medium text-slate-600", scoreClass)}>
             {score != null ? `${score}/${max}` : "ball yo'q"}
           </span>
         </div>
@@ -107,7 +107,7 @@ export function ScoreRing({
       {caption ? (
         <span className="text-xs font-medium text-slate-500">{caption}</span>
       ) : null}
-      {hint ? <span className="text-[11px] text-slate-400">{hint}</span> : null}
+      {hint ? <span className="text-[11px] text-slate-600">{hint}</span> : null}
     </div>
   );
 }

@@ -435,7 +435,7 @@ export function ScheduleBuilder({
             {weekParity === "even" ? "Juft hafta" : "Toq hafta"}
           </Badge>
 
-          <p className="hidden text-xs text-slate-400 sm:ml-auto lg:block">
+          <p className="hidden text-xs text-slate-600 sm:ml-auto lg:block">
             Kompyuterda sudrab tashlang; telefonda blokni bosib, katakni bosing
           </p>
         </CardBody>

@@ -213,7 +213,7 @@ export function AssignmentsSubmit({
             <button
               type="button"
               onClick={clearFile}
-              className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+              className="shrink-0 rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-600"
               aria-label="Faylni olib tashlash"
             >
               <svg
@@ -269,7 +269,7 @@ export function AssignmentsSubmit({
             <span className="text-sm font-medium text-slate-700">
               Faylni bu yerga tashlang yoki <span className="text-brand-700 underline decoration-brand-300 underline-offset-2">tanlang</span>
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               Maks 10MB: {ALLOWED_EXTENSIONS.join(", ")}
             </span>
             <input

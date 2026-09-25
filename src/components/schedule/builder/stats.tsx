@@ -32,7 +32,7 @@ export function BuilderStats({ entries, weekParity }: { entries: BuilderEntry[];
 
         <div className="max-h-52 space-y-1.5 overflow-y-auto pr-1">
           {sorted.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-400">
+            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-4 text-center text-xs text-slate-600">
               {"Hozircha dars yo'q — palette'dan tashlang."}
             </p>
           ) : (
@@ -44,7 +44,7 @@ export function BuilderStats({ entries, weekParity }: { entries: BuilderEntry[];
                 <span className="min-w-0 flex-1 truncate font-medium text-slate-700">
                   {entry.subjectRef?.name ?? entry.subject}
                 </span>
-                {entry.room ? <span className="shrink-0 text-slate-400">{entry.room}</span> : null}
+                {entry.room ? <span className="shrink-0 text-slate-600">{entry.room}</span> : null}
               </div>
             ))
           )}

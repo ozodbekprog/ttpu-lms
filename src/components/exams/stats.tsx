@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const TONES = {
   brand: "bg-brand-50 text-brand-700 ring-brand-100",
-  gold: "bg-gold-300/20 text-gold-600 ring-gold-300/40",
+  gold: "bg-gold-300/20 text-gold-800 ring-gold-300/40",
   emerald: "bg-emerald-50 text-emerald-600 ring-emerald-100",
   amber: "bg-amber-50 text-amber-600 ring-amber-100",
   rose: "bg-rose-50 text-rose-600 ring-rose-100",
@@ -80,7 +80,7 @@ export function ExamStat({
         <div className="min-w-0">
           <p className="text-sm font-medium text-slate-500">{label}</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-brand-950">{value}</p>
-          {hint ? <p className="mt-1 truncate text-xs text-slate-400">{hint}</p> : null}
+          {hint ? <p className="mt-1 truncate text-xs text-slate-600">{hint}</p> : null}
         </div>
         <span className={cn("inline-flex size-10 shrink-0 items-center justify-center rounded-xl ring-1", TONES[tone])}>
           {ICONS[icon]}

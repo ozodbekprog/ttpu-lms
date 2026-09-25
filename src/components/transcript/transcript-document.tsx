@@ -11,13 +11,13 @@ function letterTone(letter: string) {
   if (letter === "C") return "border-amber-300 bg-amber-50 text-amber-700";
   if (letter === "D") return "border-orange-300 bg-orange-50 text-orange-700";
   if (letter === "F") return "border-rose-300 bg-rose-50 text-rose-700";
-  return "border-slate-200 bg-slate-50 text-slate-400";
+  return "border-slate-200 bg-slate-50 text-slate-600";
 }
 
 function Info({ label, value, className }: { label: string; value: string; className?: string }) {
   return (
     <div className={className}>
-      <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</p>
+      <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-600">{label}</p>
       <p className="mt-1 font-serif text-[15px] font-semibold leading-snug text-slate-800">{value}</p>
     </div>
   );
@@ -28,7 +28,7 @@ function Signature({ role }: { role: string }) {
     <div className="flex flex-col items-center">
       <p className="font-serif text-sm italic text-slate-600">{role}</p>
       <div className="mt-10 h-px w-44 bg-slate-500" />
-      <p className="mt-1.5 text-[9px] uppercase tracking-[0.24em] text-slate-400">Imzo</p>
+      <p className="mt-1.5 text-[9px] uppercase tracking-[0.24em] text-slate-600">Imzo</p>
     </div>
   );
 }
@@ -119,11 +119,11 @@ export function TranscriptDocument({ data }: { data: TranscriptData }) {
                   <h2 className="font-serif text-base font-semibold text-brand-950">
                     O&apos;quv natijalari
                   </h2>
-                  <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                  <p className="mt-0.5 text-[10px] uppercase tracking-[0.18em] text-slate-600">
                     Fanlar bo&apos;yicha yakuniy ko&apos;rsatkichlar
                   </p>
                 </div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600">
                   {data.courses.length} ta fan
                 </p>
               </div>
@@ -162,7 +162,7 @@ export function TranscriptDocument({ data }: { data: TranscriptData }) {
                     <tr>
                       <td
                         colSpan={8}
-                        className="border-b border-slate-200 px-3 py-10 text-center text-sm text-slate-400"
+                        className="border-b border-slate-200 px-3 py-10 text-center text-sm text-slate-600"
                       >
                         Kurslar mavjud emas
                       </td>
@@ -175,7 +175,7 @@ export function TranscriptDocument({ data }: { data: TranscriptData }) {
                           index % 2 === 1 ? "bg-slate-50/70" : "bg-white"
                         }`}
                       >
-                        <td className="border-b border-slate-200 px-2.5 py-2.5 text-center text-xs tabular-nums text-slate-400">
+                        <td className="border-b border-slate-200 px-2.5 py-2.5 text-center text-xs tabular-nums text-slate-600">
                           {index + 1}
                         </td>
                         <td className="border-b border-slate-200 px-3 py-2.5 font-medium text-slate-800">
@@ -214,16 +214,16 @@ export function TranscriptDocument({ data }: { data: TranscriptData }) {
               <div className="rounded-lg border border-l-4 border-slate-200 border-l-gold-400 bg-slate-50 px-5 py-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
                       Umumiy GPA
                     </p>
                     <p className="mt-1 font-serif text-4xl font-bold tracking-tight text-brand-950">
                       {data.gpa !== null ? data.gpa.toFixed(2) : "—"}
-                      <span className="ml-1.5 text-sm font-medium text-slate-400">/ 4.00</span>
+                      <span className="ml-1.5 text-sm font-medium text-slate-600">/ 4.00</span>
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-600">
                       Baholangan fanlar
                     </p>
                     <p className="mt-1 font-serif text-2xl font-semibold text-brand-900">
@@ -237,7 +237,7 @@ export function TranscriptDocument({ data }: { data: TranscriptData }) {
                     style={{ width: `${gpaPercent}%` }}
                   />
                 </div>
-                <div className="mt-1.5 flex justify-between text-[9px] uppercase tracking-[0.16em] text-slate-400">
+                <div className="mt-1.5 flex justify-between text-[9px] uppercase tracking-[0.16em] text-slate-600">
                   <span>0.00</span>
                   <span>2.00</span>
                   <span>4.00</span>
@@ -245,7 +245,7 @@ export function TranscriptDocument({ data }: { data: TranscriptData }) {
               </div>
 
               <div className="rounded-lg border border-slate-200 px-5 py-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
                   Baholash shkalasi
                 </p>
                 <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
@@ -265,11 +265,11 @@ export function TranscriptDocument({ data }: { data: TranscriptData }) {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-3.5 sm:px-8">
-              <p className="max-w-xl text-[10px] leading-relaxed text-slate-400">
+              <p className="max-w-xl text-[10px] leading-relaxed text-slate-600">
                 Ushbu transkript TTPU LMS tizimi ma&apos;lumotlari asosida avtomatik
                 shakllantirilgan. Faqat imzo va muhr bilan tasdiqlanganda haqiqiy hisoblanadi.
               </p>
-              <p className="font-mono text-[10px] tracking-[0.14em] text-slate-400">
+              <p className="font-mono text-[10px] tracking-[0.14em] text-slate-600">
                 {data.serial} · {fmtDate(issuedAt)}
               </p>
             </div>

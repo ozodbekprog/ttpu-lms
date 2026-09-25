@@ -19,7 +19,7 @@ export function GpaCourseTable({ data, delay = 0 }: { data: StudentGpa; delay?: 
         <div className="hidden px-6 pb-5 pt-2 md:block">
           <Table>
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] uppercase tracking-[0.12em] text-slate-400">
+              <tr className="border-b border-slate-100 text-[11px] uppercase tracking-[0.12em] text-slate-600">
                 <th className="py-3 pr-4 text-left font-medium">Kurs</th>
                 <th className="px-3 py-3 text-center font-medium">O&apos;rtacha</th>
                 <th className="px-3 py-3 text-center font-medium">Baho</th>
@@ -47,7 +47,7 @@ export function GpaCourseTable({ data, delay = 0 }: { data: StudentGpa; delay?: 
                         <span className="block truncate text-sm font-medium text-slate-800 transition-colors duration-150 group-hover:text-brand-700">
                           {course.title}
                         </span>
-                        <span className="mt-0.5 block text-xs text-slate-400">
+                        <span className="mt-0.5 block text-xs text-slate-600">
                           {course.gradedCount} ta baholangan ish
                         </span>
                       </span>
@@ -67,7 +67,7 @@ export function GpaCourseTable({ data, delay = 0 }: { data: StudentGpa; delay?: 
                     <span className="text-sm font-semibold tabular-nums text-slate-700">
                       {course.credits}
                     </span>
-                    <span className="ml-1 text-xs text-slate-400">kredit</span>
+                    <span className="ml-1 text-xs text-slate-600">kredit</span>
                   </td>
                 </tr>
               ))}
@@ -84,7 +84,7 @@ export function GpaCourseTable({ data, delay = 0 }: { data: StudentGpa; delay?: 
                         <GpaPointsBadge points={gpa} size="lg" digits={2} />
                         <span className="text-sm font-semibold tabular-nums text-slate-700">
                           {totalCredits}
-                          <span className="ml-1 text-xs font-normal text-slate-400">kredit</span>
+                          <span className="ml-1 text-xs font-normal text-slate-600">kredit</span>
                         </span>
                       </span>
                     </div>
@@ -110,7 +110,7 @@ export function GpaCourseTable({ data, delay = 0 }: { data: StudentGpa; delay?: 
                   <span className="block truncate text-sm font-medium text-slate-800">
                     {course.title}
                   </span>
-                  <span className="mt-0.5 block text-xs text-slate-400">
+                  <span className="mt-0.5 block text-xs text-slate-600">
                     {course.gradedCount} ta baholangan ish
                   </span>
                 </span>
@@ -120,7 +120,7 @@ export function GpaCourseTable({ data, delay = 0 }: { data: StudentGpa; delay?: 
                 <Progress value={course.percent} className="h-1.5 flex-1" />
                 <GradeBadge percent={course.percent} size="sm" />
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
                 <span>GPA ball</span>
                 <span className="flex items-center gap-2">
                   <GpaPointsBadge points={course.points} size="sm" />

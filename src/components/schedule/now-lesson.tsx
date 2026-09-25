@@ -128,12 +128,12 @@ export function NowLesson({
       <Card className="animate-fade-up relative overflow-hidden">
         <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200" />
         <CardBody className="flex items-center gap-3 py-4">
-          <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+          <span className="inline-flex size-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
             <CheckIcon className="size-4" />
           </span>
           <div>
             <p className="text-sm font-semibold text-slate-800">Bugun darslar tugadi</p>
-            <p className="text-xs text-slate-400">Keyingi darslar jadvalini hafta navigatsiyasidan tanlang</p>
+            <p className="text-xs text-slate-600">Keyingi darslar jadvalini hafta navigatsiyasidan tanlang</p>
           </div>
         </CardBody>
       </Card>
@@ -190,7 +190,7 @@ export function NowLesson({
               <p className="mt-0.5 flex flex-wrap items-center gap-x-2 truncate text-sm text-slate-500">
                 {active.entry.room ? (
                   <span className="inline-flex items-center gap-1">
-                    <PinIcon className="text-slate-400" />
+                    <PinIcon className="text-slate-600" />
                     {active.entry.room}
                   </span>
                 ) : null}
@@ -200,7 +200,7 @@ export function NowLesson({
           </div>
         </div>
         <div className="mt-3.5">
-          <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
+          <div className="mb-1 flex items-center justify-between text-[11px] text-slate-600">
             <span>{fromLabel}</span>
             <span className={cn("font-medium", current ? "text-emerald-600" : "text-brand-600")}>
               {current ? `${Math.round(progress)}% bajarildi` : "kutilmoqda"}

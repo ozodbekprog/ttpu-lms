@@ -158,7 +158,7 @@ export default function CoursesManager({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full sm:w-72">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-600">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
@@ -209,7 +209,7 @@ export default function CoursesManager({
         ) : (
           <Table className="max-h-[68vh] overflow-y-auto">
             <thead>
-              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Kurs</th>
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">O&apos;qituvchi</th>
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Talabalar</th>
@@ -236,7 +236,7 @@ export default function CoursesManager({
                         </span>
                         <div className="min-w-0">
                           <span className="block truncate font-medium text-slate-900">{course.title}</span>
-                          <span className="block truncate text-xs text-slate-400">{course.slug}</span>
+                          <span className="block truncate text-xs text-slate-600">{course.slug}</span>
                         </div>
                       </div>
                     </td>

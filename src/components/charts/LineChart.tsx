@@ -28,7 +28,7 @@ function smoothPath(points: { x: number; y: number }[]) {
 
 export function LineChart({ data }: { data: LineChartDatum[] }) {
   if (data.length === 0) {
-    return <p className="py-12 text-center text-sm text-slate-400">{"Ma'lumot yo'q"}</p>;
+    return <p className="py-12 text-center text-sm text-slate-600">{"Ma'lumot yo'q"}</p>;
   }
 
   const innerWidth = WIDTH - PAD.left - PAD.right;

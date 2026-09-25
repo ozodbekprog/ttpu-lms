@@ -1,6 +1,59 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, ButtonLink, Card } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
+
+export const revalidate = 300;
+
+const SITE_URL = "https://lms.ttpu.uz";
+const OG_TITLE = "TTPU LMS — O'quv boshqaruv tizimi";
+const OG_DESCRIPTION =
+  "Turin Politexnika Universiteti uchun zamonaviy o'quv boshqaruv tizimi: kurslar, topshiriqlar, testlar, GPA, transkript va jadval.";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    siteName: "TTPU LMS",
+  },
+  twitter: {
+    card: "summary",
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+  },
+};
+
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Turin Politexnika Universiteti",
+      alternateName: "TTPU LMS",
+      url: SITE_URL,
+      email: "info@ttpu.uz",
+      telephone: "+998 71 289 99 00",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Toshkent",
+        addressCountry: "UZ",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "TTPU LMS",
+      url: SITE_URL,
+      inLanguage: "uz",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+  ],
+};
 
 const NAV_LINKS = [
   { href: "#imkoniyatlar", label: "Imkoniyatlar" },
@@ -296,6 +349,10 @@ const FOOTER_PLATFORM = [
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+      />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-800 focus:shadow-lg"
@@ -503,7 +560,7 @@ export default function HomePage() {
               </div>
 
               <div className="absolute -right-3 -top-6 hidden items-center gap-2.5 rounded-2xl border border-slate-200 bg-white/95 px-3.5 py-2.5 shadow-lift backdrop-blur sm:flex">
-                <span className="inline-flex size-8 items-center justify-center rounded-xl bg-gold-300/20 text-gold-600">
+                <span className="inline-flex size-8 items-center justify-center rounded-xl bg-gold-300/20 text-gold-800">
                   <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"

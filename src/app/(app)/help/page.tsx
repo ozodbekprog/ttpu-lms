@@ -276,7 +276,7 @@ export default function HelpPage() {
         <ContactCards />
       </div>
 
-      <p className="pt-10 text-center text-xs text-slate-400">
+      <p className="pt-10 text-center text-xs text-slate-600">
         Ma&apos;lumot sentabr 2026 holatiga ko&apos;ra yangilangan. Takliflar uchun:{" "}
         <a href="mailto:academic.department@polito.uz" className="hover:text-brand-600 hover:underline">
           academic.department@polito.uz

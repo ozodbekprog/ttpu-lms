@@ -160,7 +160,7 @@ export function MessageThread({
                         <span
                           className={cn(
                             "mt-1 flex items-center justify-end gap-1 text-[10px]",
-                            own ? "text-brand-200" : "text-slate-400",
+                            own ? "text-brand-200" : "text-slate-600",
                           )}
                         >
                           {fmtClock(message.createdAt)}
@@ -197,7 +197,7 @@ export function MessageThread({
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Xabar yozing..."
-            className="max-h-32 min-h-9 flex-1 resize-none bg-transparent py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+            className="max-h-32 min-h-9 flex-1 resize-none bg-transparent py-2 text-sm text-slate-900 outline-none placeholder:text-slate-500"
           />
           <button
             type="button"
@@ -212,7 +212,7 @@ export function MessageThread({
             </svg>
           </button>
         </div>
-        <p className="mt-2 hidden px-2 text-[11px] text-slate-400 sm:block">
+        <p className="mt-2 hidden px-2 text-[11px] text-slate-600 sm:block">
           Enter — yuborish, Shift+Enter — yangi qator
         </p>
       </div>

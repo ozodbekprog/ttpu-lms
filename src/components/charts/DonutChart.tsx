@@ -10,7 +10,7 @@ export function DonutChart({ data }: { data: DonutChartDatum[] }) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   if (data.length === 0 || total === 0) {
-    return <p className="py-12 text-center text-sm text-slate-400">{"Ma'lumot yo'q"}</p>;
+    return <p className="py-12 text-center text-sm text-slate-600">{"Ma'lumot yo'q"}</p>;
   }
 
   const segments = data.reduce<
@@ -93,7 +93,7 @@ export function DonutChart({ data }: { data: DonutChartDatum[] }) {
               />
               <span className="min-w-0 flex-1 truncate text-sm text-slate-600">{item.label}</span>
               <span className="text-sm font-semibold text-slate-900">{item.value}</span>
-              <span className="w-9 text-right text-xs text-slate-400">{percent}%</span>
+              <span className="w-9 text-right text-xs text-slate-600">{percent}%</span>
             </li>
           );
         })}

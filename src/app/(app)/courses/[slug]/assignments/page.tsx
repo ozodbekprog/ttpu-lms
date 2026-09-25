@@ -306,7 +306,7 @@ export default async function CourseAssignmentsPage({
                         </svg>
                         {assignment._count.submissions} ta topshirilgan
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-slate-600">
                         Yaratilgan: {fmtDate(assignment.createdAt)}
                       </span>
                     </div>

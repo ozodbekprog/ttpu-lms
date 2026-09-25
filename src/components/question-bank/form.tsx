@@ -153,7 +153,7 @@ export function BankQuestionForm({
             </Select>
           </div>
         </div>
-        <p className="text-xs text-slate-400">Kamida bitta kurs yoki fan tanlanishi shart</p>
+        <p className="text-xs text-slate-600">Kamida bitta kurs yoki fan tanlanishi shart</p>
 
         <div>
           <Label>Savol matni</Label>
@@ -231,7 +231,7 @@ export function BankQuestionForm({
           <div className="space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-medium text-slate-700">Variantlar</span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-600">
                 {type === "SINGLE" ? "Bitta to'g'ri javobni belgilang" : "Bir nechta to'g'ri javobni belgilang"}
               </span>
             </div>
@@ -277,7 +277,7 @@ export function BankQuestionForm({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="shrink-0 text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
+                    className="shrink-0 text-slate-600! hover:bg-rose-50! hover:text-rose-600!"
                     onClick={() => removeOption(index)}
                     disabled={options.length <= 2}
                   >

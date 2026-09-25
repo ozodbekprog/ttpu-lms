@@ -55,7 +55,7 @@ export function gpaTier(gpa: number): GpaTier {
 export function gpaRingTone(gpa: number, dark = false) {
   if (gpa >= 3.5) return dark ? "text-emerald-400" : "text-emerald-500";
   if (gpa >= 3.0) return dark ? "text-brand-400" : "text-brand-500";
-  if (gpa >= 2.5) return dark ? "text-gold-400" : "text-gold-500";
+  if (gpa >= 2.5) return dark ? "text-gold-400" : "text-gold-700";
   if (gpa >= 2.0) return dark ? "text-amber-400" : "text-amber-500";
   return dark ? "text-rose-400" : "text-rose-500";
 }
@@ -172,7 +172,7 @@ export function GpaRing({
         <span
           className={cn(
             "mt-2 text-[11px] font-semibold uppercase tracking-[0.22em]",
-            dark ? "text-brand-200" : "text-slate-400",
+            dark ? "text-brand-200" : "text-slate-600",
           )}
         >
           4.0 tizim

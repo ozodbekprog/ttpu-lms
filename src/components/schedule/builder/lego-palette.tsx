@@ -82,7 +82,7 @@ export function LegoPalette({
         ) : null}
 
         {blocks.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400">
+          <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-600">
             {"Bu guruhda sizning fanlaringiz topilmadi"}
           </p>
         ) : (

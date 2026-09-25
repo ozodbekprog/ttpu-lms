@@ -145,12 +145,12 @@ export default async function CertificatePage({
             </h1>
             <p className="mt-1 text-sm text-slate-500">
               {certificate.course.title} ·{" "}
-              <span className="font-mono text-xs tracking-wider text-slate-400">{serial}</span>
+              <span className="font-mono text-xs tracking-wider text-slate-600">{serial}</span>
             </p>
           </div>
           <div className="flex flex-col items-end gap-1.5">
             <PrintButton />
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               {dict.certPrintHint}
             </p>
           </div>
@@ -199,7 +199,7 @@ export default async function CertificatePage({
                 <span className="size-1.5 rotate-45 bg-gold-500" />
                 <span className="h-px w-10 bg-gold-400/70" />
               </div>
-              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-gold-600">
+              <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.3em] text-gold-800">
                 {dict.certSubtitle}
               </p>
 
@@ -208,7 +208,7 @@ export default async function CertificatePage({
                 {certificate.student.name}
               </p>
               {certificate.student.group ? (
-                <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-600">
                   {dict.certGroupFormat.replace("{group}", certificate.student.group.name)}
                 </p>
               ) : null}
@@ -220,7 +220,7 @@ export default async function CertificatePage({
                 {certificate.course.title}
               </p>
               {certificate.grade != null ? (
-                <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-gold-400/60 bg-gold-300/15 px-5 py-1.5 text-sm font-semibold text-gold-600">
+                <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-gold-400/60 bg-gold-300/15 px-5 py-1.5 text-sm font-semibold text-gold-800">
                   <span className="size-1.5 rotate-45 bg-gold-500" />
                   {dict.certResultFormat
                     .replace("{score}", String(certificate.grade))
@@ -233,14 +233,14 @@ export default async function CertificatePage({
               <div className="text-left">
                 <p className="font-semibold text-slate-700">{dict.certDate}</p>
                 <p className="mt-1 text-slate-500">{fmtDate(certificate.issuedAt)}</p>
-                <p className="mt-0.5 text-[10px] text-slate-400">{dict.certCity}</p>
+                <p className="mt-0.5 text-[10px] text-slate-600">{dict.certCity}</p>
               </div>
               <div className="flex flex-col items-center">
                 <p className="font-serif text-base italic text-brand-900">
                   {certificate.issuedBy.name}
                 </p>
                 <div className="mt-1.5 h-px w-32 bg-gold-400/80 sm:w-40" />
-                <p className="mt-1 text-[10px] uppercase tracking-widest text-slate-400">
+                <p className="mt-1 text-[10px] uppercase tracking-widest text-slate-600">
                   {dict.certSignature}
                 </p>
               </div>
@@ -249,7 +249,7 @@ export default async function CertificatePage({
                 <p className="mt-1 font-mono text-[11px] tracking-wider text-slate-500">
                   {serial}
                 </p>
-                <p className="mt-0.5 text-[10px] text-slate-400">{dict.certIssuedVia}</p>
+                <p className="mt-0.5 text-[10px] text-slate-600">{dict.certIssuedVia}</p>
               </div>
             </div>
           </div>

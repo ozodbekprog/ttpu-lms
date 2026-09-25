@@ -76,13 +76,13 @@ export function ProfileForm({
         <form onSubmit={onSubmit} className="space-y-5">
           <div className="grid gap-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-5 sm:grid-cols-[auto_1fr] sm:items-center">
             <div className="flex flex-col items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
                 Avatar
               </span>
               <AvatarUpload name={initialName} src={avatarUrl} size={92} />
             </div>
             <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
                 Muqova
               </span>
               <CoverUpload />
@@ -92,7 +92,7 @@ export function ProfileForm({
           <div>
             <Label>Ism</Label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
@@ -116,7 +116,7 @@ export function ProfileForm({
               <span
                 className={cn(
                   "text-xs tabular-nums",
-                  bioNearLimit ? "font-medium text-amber-600" : "text-slate-400",
+                  bioNearLimit ? "font-medium text-amber-600" : "text-slate-600",
                 )}
               >
                 {bio.length}/{BIO_MAX}

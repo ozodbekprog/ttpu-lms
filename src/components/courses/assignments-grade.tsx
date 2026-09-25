@@ -91,7 +91,7 @@ export function AssignmentsGrade({
           <div className="min-w-0">
             {submissions.length === 0 ? (
               <div className="flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-10 text-center">
-                <span className="mb-1 inline-flex size-10 items-center justify-center rounded-full bg-white text-slate-400 ring-1 ring-slate-200">
+                <span className="mb-1 inline-flex size-10 items-center justify-center rounded-full bg-white text-slate-600 ring-1 ring-slate-200">
                   <svg
                     width="17"
                     height="17"
@@ -173,7 +173,7 @@ export function AssignmentsGrade({
                             Yuklab olish
                           </a>
                         ) : (
-                          <span className="text-slate-300">—</span>
+                          <span className="text-slate-500">—</span>
                         )}
                       </td>
                       <td className="px-3 py-3 text-sm whitespace-nowrap text-slate-700">
@@ -182,7 +182,7 @@ export function AssignmentsGrade({
                         ) : (
                           "—"
                         )}
-                        <span className="text-slate-400">/{maxScore}</span>
+                        <span className="text-slate-600">/{maxScore}</span>
                       </td>
                       <td className="px-3 py-3 text-right">
                         <Button size="sm" variant="secondary" onClick={() => select(submission)}>
@@ -215,7 +215,7 @@ export function AssignmentsGrade({
                   <button
                     type="button"
                     onClick={() => setSelectedId(null)}
-                    className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+                    className="shrink-0 rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-white hover:text-slate-700"
                     aria-label="Panelni yopish"
                   >
                     <svg
@@ -245,7 +245,7 @@ export function AssignmentsGrade({
 
                   {selected.text ? (
                     <div className="rounded-xl border-l-[3px] border-brand-300 bg-slate-50 px-3.5 py-3">
-                      <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                      <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                         Javob matni
                       </p>
                       <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-wrap text-slate-600">
@@ -253,7 +253,7 @@ export function AssignmentsGrade({
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-400">Javob matni kiritilmagan.</p>
+                    <p className="text-sm text-slate-600">Javob matni kiritilmagan.</p>
                   )}
 
                   {selected.fileUrl ? (
@@ -290,7 +290,7 @@ export function AssignmentsGrade({
                         strokeWidth="1.8"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="shrink-0 text-slate-400"
+                        className="shrink-0 text-slate-600"
                       >
                         <path d="M12 3v12" />
                         <path d="m7 10 5 5 5-5" />

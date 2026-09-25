@@ -9,7 +9,7 @@ const PODIUM_META: Record<
 > = {
   1: {
     bar: "bg-gradient-to-t from-gold-600 via-gold-400 to-gold-300",
-    num: "bg-white/25 text-white",
+    num: "bg-white/70 text-brand-950",
     height: "h-24 sm:h-36",
     delay: "140ms",
     label: "Chempion",
@@ -37,7 +37,7 @@ const ORDER: Record<number, string> = {
 };
 
 const RANK_TONES: Record<number, string> = {
-  1: "bg-gradient-to-br from-gold-300 to-gold-500 text-white shadow-sm shadow-gold-400/40",
+  1: "bg-gradient-to-br from-gold-300 to-gold-500 text-brand-950 shadow-sm shadow-gold-400/40",
   2: "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-700 shadow-sm shadow-slate-300/40",
   3: "bg-gradient-to-br from-amber-500 to-amber-700 text-white shadow-sm shadow-amber-600/40",
 };
@@ -118,7 +118,7 @@ function Podium({ rows }: { rows: RankedRating[] }) {
             >
               <span className="relative inline-flex">
                 {isFirst ? (
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-gold-500">
+                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-gold-700">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                       <path d="m12 2 2.6 6.6L21 9.2l-4.7 4.1 1.4 6.7L12 16.6 6.3 20l1.4-6.7L3 9.2l6.4-.6Z" />
                     </svg>
@@ -149,7 +149,7 @@ function Podium({ rows }: { rows: RankedRating[] }) {
                   siz
                 </span>
               ) : (
-                <span className="mt-1 hidden text-[10px] uppercase tracking-wide text-slate-300 sm:block">
+                <span className="mt-1 hidden text-[10px] uppercase tracking-wide text-slate-500 sm:block">
                   {meta.label}
                 </span>
               )}
@@ -195,7 +195,7 @@ export function RatingPanel({
       <CardHeader
         title={
           <span className="flex items-center gap-2">
-            <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gold-300/25 text-gold-600">
+            <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gold-300/25 text-gold-800">
               <TrophyIcon />
             </span>
             Reyting
@@ -223,7 +223,7 @@ export function RatingPanel({
                 <RatingRow key={row.studentId} row={row} delay={index * 35} />
               ))}
               {hidden > 0 ? (
-                <li className="py-2 text-center text-xs font-semibold tracking-widest text-slate-300">
+                <li className="py-2 text-center text-xs font-semibold tracking-widest text-slate-500">
                   ···
                 </li>
               ) : null}

@@ -73,7 +73,7 @@ export default async function CourseAnnouncementsPage({
                           <p className="text-sm font-semibold text-slate-900">
                             {announcement.author.name}
                           </p>
-                          <span className="text-xs text-slate-300">·</span>
+                          <span className="text-xs text-slate-500">·</span>
                           <p className="text-xs text-slate-500">
                             {fmtDateTime(announcement.createdAt)}
                           </p>

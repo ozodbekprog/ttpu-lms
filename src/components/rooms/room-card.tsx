@@ -84,7 +84,7 @@ export function RoomCard({
                 strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="shrink-0 text-slate-400"
+                className="shrink-0 text-slate-600"
               >
                 <path d="M3 21h18" />
                 <path d="M5 21V7l7-4 7 4v14" />
@@ -106,7 +106,7 @@ export function RoomCard({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-slate-400"
+              className="text-slate-600"
             >
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
@@ -125,7 +125,7 @@ export function RoomCard({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-slate-400"
+              className="text-slate-600"
             >
               <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" />
             </svg>
@@ -134,7 +134,7 @@ export function RoomCard({
         </div>
 
         <div className="flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Jihozlar</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">Jihozlar</p>
           {equipment.length ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {equipment.map((item) => (
@@ -148,7 +148,7 @@ export function RoomCard({
               ))}
             </div>
           ) : (
-            <p className="mt-1.5 text-xs text-slate-400">Ko&apos;rsatilmagan</p>
+            <p className="mt-1.5 text-xs text-slate-600">Ko&apos;rsatilmagan</p>
           )}
         </div>
 

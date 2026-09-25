@@ -82,7 +82,7 @@ export default async function RoomUsagePage({
             <span className="size-3 rounded border border-dashed border-slate-300 bg-slate-50" />
             Bo&apos;sh
           </span>
-          <span className="text-slate-400">
+          <span className="text-slate-600">
             {lessonCount} ta dars · {bookingCount} ta bron
           </span>
         </div>
@@ -105,7 +105,7 @@ export default async function RoomUsagePage({
               </p>
             </div>
             <div className="grid grid-cols-[76px_repeat(6,minmax(0,1fr))] gap-1.5">
-              <div className="flex items-center justify-center rounded-xl bg-slate-100/70 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="flex items-center justify-center rounded-xl bg-slate-100/70 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
                 Par
               </div>
               {DAYS.map((day) => (
@@ -114,7 +114,7 @@ export default async function RoomUsagePage({
                   className="rounded-xl bg-slate-50 px-2 py-2 text-center ring-1 ring-slate-100"
                 >
                   <p className="text-xs font-semibold text-slate-700">{dayName(day)}</p>
-                  <p className="text-[10px] text-slate-400">{formatDayShort(dayIsoInWeek(week, day))}</p>
+                  <p className="text-[10px] text-slate-600">{formatDayShort(dayIsoInWeek(week, day))}</p>
                 </div>
               ))}
 
@@ -122,7 +122,7 @@ export default async function RoomUsagePage({
                 <Fragment key={slot}>
                   <div className="flex flex-col items-center justify-center rounded-xl bg-slate-50 px-1 py-2 text-center ring-1 ring-slate-100">
                     <span className="text-xs font-semibold text-slate-700">{slot}-par</span>
-                    <span className="mt-0.5 text-[10px] leading-tight text-slate-400">
+                    <span className="mt-0.5 text-[10px] leading-tight text-slate-600">
                       {SLOT_TIMES[slot]}
                     </span>
                   </div>
@@ -161,15 +161,15 @@ export default async function RoomUsagePage({
                             key={`booking-${index}`}
                             className="rounded-lg border border-gold-300 bg-gold-300/20 px-2 py-1.5"
                           >
-                            <p className="truncate text-[11px] font-semibold text-gold-600">
+                            <p className="truncate text-[11px] font-semibold text-gold-800">
                               {booking.purpose ?? "Bron"}
                             </p>
-                            <p className="truncate text-[10px] text-gold-600">{booking.userName}</p>
+                            <p className="truncate text-[10px] text-gold-800">{booking.userName}</p>
                           </div>
                         ))}
                         {!occupied ? (
                           <div className="flex flex-1 flex-col items-center justify-center gap-1">
-                            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-600">
                               Bo&apos;sh
                             </span>
                             <Link

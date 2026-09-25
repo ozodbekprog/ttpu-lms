@@ -58,7 +58,7 @@ export default async function AdminUsersPage({
         <Card className="overflow-hidden">
           <CardBody className="flex flex-wrap items-center gap-2">
             <div className="relative w-full sm:w-80">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-600">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="7" />
                   <path d="m20 20-3.5-3.5" />
@@ -90,7 +90,7 @@ export default async function AdminUsersPage({
                 Tozalash
               </Link>
             ) : null}
-            <span className="ml-auto hidden items-center gap-2 text-xs font-medium text-slate-400 sm:inline-flex">
+            <span className="ml-auto hidden items-center gap-2 text-xs font-medium text-slate-600 sm:inline-flex">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />

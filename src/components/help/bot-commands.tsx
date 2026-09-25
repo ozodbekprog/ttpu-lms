@@ -25,7 +25,7 @@ export function BotCommands({ commands }: { commands: BotCommand[] }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] uppercase tracking-[0.14em] text-slate-400">
+                <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] uppercase tracking-[0.14em] text-slate-600">
                   <th className="px-6 py-3 font-semibold">Buyruq</th>
                   <th className="px-6 py-3 font-semibold">Tavsif</th>
                   <th className="hidden px-6 py-3 font-semibold md:table-cell">Natija</th>

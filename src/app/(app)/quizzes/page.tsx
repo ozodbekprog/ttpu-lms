@@ -154,7 +154,7 @@ export default async function QuizzesPage() {
                     >
                       Tahrirlash
                     </ButtonLink>
-                    <span className="ml-auto text-xs text-slate-400">
+                    <span className="ml-auto text-xs text-slate-600">
                       Maks: {quiz.maxAttempts} urinish
                     </span>
                   </div>

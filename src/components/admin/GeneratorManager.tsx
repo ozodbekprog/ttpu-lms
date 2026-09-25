@@ -211,7 +211,7 @@ export default function GeneratorManager({ initial }: { initial: GeneratorStats 
           />
           <CardBody className="space-y-5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Tayyor profil:</span>
+              <span className="text-xs font-medium uppercase tracking-wider text-slate-600">Tayyor profil:</span>
               {PRESETS.map((preset) => {
                 const active = groups === preset.groups && studentsPerGroup === preset.students;
                 return (
@@ -261,7 +261,7 @@ export default function GeneratorManager({ initial }: { initial: GeneratorStats 
                   onChange={(event) => setGroups(event.target.value)}
                   className="mt-2.5 w-full accent-brand-900 disabled:opacity-50"
                 />
-                <p className="mt-1.5 text-xs text-slate-400">
+                <p className="mt-1.5 text-xs text-slate-600">
                   CS-25, CS-26, EE-25, ME-25, SE-25 ro&apos;yxatidan olinadi
                 </p>
               </div>
@@ -289,7 +289,7 @@ export default function GeneratorManager({ initial }: { initial: GeneratorStats 
                   onChange={(event) => setStudentsPerGroup(event.target.value)}
                   className="mt-2.5 w-full accent-brand-900 disabled:opacity-50"
                 />
-                <p className="mt-1.5 text-xs text-slate-400">Faqat yangi yaratilgan guruhlarga qo&apos;shiladi</p>
+                <p className="mt-1.5 text-xs text-slate-600">Faqat yangi yaratilgan guruhlarga qo&apos;shiladi</p>
               </div>
             </div>
 
@@ -298,7 +298,7 @@ export default function GeneratorManager({ initial }: { initial: GeneratorStats 
                 <span className="font-medium text-slate-500">
                   {busy ? "Generatsiya qilinmoqda..." : result ? "Yakunlandi" : "Kutilmoqda"}
                 </span>
-                <span className="tabular-nums text-slate-400">
+                <span className="tabular-nums text-slate-600">
                   {result ? `${createdTotal} ta yozuv qo'shildi` : `≈ ${estimate} ta yangi talaba`}
                 </span>
               </div>
@@ -355,7 +355,7 @@ export default function GeneratorManager({ initial }: { initial: GeneratorStats 
                   </div>
                   <div className="mt-2.5 flex items-center gap-2.5">
                     <Progress value={pct} max={100} className="flex-1" />
-                    <span className="w-14 text-right text-xs tabular-nums text-slate-400">
+                    <span className="w-14 text-right text-xs tabular-nums text-slate-600">
                       {check.target > 0 ? `${check.value}/${check.target}` : check.value}
                     </span>
                   </div>
@@ -432,7 +432,7 @@ export default function GeneratorManager({ initial }: { initial: GeneratorStats 
                     </span>
                   </div>
                   <p className="mt-3 text-sm font-medium text-slate-700">{item.label}</p>
-                  <p className="text-xs text-slate-400">{item.hint}</p>
+                  <p className="text-xs text-slate-600">{item.hint}</p>
                   <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
                       className={cn("h-full rounded-full bg-gradient-to-r transition-all duration-700", item.tone)}

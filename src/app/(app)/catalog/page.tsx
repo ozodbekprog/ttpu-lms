@@ -52,7 +52,7 @@ export default async function CatalogPage({
   const searchForm = (
     <form action="/catalog" method="get" className="flex w-full flex-wrap items-center gap-2">
       <div className="relative w-full sm:w-96">
-        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-600">
           <svg
             width="15"
             height="15"

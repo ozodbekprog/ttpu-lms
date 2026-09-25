@@ -127,7 +127,7 @@ function ResultRow({
         {subtitle ? <span className="mt-0.5 block truncate text-sm text-slate-500">{subtitle}</span> : null}
       </span>
       {badge}
-      {meta ? <span className="hidden shrink-0 text-xs text-slate-400 sm:block">{meta}</span> : null}
+      {meta ? <span className="hidden shrink-0 text-xs text-slate-600 sm:block">{meta}</span> : null}
       {CHEVRON_ICON}
     </Link>
   );

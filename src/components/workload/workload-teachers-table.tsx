@@ -109,7 +109,7 @@ export function WorkloadTeachersTable({
   return (
     <Table>
       <thead>
-        <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
           {COLUMNS.map((column) => {
             const active = sort === column.key;
             return (
@@ -159,7 +159,7 @@ export function WorkloadTeachersTable({
                 >
                   {teacher.name}
                 </Link>
-                <p className="text-xs text-slate-400">{teacher.email}</p>
+                <p className="text-xs text-slate-600">{teacher.email}</p>
               </td>
               <td className="px-5 py-3 text-right tabular-nums text-slate-700">
                 {teacher.courseCount}
@@ -174,7 +174,7 @@ export function WorkloadTeachersTable({
                 {teacher.pendingReviews > 0 ? (
                   <Badge tone="amber">{teacher.pendingReviews}</Badge>
                 ) : (
-                  <span className="tabular-nums text-slate-400">0</span>
+                  <span className="tabular-nums text-slate-600">0</span>
                 )}
               </td>
             </tr>

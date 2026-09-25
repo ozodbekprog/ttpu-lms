@@ -82,26 +82,26 @@ export function CertificateCard({ certificate }: { certificate: CertificateCardD
 
         <dl className="mt-4 space-y-2 rounded-xl bg-slate-50/80 px-3.5 py-3 text-xs ring-1 ring-slate-100">
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-slate-400">Seriya</dt>
+            <dt className="text-slate-600">Seriya</dt>
             <dd className="rounded-md bg-white px-2 py-0.5 font-mono text-[11px] tracking-wider text-brand-800 ring-1 ring-slate-200">
               {certificateSerial(certificate.id)}
             </dd>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-slate-400">Ball</dt>
+            <dt className="text-slate-600">Ball</dt>
             <dd className="font-semibold text-slate-700">
               {certificate.grade ?? "—"}
-              <span className="ml-1 text-[11px] font-normal text-slate-400">{grade.label}</span>
+              <span className="ml-1 text-[11px] font-normal text-slate-600">{grade.label}</span>
             </dd>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <dt className="text-slate-400">Bergan</dt>
+            <dt className="text-slate-600">Bergan</dt>
             <dd className="truncate font-medium text-slate-600">{certificate.issuedBy.name}</dd>
           </div>
         </dl>
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-5">
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-600">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M20 6 9 17l-5-5" />
             </svg>

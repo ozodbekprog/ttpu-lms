@@ -198,7 +198,7 @@ export function CourseStudents({
               <div className="min-w-52 flex-1">
                 <Label>Qidiruv</Label>
                 <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">
                     <svg
                       width="15"
                       height="15"
@@ -296,7 +296,7 @@ export function CourseStudents({
           <CardHeader title="Talabalar" subtitle={`${enrollments.length} ta yozilgan`} />
           <Table>
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] uppercase tracking-[0.08em] text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/80 text-[11px] uppercase tracking-[0.08em] text-slate-600">
                 <th className="px-5 py-3.5 font-semibold">#</th>
                 <th className="px-5 py-3.5 font-semibold">
                   <span className="inline-flex items-center gap-1.5">
@@ -401,7 +401,7 @@ export function CourseStudents({
                         {enrollment.user.group.name}
                       </span>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-slate-600">—</span>
                     )}
                   </td>
                   <td className="px-5 py-3 text-slate-500">{fmtDate(enrollment.createdAt)}</td>

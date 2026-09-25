@@ -125,7 +125,7 @@ export function NotificationBell() {
                 {unreadCount} ta yangi
               </span>
             ) : (
-              <span className="text-[11px] text-slate-400">Hammasi o&apos;qilgan</span>
+              <span className="text-[11px] text-slate-600">Hammasi o&apos;qilgan</span>
             )}
           </div>
 
@@ -139,14 +139,14 @@ export function NotificationBell() {
               </span>
               <div>
                 <p className="text-sm font-medium text-slate-700">Bildirishnomalar yo&apos;q</p>
-                <p className="mt-0.5 text-xs text-slate-400">Yangi xabarlar shu yerda ko&apos;rinadi</p>
+                <p className="mt-0.5 text-xs text-slate-600">Yangi xabarlar shu yerda ko&apos;rinadi</p>
               </div>
             </div>
           ) : (
             <div className="max-h-96 overflow-y-auto">
               {sections.map((section, sectionIndex) => (
                 <div key={section.key} className={cn(sectionIndex > 0 && "border-t border-slate-100")}>
-                  <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
                     {section.label}
                   </p>
                   <ul className="divide-y divide-slate-100">
@@ -194,7 +194,7 @@ export function NotificationBell() {
                                   {n.body}
                                 </span>
                               ) : null}
-                              <span className="mt-1 block text-[11px] text-slate-400">
+                              <span className="mt-1 block text-[11px] text-slate-600">
                                 {fmtDateTime(n.createdAt)}
                               </span>
                             </span>

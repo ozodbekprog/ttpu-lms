@@ -360,7 +360,7 @@ export default function UsersManager({
         ) : (
           <Table className="max-h-[68vh] overflow-y-auto">
             <thead>
-              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Foydalanuvchi</th>
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Rol</th>
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Guruh</th>

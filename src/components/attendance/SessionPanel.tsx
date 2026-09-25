@@ -341,7 +341,7 @@ export function SessionPanel({
                   )}
                 </div>
               </div>
-              <p className="mt-5 text-center text-xs text-slate-400">
+              <p className="mt-5 text-center text-xs text-slate-600">
                 Talabalar QR kodni telefon kamerasi bilan skanerlaydi
               </p>
             </div>
@@ -378,7 +378,7 @@ export function SessionPanel({
                         className="stroke-gold-400 drop-shadow-[0_0_6px_rgba(212,175,55,0.45)]"
                       />
                     </svg>
-                    <span className="font-mono text-[11px] font-semibold tabular-nums text-gold-600">
+                    <span className="font-mono text-[11px] font-semibold tabular-nums text-gold-800">
                       {formatRemaining(remainingMs)}
                     </span>
                   </span>
@@ -430,7 +430,7 @@ export function SessionPanel({
                   Belgilanganlar:{" "}
                   <span className="font-semibold text-brand-800">{latest.marked.length}</span>
                   {studentCount ? (
-                    <span className="text-slate-400"> / {studentCount}</span>
+                    <span className="text-slate-600"> / {studentCount}</span>
                   ) : null}
                 </p>
                 {latest.marked.length === 0 ? (
@@ -453,7 +453,7 @@ export function SessionPanel({
                 )}
               </div>
 
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Ro&apos;yxat 30 sekundda bir marta avtomatik yangilanadi.
               </p>
             </div>
@@ -466,12 +466,12 @@ export function SessionPanel({
 
         {history.length > 0 ? (
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
               So&apos;nggi sessiyalar
             </p>
             <Table>
               <thead>
-                <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-600">
                   <th className="py-2.5 pr-3 text-left font-medium">Sana</th>
                   <th className="px-3 py-2.5 text-left font-medium">Holat</th>
                   <th className="px-3 py-2.5 text-right font-medium">Belgilangan</th>

@@ -159,7 +159,7 @@ export function StaffAttendanceOverview({ courses }: { courses: StaffCourseAtten
                   <p className="mt-2.5 text-xl font-semibold tabular-nums text-brand-950">
                     {tile.key === "marks" && totals.total === 0 ? "—" : tileValues[tile.key]}
                   </p>
-                  <p className="text-xs text-slate-400">{tile.label}</p>
+                  <p className="text-xs text-slate-600">{tile.label}</p>
                 </div>
               ))}
             </div>
@@ -190,7 +190,7 @@ export function StaffAttendanceOverview({ courses }: { courses: StaffCourseAtten
                   >
                     {course.title}
                   </Link>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-slate-600">
                     {course.students} ta talaba · {course.total} ta belgi
                   </p>
                 </div>
@@ -198,7 +198,7 @@ export function StaffAttendanceOverview({ courses }: { courses: StaffCourseAtten
                   className={cn(
                     "shrink-0 rounded-xl px-2 py-1 text-lg font-semibold tabular-nums",
                     course.total === 0
-                      ? "text-slate-300"
+                      ? "text-slate-500"
                       : course.percent >= 80
                         ? "bg-emerald-50 text-emerald-600"
                         : course.percent >= 60

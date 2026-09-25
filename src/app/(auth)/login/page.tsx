@@ -235,7 +235,7 @@ export default function LoginPage() {
             <div className="mt-8">
               <div className="flex items-center gap-3">
                 <span className="h-px flex-1 bg-slate-100" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-400">
+                <span className="text-xs font-medium uppercase tracking-[0.14em] text-slate-600">
                   {t("authDemoTitle")}
                 </span>
                 <span className="h-px flex-1 bg-slate-100" />
@@ -257,7 +257,7 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-center text-[11px] text-slate-400">
+              <p className="mt-3 text-center text-[11px] text-slate-600">
                 {t("authDemoHint")}
               </p>
             </div>
@@ -271,7 +271,7 @@ export default function LoginPage() {
               </Link>
             </p>
           </Card>
-          <p className="mt-6 text-center text-xs text-slate-400">
+          <p className="mt-6 text-center text-xs text-slate-600">
             {t("authLoginTerms")}
           </p>
         </div>

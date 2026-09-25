@@ -255,7 +255,7 @@ export function LessonAttendance({
                       <Avatar name={student.name} src={student.avatarUrl} className="size-8! text-[10px]" />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-slate-800">{student.name}</p>
-                        <p className="flex items-center gap-1.5 text-xs text-slate-400">
+                        <p className="flex items-center gap-1.5 text-xs text-slate-600">
                           <span className={cn("size-1.5 rounded-full", activeOption?.dot)} />
                           {student.subGroupName ?? student.groupName ?? activeOption?.label}
                         </p>
@@ -296,7 +296,7 @@ export function LessonAttendance({
             <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>
           ) : null}
 
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600">
             QR orqali belgilanganlar avtomatik &quot;Keldi&quot; bo&apos;lib turadi.
           </p>
         </CardBody>

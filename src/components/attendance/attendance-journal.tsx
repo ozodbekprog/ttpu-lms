@@ -397,7 +397,7 @@ export function AttendanceJournal({
                           </span>
                           <span
                             className={cn(
-                              "block text-[10px] font-normal text-slate-400",
+                              "block text-[10px] font-normal text-slate-600",
                               isToday && "font-semibold text-brand-500",
                             )}
                           >
@@ -554,7 +554,7 @@ export function AttendanceJournal({
                 </span>
                 Belgilanmagan
               </span>
-              <span className="ml-auto hidden text-slate-400 sm:inline">
+              <span className="ml-auto hidden text-slate-600 sm:inline">
                 {canEdit ? "Tahrirlash uchun katak ustiga bosing" : "Faqat ko'rish"}
               </span>
             </div>
@@ -573,7 +573,7 @@ export function AttendanceJournal({
                 )}
                 style={editor.mobile ? undefined : { top: editor.top, left: editor.left }}
               >
-            <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-400">
+            <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-600">
               {editingStudent?.name ?? ""} · {journalDateParts(editor.date).label}
             </p>
             <div className="flex justify-between gap-1">

@@ -108,7 +108,7 @@ export function AttendanceBulk({
                 }}
                 required
               />
-              <p className="mt-1.5 text-xs text-slate-400 sm:hidden">
+              <p className="mt-1.5 text-xs text-slate-600 sm:hidden">
                 P — Bor, A — Yo&apos;q, L — Kechikkan, E — Sababli
               </p>
             </div>

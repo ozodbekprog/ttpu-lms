@@ -40,7 +40,7 @@ function Stars({ value, className, size = 14 }: { value: number; className?: str
           height={size}
           viewBox="0 0 24 24"
           fill="currentColor"
-          className={cn(star <= value ? "text-gold-500 drop-shadow-sm" : "text-slate-300")}
+          className={cn(star <= value ? "text-gold-700 drop-shadow-sm" : "text-slate-300")}
         >
           <path d={STAR_PATH} />
         </svg>
@@ -76,7 +76,7 @@ function StarInput({
             fill="currentColor"
             className={cn(
               "transition-colors duration-150",
-              star <= value ? "text-gold-500 drop-shadow-sm" : "text-slate-300 hover:text-gold-300",
+              star <= value ? "text-gold-700 drop-shadow-sm" : "text-slate-300 hover:text-gold-300",
             )}
           >
             <path d={STAR_PATH} />
@@ -205,13 +205,13 @@ export function CourseReviews({
         {data ? (
           data.count === 0 ? (
             <div className="flex flex-col items-center gap-1.5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-8 text-center">
-              <span className="mb-1 inline-flex size-10 items-center justify-center rounded-full bg-gold-300/20 text-gold-500">
+              <span className="mb-1 inline-flex size-10 items-center justify-center rounded-full bg-gold-300/20 text-gold-700">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d={STAR_PATH} />
                 </svg>
               </span>
               <p className="text-sm font-medium text-slate-600">Hozircha sharhlar yo&apos;q</p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Birinchi bo&apos;lib fikringizni qoldiring.
               </p>
             </div>
@@ -251,7 +251,7 @@ export function CourseReviews({
                       <span className="w-3 text-right font-semibold tabular-nums text-slate-600">
                         {row.rating}
                       </span>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-gold-500">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 text-gold-700">
                         <path d={STAR_PATH} />
                       </svg>
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/60">
@@ -286,8 +286,8 @@ export function CourseReviews({
                 className={cn(
                   "rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset",
                   rating > 0
-                    ? "bg-white text-gold-600 ring-gold-300/60"
-                    : "bg-white/70 text-slate-400 ring-slate-200",
+                    ? "bg-white text-gold-800 ring-gold-300/60"
+                    : "bg-white/70 text-slate-600 ring-slate-200",
                 )}
               >
                 {rating > 0 ? `${rating} / 5` : "Yulduz tanlang"}
@@ -302,7 +302,7 @@ export function CourseReviews({
                 maxLength={500}
                 placeholder="Kurs haqida fikringiz..."
               />
-              <p className="mt-1 text-right text-xs text-slate-400">{comment.length}/500</p>
+              <p className="mt-1 text-right text-xs text-slate-600">{comment.length}/500</p>
             </div>
             {saved ? (
               <p className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600">
@@ -352,7 +352,7 @@ export function CourseReviews({
                     <span className="text-sm font-semibold text-slate-900">{review.user.name}</span>
                     {review.mine ? <Badge tone="gold">Siz</Badge> : null}
                     <Stars value={review.rating} />
-                    <span className="ml-auto text-xs text-slate-400">{fmtDate(review.createdAt)}</span>
+                    <span className="ml-auto text-xs text-slate-600">{fmtDate(review.createdAt)}</span>
                   </div>
                   {review.comment ? (
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">

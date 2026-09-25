@@ -111,7 +111,7 @@ export function SectionHeading({
     <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h2 className="text-sm font-semibold tracking-[0.14em] text-slate-700 uppercase">{title}</h2>
-        {subtitle ? <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-0.5 text-xs text-slate-600">{subtitle}</p> : null}
       </div>
       {action}
     </div>

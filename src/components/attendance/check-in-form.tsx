@@ -238,7 +238,7 @@ export function CheckInForm({ initialPayload }: { initialPayload?: QrScanPayload
               <p className="text-sm font-medium text-slate-600">
                 {message ?? "Tekshirilmoqda..."}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Joylashuv so&apos;ralsa — ruxsat bering
               </p>
             </div>

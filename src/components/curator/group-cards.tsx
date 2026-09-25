@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { CuratorGroupSummary } from "@/app/api/curator/data";
 
 function attendanceTone(value: number | null) {
-  if (value === null) return "text-slate-400";
+  if (value === null) return "text-slate-600";
   if (value >= 80) return "text-emerald-600";
   if (value >= 60) return "text-amber-600";
   return "text-rose-600";
@@ -45,13 +45,13 @@ export function CuratorGroupCards({
 
               <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-100 pt-4 text-sm">
                 <div>
-                  <p className="text-xs text-slate-400">Talabalar</p>
+                  <p className="text-xs text-slate-600">Talabalar</p>
                   <p className="mt-0.5 font-semibold tabular-nums text-slate-800">
                     {group.studentCount}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">O&apos;rtacha davomat</p>
+                  <p className="text-xs text-slate-600">O&apos;rtacha davomat</p>
                   <p
                     className={cn(
                       "mt-0.5 font-semibold tabular-nums",
@@ -62,7 +62,7 @@ export function CuratorGroupCards({
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">Ruxsatsiz</p>
+                  <p className="text-xs text-slate-600">Ruxsatsiz</p>
                   <p
                     className={cn(
                       "mt-0.5 font-semibold tabular-nums",
@@ -73,7 +73,7 @@ export function CuratorGroupCards({
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">O&apos;rtacha GPA</p>
+                  <p className="text-xs text-slate-600">O&apos;rtacha GPA</p>
                   <p className="mt-0.5 font-semibold tabular-nums text-slate-800">
                     {group.averageGpa !== null ? group.averageGpa.toFixed(2) : "—"}
                   </p>
