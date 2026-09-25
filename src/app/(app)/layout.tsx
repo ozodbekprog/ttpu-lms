@@ -7,7 +7,7 @@ import { Avatar } from "@/components/ui";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UnreadBadge } from "@/components/chat/UnreadBadge";
 import { Logo } from "@/components/brand/logo";
-import { MobileTabBar, NavLinks, type MobileTab } from "./nav-links";
+import { MobileTabBar, NavLinks, type MobileTab, type MobileTabIcon } from "./nav-links";
 
 export default async function AppLayout({
   children,
@@ -40,6 +40,7 @@ export default async function AppLayout({
         { href: "/gpa", label: "GPA" },
         { href: "/transcript", label: "Transkript" },
         { href: "/attendance", label: "Davomat" },
+        ...(isStaff(user.role) ? [{ href: "/journal", label: "Jurnal" }] : []),
         ...(modules.certificates ? [{ href: "/certificates", label: "Sertifikatlar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/journals", label: "Kundaliklar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/question-bank", label: "Savollar banki" }] : []),
@@ -83,6 +84,9 @@ export default async function AppLayout({
   const tabs: MobileTab[] = [
     { href: "/dashboard", label: "Dashboard", icon: "home" },
     { href: "/courses", label: "Kurslar", icon: "book" },
+    ...(isStaff(user.role)
+      ? [{ href: "/journal", label: "Jurnal", icon: "list" as MobileTabIcon }]
+      : []),
     { href: "/schedule", label: "Jadval", icon: "calendar" },
     { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholar", icon: "chart" },
   ];
