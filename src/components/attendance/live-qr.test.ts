@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkInPathForToken, formatSecondsLeft, tokenFromQr } from "./live-qr";
+import { checkInPathForToken, formatSecondsLeft, parseQrPayload, tokenFromQr } from "./live-qr";
 
 describe("formatSecondsLeft", () => {
   it("0 ms uchun 00:00 qaytaradi", () => {
@@ -49,5 +49,26 @@ describe("tokenFromQr", () => {
 
   it("begona matn uchun null qaytaradi", () => {
     expect(tokenFromQr("shunchaki matn")).toBeNull();
+  });
+});
+
+describe("parseQrPayload", () => {
+  it("code parametrli havolani o'qiydi", () => {
+    expect(
+      parseQrPayload("https://example.com/attendance/check-in?code=ab2c3d"),
+    ).toEqual({ code: "AB2C3D" });
+  });
+
+  it("xom 6 belgili kodni o'qiydi", () => {
+    expect(parseQrPayload("aB2c3D")).toEqual({ code: "AB2C3D" });
+  });
+
+  it("token va kodni aralashtirmaydi", () => {
+    expect(parseQrPayload("v1.abc.def")).toEqual({ token: "v1.abc.def" });
+    expect(parseQrPayload("salom")).toBeNull();
+  });
+
+  it("begona havola uchun null qaytaradi", () => {
+    expect(parseQrPayload("https://example.com/")).toBeNull();
   });
 });

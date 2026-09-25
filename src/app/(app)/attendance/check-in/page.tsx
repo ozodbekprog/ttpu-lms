@@ -5,10 +5,10 @@ import { CheckInForm } from "@/components/attendance/check-in-form";
 export default async function AttendanceCheckInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ t?: string }>;
+  searchParams: Promise<{ t?: string; code?: string }>;
 }) {
   const user = await requireUser();
-  const { t } = await searchParams;
+  const { t, code } = await searchParams;
 
   if (user.role !== "STUDENT") {
     return (
@@ -27,7 +27,9 @@ export default async function AttendanceCheckInPage({
     );
   }
 
-  const initialToken = (t ?? "").trim() || undefined;
+  const token = (t ?? "").trim();
+  const codeValue = (code ?? "").trim().toUpperCase();
+  const initialPayload = token ? { token } : codeValue ? { code: codeValue } : undefined;
 
   return (
     <>
@@ -35,7 +37,7 @@ export default async function AttendanceCheckInPage({
         title="QR orqali davomat"
         subtitle={`${user.name} · QR kodni skanerlang`}
       />
-      <CheckInForm initialToken={initialToken} />
+      <CheckInForm initialPayload={initialPayload} />
     </>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Card, CardBody } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
-import { requestBrowserLocation } from "./live-qr";
+import { requestBrowserLocation, type QrScanPayload } from "./live-qr";
 import { QrScanner } from "./qr-scanner";
 
 type CheckInResult = {
@@ -24,7 +24,7 @@ const REASON_LABELS: Record<string, string> = {
   IP_GEO_MISMATCH: "Tarmoq joylashuvi qurilma joylashuviga mos emas",
 };
 
-export function CheckInForm({ initialToken }: { initialToken?: string }) {
+export function CheckInForm({ initialPayload }: { initialPayload?: QrScanPayload }) {
   const [status, setStatus] = useState<"idle" | "scanning" | "loading" | "success" | "suspicious" | "error">(
     "idle",
   );
@@ -34,29 +34,46 @@ export function CheckInForm({ initialToken }: { initialToken?: string }) {
   const [pop, setPop] = useState(false);
   const tokenSubmitted = useRef(false);
 
-  async function submitToken(token: string) {
-    const value = token.trim();
-    if (!value) {
+  async function submitScan(payload: QrScanPayload) {
+    const token = payload.token?.trim() ?? "";
+    const code = (payload.code ?? "").trim().toUpperCase();
+    if (!token && !code) {
       setStatus("error");
       setMessage("QR kod o'qilmadi. Qayta urinib ko'ring.");
       return;
     }
 
     setStatus("loading");
-    setMessage("Joylashuv aniqlanmoqda...");
+    setMessage("QR o'qildi ✓ — joylashuv aniqlanmoqda...");
 
     const location = await requestBrowserLocation();
 
     setMessage("Tekshirilmoqda...");
 
-    const response = await apiFetch("/api/attendance/check-in", {
-      method: "POST",
-      body: JSON.stringify(
-        location
-          ? { token: value, lat: location.lat, lng: location.lng, accuracy: location.accuracy }
-          : { token: value },
-      ),
-    });
+    const body = token
+      ? location
+        ? { token, lat: location.lat, lng: location.lng, accuracy: location.accuracy }
+        : { token }
+      : location
+        ? { code, lat: location.lat, lng: location.lng, accuracy: location.accuracy }
+        : { code };
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 20000);
+    let response: Response;
+    try {
+      response = await apiFetch("/api/attendance/check-in", {
+        method: "POST",
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch {
+      window.clearTimeout(timer);
+      setStatus("error");
+      setMessage("Serverdan javob kelmadi. Internetni tekshirib, qayta urinib ko'ring.");
+      return;
+    }
+    window.clearTimeout(timer);
     const json = (await response.json().catch(() => null)) as
       | { ok?: boolean; error?: string; data?: CheckInResult }
       | null;
@@ -81,11 +98,10 @@ export function CheckInForm({ initialToken }: { initialToken?: string }) {
 
   useEffect(() => {
     if (tokenSubmitted.current) return;
-    const token = (initialToken ?? "").trim();
-    if (!token) return;
+    if (!initialPayload?.token && !initialPayload?.code) return;
     tokenSubmitted.current = true;
-    void submitToken(token);
-  }, [initialToken]);
+    void submitScan(initialPayload);
+  }, [initialPayload]);
 
   if (status === "success" && result) {
     return (
@@ -211,8 +227,8 @@ export function CheckInForm({ initialToken }: { initialToken?: string }) {
         <CardBody className="space-y-5 px-6 py-8 sm:px-8">
           {status === "scanning" ? (
             <QrScanner
-              onDetected={(token) => {
-                void submitToken(token);
+              onDetected={(payload) => {
+                void submitScan(payload);
               }}
               onCancel={() => setStatus("idle")}
             />
