@@ -45,6 +45,15 @@ type StudentsResponse = {
 
 type EnrollmentResponse = { ok?: boolean; error?: string } | null;
 
+function normalizeSearch(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/['`’‘ʻʼ]/g, "")
+    .replace(/x/g, "h")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function CourseStudents({
   courseId,
   enrollments,
@@ -140,14 +149,16 @@ export function CourseStudents({
     }
   }
 
-  const normalized = query.trim().toLowerCase();
+  const normalized = normalizeSearch(query);
   const options = (students ?? []).filter((student) => {
     if (!normalized) return true;
     return (
-      student.name.toLowerCase().includes(normalized) ||
-      student.email.toLowerCase().includes(normalized)
+      normalizeSearch(student.name).includes(normalized) ||
+      normalizeSearch(student.email).includes(normalized)
     );
   });
+  const availableOptions = options.filter((student) => !student.isEnrolled);
+  const noMatches = normalized.length > 0 && availableOptions.length === 0;
 
   return (
     <div className="space-y-4">
@@ -226,6 +237,12 @@ export function CourseStudents({
                     </option>
                   ))}
                 </Select>
+                {noMatches ? (
+                  <p className="mt-1.5 text-xs text-amber-600">
+                    Mos talaba topilmadi — imlo farq qilishi mumkin (Ahmad/Axmad). Boshqacha
+                    yozib ko&apos;ring.
+                  </p>
+                ) : null}
               </div>
               <Button onClick={addStudent} disabled={busy || loading || !selectedId}>
                 <svg

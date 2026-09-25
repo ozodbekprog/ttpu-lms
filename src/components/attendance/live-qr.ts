@@ -15,18 +15,31 @@ export function checkInPathForToken(token: string): string {
   return `/attendance/check-in?t=${encodeURIComponent(token)}`;
 }
 
-export function tokenFromQr(data: string): string | null {
+export type QrScanPayload = { token?: string; code?: string };
+
+const TOKEN_PATTERN = /^[\w-]+\.[\w-]+\.[\w-]+$/;
+const CODE_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/i;
+
+export function parseQrPayload(data: string): QrScanPayload | null {
   const value = data.trim();
   if (!value) return null;
   try {
     const url = new URL(value);
-    const token = url.searchParams.get("t");
-    if (token) return token;
+    const token = (url.searchParams.get("t") ?? "").trim();
+    if (token && TOKEN_PATTERN.test(token)) return { token };
+    const code = (url.searchParams.get("code") ?? "").trim();
+    if (code && CODE_PATTERN.test(code)) return { code: code.toUpperCase() };
+    return null;
   } catch {
     void 0;
   }
-  if (/^[\w-]+\.[\w-]+\.[\w-]+$/.test(value)) return value;
+  if (TOKEN_PATTERN.test(value)) return { token: value };
+  if (CODE_PATTERN.test(value)) return { code: value.toUpperCase() };
   return null;
+}
+
+export function tokenFromQr(data: string): string | null {
+  return parseQrPayload(data)?.token ?? null;
 }
 
 export function requestBrowserLocation(): Promise<BrowserLocation | null> {
