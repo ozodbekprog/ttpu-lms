@@ -173,7 +173,7 @@ export default async function CertificatesPage({
             ) : (
               <Table>
                 <thead>
-                  <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
+                  <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-600">
                     <th className="py-2.5 pr-3 text-left font-medium">Talaba</th>
                     <th className="px-3 py-2.5 text-left font-medium">Sana</th>
                     <th className="px-3 py-2.5 text-left font-medium">Natija</th>
@@ -195,7 +195,7 @@ export default async function CertificatesPage({
                               <p className="truncate text-sm font-medium text-slate-800">
                                 {certificate.student.name}
                               </p>
-                              <p className="mt-0.5 truncate font-mono text-[11px] tracking-wider text-slate-400">
+                              <p className="mt-0.5 truncate font-mono text-[11px] tracking-wider text-slate-600">
                                 {certificate.student.group?.name ?? "—"} ·{" "}
                                 {certificateSerial(certificate.id)}
                               </p>

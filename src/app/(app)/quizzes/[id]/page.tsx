@@ -247,7 +247,7 @@ export default async function QuizPage({ params }: { params: Promise<{ id: strin
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-slate-700">{fmtDateTime(attempt.startedAt)}</p>
-                    <p className="text-xs text-slate-400">Tugagan: {fmtDateTime(attempt.finishedAt)}</p>
+                    <p className="text-xs text-slate-600">Tugagan: {fmtDateTime(attempt.finishedAt)}</p>
                   </div>
                   {attempt.score != null ? (
                     <Progress value={attempt.score} max={maxPoints} className="hidden w-24 sm:block" />

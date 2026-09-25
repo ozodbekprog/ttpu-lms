@@ -214,7 +214,7 @@ const BUTTON_VARIANTS = {
   secondary: "border border-slate-300 bg-white text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50",
   danger: "bg-rose-600 text-white shadow-sm hover:bg-rose-700",
   ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-  gold: "bg-gold-500 text-brand-950 shadow-sm hover:bg-gold-600",
+  gold: "bg-gold-500 text-brand-950 shadow-sm hover:bg-gold-600 active:bg-gold-600",
 };
 
 const BUTTON_SIZES = {

@@ -203,7 +203,7 @@ export function QuestionBankManager({
                 </button>
               );
             })}
-            <span className="ml-auto text-xs text-slate-400">
+            <span className="ml-auto text-xs text-slate-600">
               {loading ? "Yuklanmoqda..." : `${items.length} ta savol`}
             </span>
           </div>
@@ -258,7 +258,7 @@ export function QuestionBankManager({
               </div>
               <p className="mt-3 text-sm font-medium leading-relaxed text-slate-900">{item.text}</p>
               {item.type === "TEXT" ? (
-                <p className="mt-3 text-xs text-slate-400">Matnli javob — qo&apos;lda baholanadi</p>
+                <p className="mt-3 text-xs text-slate-600">Matnli javob — qo&apos;lda baholanadi</p>
               ) : (
                 <ul className="mt-3 space-y-1.5">
                   {item.options.map((option, index) => {
@@ -294,7 +294,7 @@ export function QuestionBankManager({
                 </ul>
               )}
               <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-4">
-                <span className="text-xs text-slate-400">{fmtDate(item.createdAt)}</span>
+                <span className="text-xs text-slate-600">{fmtDate(item.createdAt)}</span>
                 <div className="flex shrink-0 gap-1.5">
                   <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
                     Tahrirlash
@@ -302,7 +302,7 @@ export function QuestionBankManager({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
+                    className="text-slate-600! hover:bg-rose-50! hover:text-rose-600!"
                     onClick={() => void remove(item)}
                   >
                     O&apos;chirish

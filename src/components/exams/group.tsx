@@ -62,7 +62,7 @@ export function ExamGroupSection({
         <GroupIcon tone={tone} />
         <div className="min-w-0">
           <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-700">{title}</h2>
-          {subtitle ? <p className="mt-0.5 text-xs text-slate-400">{subtitle}</p> : null}
+          {subtitle ? <p className="mt-0.5 text-xs text-slate-600">{subtitle}</p> : null}
         </div>
         <span className={cn("mx-1 hidden h-px flex-1 bg-gradient-to-r to-transparent sm:block", TONES[tone].line)} />
         <Badge tone={tone}>{count} ta</Badge>

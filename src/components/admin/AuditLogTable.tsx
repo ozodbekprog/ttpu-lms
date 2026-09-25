@@ -88,7 +88,7 @@ export default function AuditLogTable({
       <CardHeader title="Amallar tarixi" subtitle={`Jami ${total} ta yozuv`} />
       <Table className="max-h-[68vh] overflow-y-auto">
         <thead>
-          <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
             <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Vaqt</th>
             <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Kim</th>
             <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Amal</th>
@@ -117,7 +117,7 @@ export default function AuditLogTable({
                       </div>
                     ) : (
                       <div className="flex items-center gap-2.5">
-                        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+                        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 ring-1 ring-slate-200">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="4" width="18" height="16" rx="2" />
                             <path d="M7 9h10M7 13h6" />
@@ -129,20 +129,20 @@ export default function AuditLogTable({
                   </td>
                   <td className="px-5 py-3">
                     <Badge tone={auditActionTone(log.action)}>{auditActionLabel(log.action)}</Badge>
-                    <span className="mt-1 block font-mono text-[11px] text-slate-400">{log.action}</span>
+                    <span className="mt-1 block font-mono text-[11px] text-slate-600">{log.action}</span>
                   </td>
                   <td className="px-5 py-3">
                     {log.entity ? (
                       <>
                         <span className="block text-sm text-slate-700">{log.entity}</span>
                         {log.entityId ? (
-                          <span className="block font-mono text-[11px] text-slate-400" title={log.entityId}>
+                          <span className="block font-mono text-[11px] text-slate-600" title={log.entityId}>
                             {log.entityId.slice(0, 10)}…
                           </span>
                         ) : null}
                       </>
                     ) : (
-                      <span className="text-sm text-slate-400">—</span>
+                      <span className="text-sm text-slate-600">—</span>
                     )}
                   </td>
                   <td className="px-5 py-3">

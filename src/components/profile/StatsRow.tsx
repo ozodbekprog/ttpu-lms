@@ -6,7 +6,7 @@ export type ProfileStatKind = "courses" | "certificates" | "average" | "students
 
 const STAT_TONES: Record<ProfileStatKind, string> = {
   courses: "bg-brand-50 text-brand-700 ring-brand-100",
-  certificates: "bg-gold-300/20 text-gold-600 ring-gold-300/40",
+  certificates: "bg-gold-300/20 text-gold-800 ring-gold-300/40",
   average: "bg-emerald-50 text-emerald-600 ring-emerald-100",
   students: "bg-purple-50 text-purple-600 ring-purple-100",
   users: "bg-sky-50 text-sky-600 ring-sky-100",
@@ -67,7 +67,7 @@ export function StatsRow({ items }: { items: ProfileStat[] }) {
               <div className="min-w-0">
                 <p className="text-sm font-medium text-slate-500">{item.label}</p>
                 <p className="mt-1.5 text-3xl font-semibold tracking-tight text-brand-950">{item.value}</p>
-                {item.hint ? <p className="mt-1 text-xs text-slate-400">{item.hint}</p> : null}
+                {item.hint ? <p className="mt-1 text-xs text-slate-600">{item.hint}</p> : null}
               </div>
               <span
                 className={cn(

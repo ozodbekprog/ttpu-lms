@@ -53,7 +53,7 @@ export function ContactCards() {
             <span className={`inline-flex size-10 items-center justify-center rounded-xl ring-1 ${channel.tone}`}>
               <HelpIcon name={channel.icon} size={19} />
             </span>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
               {channel.title}
             </p>
             {channel.href ? (

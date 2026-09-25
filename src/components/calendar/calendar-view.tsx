@@ -190,7 +190,7 @@ export function CalendarView() {
             {WEEKDAYS.map((name) => (
               <div
                 key={name}
-                className="pb-1 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                className="pb-1 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-600"
               >
                 {name}
               </div>
@@ -235,7 +235,7 @@ export function CalendarView() {
                         />
                       ))}
                       {dayItems.length > 4 ? (
-                        <span className="text-[10px] font-medium text-slate-400">
+                        <span className="text-[10px] font-medium text-slate-600">
                           +{dayItems.length - 4}
                         </span>
                       ) : null}

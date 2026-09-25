@@ -593,7 +593,7 @@ export default function DictionariesManager({
                       {slotForm.startTime} — {slotForm.endTime}
                     </span>
                     {slotValid && minutes(slotForm.endTime) - minutes(slotForm.startTime) > 0 ? (
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-slate-600">
                         {minutes(slotForm.endTime) - minutes(slotForm.startTime)} daqiqa
                       </span>
                     ) : null}
@@ -643,7 +643,7 @@ export default function DictionariesManager({
                     >
                       {typeForm.name.trim() || "Dars turi"}
                     </span>
-                    <span className="font-mono text-xs uppercase text-slate-400">
+                    <span className="font-mono text-xs uppercase text-slate-600">
                       {typeValid ? typeForm.color : FALLBACK_COLOR}
                     </span>
                   </span>
@@ -691,7 +691,7 @@ export default function DictionariesManager({
         ) : (
           <Table>
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                 {tab === "subjects" ? (
                   <>
                     <th className="px-5 py-3 font-semibold">Fan</th>
@@ -737,7 +737,7 @@ export default function DictionariesManager({
                             {subject.code}
                           </Badge>
                         ) : (
-                          <span className="text-slate-400">—</span>
+                          <span className="text-slate-600">—</span>
                         )}
                       </td>
                       <td className="px-5 py-3">
@@ -754,7 +754,7 @@ export default function DictionariesManager({
                       </td>
                       <td className="px-5 py-3">
                         {subject.teachers.length === 0 ? (
-                          <span className="text-xs italic text-slate-400">Biriktirilmagan</span>
+                          <span className="text-xs italic text-slate-600">Biriktirilmagan</span>
                         ) : (
                           <div className="flex max-w-72 flex-wrap items-center gap-1">
                             {subject.teachers.slice(0, 3).map((teacher) => (
@@ -836,7 +836,7 @@ export default function DictionariesManager({
                               <span className="text-xs tabular-nums text-slate-500">{duration} daqiqa</span>
                             </div>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-600">—</span>
                           )}
                         </td>
                         <td className="px-5 py-3">
@@ -972,7 +972,7 @@ export default function DictionariesManager({
                 type="button"
                 onClick={closeTeachers}
                 aria-label="Yopish"
-                className="rounded-lg p-1.5 text-slate-400 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
+                className="rounded-lg p-1.5 text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 6 6 18M6 6l12 12" />
@@ -991,7 +991,7 @@ export default function DictionariesManager({
                 </div>
               ) : null}
               {!teachersLoading && teacherList && teacherList.length === 0 ? (
-                <p className="px-2 py-6 text-center text-sm text-slate-400">O&apos;qituvchilar topilmadi</p>
+                <p className="px-2 py-6 text-center text-sm text-slate-600">O&apos;qituvchilar topilmadi</p>
               ) : null}
               {!teachersLoading && teacherList
                 ? teacherList.map((teacher) => {
@@ -1014,7 +1014,7 @@ export default function DictionariesManager({
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-slate-800">{teacher.name}</span>
-                          <span className="block truncate text-xs text-slate-400">{teacher.email}</span>
+                          <span className="block truncate text-xs text-slate-600">{teacher.email}</span>
                         </span>
                         {checked ? (
                           <svg

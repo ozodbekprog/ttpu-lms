@@ -189,7 +189,7 @@ export function ConversationList({
                         >
                           {conversation.participant.name}
                         </span>
-                        <span className={cn("shrink-0 text-[11px]", unread ? "font-medium text-brand-700" : "text-slate-400")}>
+                        <span className={cn("shrink-0 text-[11px]", unread ? "font-medium text-brand-700" : "text-slate-600")}>
                           {conversation.lastMessage ? fmtListTime(conversation.lastMessage.createdAt) : ""}
                         </span>
                       </span>
@@ -241,7 +241,7 @@ export function ConversationList({
                     type="button"
                     onClick={closePicker}
                     aria-label="Yopish"
-                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-700"
+                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-700"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 6 6 18" />
@@ -265,13 +265,13 @@ export function ConversationList({
                   <div className="mt-3 max-h-72 overflow-y-auto">
                     {query.trim().length === 0 ? (
                       <div className="flex flex-col items-center gap-2 py-8 text-center">
-                        <span className="inline-flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                        <span className="inline-flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-600">
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="7" />
                             <path d="m20 20-3.5-3.5" />
                           </svg>
                         </span>
-                        <p className="text-xs text-slate-400">Qidirish uchun ism yoki email yozing</p>
+                        <p className="text-xs text-slate-600">Qidirish uchun ism yoki email yozing</p>
                       </div>
                     ) : searching ? (
                       <ul className="space-y-1">
@@ -287,7 +287,7 @@ export function ConversationList({
                       </ul>
                     ) : results.length === 0 ? (
                       <div className="flex flex-col items-center gap-2 py-8 text-center">
-                        <span className="inline-flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                        <span className="inline-flex size-10 items-center justify-center rounded-full bg-slate-100 text-slate-600">
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                             <circle cx="9" cy="7" r="4" />
@@ -295,7 +295,7 @@ export function ConversationList({
                             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                           </svg>
                         </span>
-                        <p className="text-xs text-slate-400">Hech kim topilmadi</p>
+                        <p className="text-xs text-slate-600">Hech kim topilmadi</p>
                       </div>
                     ) : (
                       <ul className="space-y-1">

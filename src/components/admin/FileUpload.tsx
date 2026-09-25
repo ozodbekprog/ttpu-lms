@@ -98,7 +98,7 @@ export default function FileUpload({
         <span
           className={cn(
             "mb-1 inline-flex size-11 items-center justify-center rounded-full transition-colors duration-150",
-            dragging ? "bg-brand-100 text-brand-700" : "bg-white text-slate-400 shadow-sm",
+            dragging ? "bg-brand-100 text-brand-700" : "bg-white text-slate-600 shadow-sm",
           )}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -110,7 +110,7 @@ export default function FileUpload({
         <span className="max-w-full truncate text-sm font-medium text-slate-700">
           {fileName ?? "Faylni bu yerga tashlang"}
         </span>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-600">
           {fileName ? "Yuklash uchun tugmani bosing" : "yoki bosib fayl tanlang"}
         </span>
       </label>

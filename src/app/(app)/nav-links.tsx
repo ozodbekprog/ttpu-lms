@@ -121,7 +121,7 @@ export function NavLinks({ groups }: { groups: NavGroup[] }) {
     <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
       {groups.map((group) => (
         <div key={group.label}>
-          <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
             {group.label}
           </p>
           <div className="space-y-0.5">

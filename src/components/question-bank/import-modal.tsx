@@ -256,7 +256,7 @@ export function BankImportModal({
                           {DIFFICULTY_LABEL[item.difficulty] ?? "—"}
                         </Badge>
                         {item.courseTitle ? (
-                          <span className="text-[11px] text-slate-400">{item.courseTitle}</span>
+                          <span className="text-[11px] text-slate-600">{item.courseTitle}</span>
                         ) : null}
                       </span>
                       <span className="mt-1.5 block text-sm font-medium text-slate-900">

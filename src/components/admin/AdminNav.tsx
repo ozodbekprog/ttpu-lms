@@ -150,7 +150,7 @@ export default function AdminNav() {
             <span
               className={cn(
                 "transition-all duration-200",
-                active ? "text-gold-300" : "text-slate-400 group-hover:scale-110 group-hover:text-brand-600",
+                active ? "text-gold-300" : "text-slate-600 group-hover:scale-110 group-hover:text-brand-600",
               )}
             >
               {link.icon}

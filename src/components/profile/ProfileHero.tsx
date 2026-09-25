@@ -104,7 +104,7 @@ export function ProfileHero({
 
         {email ? (
           <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-slate-500">
-            <Icon className="text-slate-400">
+            <Icon className="text-slate-600">
               <rect x="3" y="5" width="18" height="14" rx="2" />
               <path d="m3 7 9 6 9-6" />
             </Icon>
@@ -116,7 +116,7 @@ export function ProfileHero({
           <Badge tone={meta.tone}>{meta.label}</Badge>
           {groupName ? <Badge tone="gold">{groupName}</Badge> : null}
           <MetaChip>
-            <Icon className="text-slate-400">
+            <Icon className="text-slate-600">
               <rect x="3" y="5" width="18" height="16" rx="2" />
               <path d="M16 3v4M8 3v4M3 11h18" />
             </Icon>
@@ -129,7 +129,7 @@ export function ProfileHero({
             "mt-5 w-full max-w-2xl rounded-2xl px-5 py-4 text-sm ring-1 ring-inset",
             bio
               ? "bg-slate-50/80 text-slate-700 ring-slate-200/60"
-              : "bg-slate-50/50 italic text-slate-400 ring-slate-200/50",
+              : "bg-slate-50/50 italic text-slate-600 ring-slate-200/50",
           )}
         >
           <p className="whitespace-pre-wrap">{bio ?? "Bio hali qo'shilmagan"}</p>

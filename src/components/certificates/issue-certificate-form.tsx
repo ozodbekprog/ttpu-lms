@@ -8,7 +8,7 @@ type ApiResult = { ok?: boolean; error?: string } | null;
 
 function SealBadge() {
   return (
-    <span className="inline-flex size-8 items-center justify-center rounded-full bg-gold-300/20 text-gold-600 ring-1 ring-gold-400/40">
+    <span className="inline-flex size-8 items-center justify-center rounded-full bg-gold-300/20 text-gold-800 ring-1 ring-gold-400/40">
       <svg
         viewBox="0 0 24 24"
         className="size-4"
@@ -140,11 +140,11 @@ export function IssueCertificateForm({
                   onChange={(event) => setGrade(event.target.value)}
                   className="pr-14"
                 />
-                <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+                <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-600">
                   ball
                 </span>
               </div>
-              <p className="mt-1.5 text-xs text-slate-400">
+              <p className="mt-1.5 text-xs text-slate-600">
                 0 dan 100 gacha butun son, ixtiyoriy
               </p>
             </div>

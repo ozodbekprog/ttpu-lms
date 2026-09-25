@@ -213,7 +213,7 @@ export default function AdminOrdersManager({ orders }: { orders: AdminOrderItem[
         <>
           <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-6 py-4">
             <div className="relative min-w-56 flex-1">
-              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600">
                 <SearchIcon />
               </span>
               <Input
@@ -246,7 +246,7 @@ export default function AdminOrdersManager({ orders }: { orders: AdminOrderItem[
           ) : (
             <Table>
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                   <th className="px-5 py-3.5 font-semibold">Talaba</th>
                   <th className="px-5 py-3.5 font-semibold">Ariza</th>
                   <th className="px-5 py-3.5 font-semibold">Tur</th>

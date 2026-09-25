@@ -14,7 +14,7 @@ function niceScale(maxValue: number) {
 
 export function BarChart({ data, height = 220 }: { data: BarChartDatum[]; height?: number }) {
   if (data.length === 0) {
-    return <p className="py-12 text-center text-sm text-slate-400">{"Ma'lumot yo'q"}</p>;
+    return <p className="py-12 text-center text-sm text-slate-600">{"Ma'lumot yo'q"}</p>;
   }
 
   const pad = { top: 20, right: 10, bottom: 32, left: 40 };

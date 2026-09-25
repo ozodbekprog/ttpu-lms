@@ -56,7 +56,7 @@ export default async function ReportsPage({
             method="get"
             className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-1.5 shadow-sm backdrop-blur"
           >
-            <span className="hidden select-none items-center gap-1.5 pl-2 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-400 sm:inline-flex">
+            <span className="hidden select-none items-center gap-1.5 pl-2 pr-1 text-xs font-semibold uppercase tracking-wider text-slate-600 sm:inline-flex">
               <svg
                 width="14"
                 height="14"

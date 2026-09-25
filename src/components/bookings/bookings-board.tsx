@@ -324,7 +324,7 @@ export function BookingsBoard({
                           <span
                             className={cn(
                               "mt-1 text-[10px] leading-none",
-                              active ? "text-brand-600" : "text-slate-400",
+                              active ? "text-brand-600" : "text-slate-600",
                             )}
                           >
                             {SLOT_TIMES[value]}
@@ -347,7 +347,7 @@ export function BookingsBoard({
                 </div>
 
                 <div className="rounded-xl bg-slate-50 px-3.5 py-3 ring-1 ring-slate-100">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                     Tanlov
                   </p>
                   <p className="mt-1 truncate text-sm font-medium text-slate-700">
@@ -430,7 +430,7 @@ export function BookingsBoard({
             {staff ? (
               <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                     Filtr
                   </p>
                   {filtersActive ? (
@@ -455,7 +455,7 @@ export function BookingsBoard({
                   <div>
                     <Label>Xona bo&apos;yicha</Label>
                     <div className="relative">
-                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-600">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="11" cy="11" r="7" />
                           <path d="m20 20-3.5-3.5" />

@@ -169,7 +169,7 @@ export function SheetManager({ sessionId, rows }: { sessionId: string; rows: Ses
                         <Avatar name={row.studentName} size={32} />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-800">{row.studentName}</p>
-                          <p className="text-xs text-slate-400">{row.studentGroup ?? "Guruhsiz"}</p>
+                          <p className="text-xs text-slate-600">{row.studentGroup ?? "Guruhsiz"}</p>
                         </div>
                       </div>
                     </td>
@@ -205,7 +205,7 @@ export function SheetManager({ sessionId, rows }: { sessionId: string; rows: Ses
                           className="w-24 px-2.5 py-1.5 text-sm"
                         />
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-slate-500">—</span>
                       )}
                     </td>
                     <td className="px-3 py-3">
@@ -233,7 +233,7 @@ export function SheetManager({ sessionId, rows }: { sessionId: string; rows: Ses
                           />
                         </div>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-slate-500">—</span>
                       )}
                       {rowErrors[row.studentId] ? (
                         <p className="mt-1.5 text-xs text-rose-600">{rowErrors[row.studentId]}</p>
@@ -254,7 +254,7 @@ export function SheetManager({ sessionId, rows }: { sessionId: string; rows: Ses
                           Majburiy qo&apos;shish
                         </Button>
                       ) : (
-                        <span className="text-xs text-slate-400">Ro&apos;yxatga olinmagan</span>
+                        <span className="text-xs text-slate-600">Ro&apos;yxatga olinmagan</span>
                       )}
                     </td>
                   </tr>

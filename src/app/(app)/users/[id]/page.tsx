@@ -28,7 +28,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
           </svg>
           Bosh sahifa
         </Link>
-        <span className="text-slate-300">/</span>
+        <span className="text-slate-500">/</span>
         <span className="rounded-lg px-2 py-1 font-medium text-slate-700">
           {isOwn ? "Mening profilim" : "Foydalanuvchi profili"}
         </span>

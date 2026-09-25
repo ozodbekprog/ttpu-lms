@@ -70,7 +70,7 @@ export function AttendanceRing({
         <span className="bg-gradient-to-br from-brand-900 to-brand-700 bg-clip-text text-5xl font-semibold tracking-tight tabular-nums text-transparent sm:text-6xl">
           {value}%
         </span>
-        <span className="mt-2 text-[11px] font-medium uppercase tracking-[0.22em] text-slate-400">
+        <span className="mt-2 text-[11px] font-medium uppercase tracking-[0.22em] text-slate-600">
           {caption}
         </span>
       </div>

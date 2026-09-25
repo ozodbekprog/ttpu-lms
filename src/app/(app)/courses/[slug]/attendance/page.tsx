@@ -117,7 +117,7 @@ export default async function CourseAttendancePage({
                       <td className="px-3 py-3">
                         <Badge tone={STATUS_TONES[entry.status]}>{STATUS_LABELS[entry.status]}</Badge>
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-400">{entry.note ?? "—"}</td>
+                      <td className="px-3 py-3 text-xs text-slate-600">{entry.note ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -111,7 +111,7 @@ export default async function SchedulePrintPage({
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-slate-400">Chop etilgan: {todayIso}</p>
+            <p className="text-xs text-slate-600">Chop etilgan: {todayIso}</p>
             <p className="mt-1 text-xs font-medium text-slate-500">
               {`${weekNumber}-hafta · ${parityLabel}`}
             </p>
@@ -188,7 +188,7 @@ export default async function SchedulePrintPage({
                                 <p
                                   className={
                                     cancelled
-                                      ? "font-semibold text-slate-400 line-through"
+                                      ? "font-semibold text-slate-600 line-through"
                                       : "font-semibold text-slate-900"
                                   }
                                 >
