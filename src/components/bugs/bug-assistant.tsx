@@ -230,7 +230,7 @@ export function BugAssistant() {
       ) : null}
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex h-full w-full flex-col overflow-hidden bg-white md:inset-auto md:bottom-6 md:right-6 md:h-auto md:w-[23rem] md:rounded-3xl md:border md:border-slate-200 md:shadow-2xl md:ring-1 md:ring-slate-900/5">
+        <div className="fixed inset-x-0 top-0 z-50 flex h-dvh w-full flex-col overflow-hidden bg-white md:inset-auto md:bottom-6 md:right-6 md:h-auto md:w-[23rem] md:rounded-3xl md:border md:border-slate-200 md:shadow-2xl md:ring-1 md:ring-slate-900/5">
           <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/80 px-4 py-3">
             <div className="flex items-center gap-2">
               <span className="flex size-7 items-center justify-center rounded-full bg-brand-900 text-[10px] font-semibold text-white">
