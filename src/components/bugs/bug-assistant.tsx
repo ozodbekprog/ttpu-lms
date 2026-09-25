@@ -272,7 +272,7 @@ export function BugAssistant() {
             ) : null}
           </div>
 
-          <div className="space-y-2 border-t border-slate-100 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-3">
+          <div className="space-y-2 border-t border-slate-100 px-4 py-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:pb-3">
             <div className="flex gap-2">
               <Input
                 value={input}
