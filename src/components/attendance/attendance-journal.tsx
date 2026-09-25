@@ -152,7 +152,7 @@ export function AttendanceJournal({
   }, [visibleDates, totals]);
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.mobile) return;
     const close = () => setEditor(null);
     window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
