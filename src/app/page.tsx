@@ -307,22 +307,22 @@ export default function HomePage() {
           <Link href="/" className="transition-opacity duration-150 hover:opacity-80">
             <Logo />
           </Link>
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
+          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 lg:flex">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="transition-colors duration-150 hover:text-brand-800"
+                className="whitespace-nowrap transition-colors duration-150 hover:text-brand-800"
               >
                 {link.label}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <ButtonLink href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <ButtonLink href="/login" variant="ghost" size="sm" className="max-sm:hidden">
               Kirish
             </ButtonLink>
-            <ButtonLink href="/register" size="sm">
+            <ButtonLink href="/register" size="sm" className="whitespace-nowrap">
               Ro&apos;yxatdan o&apos;tish
             </ButtonLink>
           </div>
