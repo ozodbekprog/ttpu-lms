@@ -179,7 +179,7 @@ export default function RegisterPage() {
                   maxLength={100}
                   required
                 />
-                <p className="mt-1.5 text-xs text-slate-400">Kamida 12 belgi</p>
+                <p className="mt-1.5 text-xs text-slate-400">{t("authRegisterPasswordPlaceholder")}</p>
               </div>
               {error ? (
                 <div className="flex items-start gap-2.5 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
