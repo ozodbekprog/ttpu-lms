@@ -7,6 +7,8 @@ import { dayName, fmtDate } from "@/lib/utils";
 import { canManageCourse } from "@/components/courses/course-access";
 import { LessonAttendance } from "@/components/attendance/lesson-attendance";
 import type { LessonStatus } from "@/components/attendance/lesson-attendance";
+import { SessionPanel } from "@/components/attendance/SessionPanel";
+import { getModuleFlags } from "@/server/settings";
 import {
   SLOT_TIMES,
   dateFromIso,
@@ -49,7 +51,7 @@ export default async function LessonAttendancePage({
   const weekdayRaw = dateValue.getUTCDay();
   const weekday = weekdayRaw === 0 ? 7 : weekdayRaw;
 
-  const [enrollments, attendanceRows, dayEntries, teacherCourses] = await Promise.all([
+  const [enrollments, attendanceRows, dayEntries, teacherCourses, moduleFlags] = await Promise.all([
     prisma.enrollment.findMany({
       where: { courseId: course.id },
       include: {
@@ -77,6 +79,7 @@ export default async function LessonAttendancePage({
           orderBy: { createdAt: "asc" },
         })
       : Promise.resolve([] as { slug: string; title: string }[]),
+    getModuleFlags(),
   ]);
 
   const courseOption = { slug: course.slug, title: course.title };
@@ -314,6 +317,11 @@ export default async function LessonAttendancePage({
           </div>
         </section>
       ) : null}
+      {moduleFlags.qr_attendance ? (
+        <div className="mb-6">
+          <SessionPanel courseId={course.id} studentCount={students.length} />
+        </div>
+      ) : null}
       <LessonAttendance
         courseId={course.id}
         date={date}
@@ -324,6 +332,7 @@ export default async function LessonAttendancePage({
         selectedSlug={course.slug}
         subGroup={subGroup}
         cancelled={cancelled}
+        qrEnabled={moduleFlags.qr_attendance}
       />
     </>
   );

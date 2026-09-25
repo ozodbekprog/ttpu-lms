@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,6 +26,10 @@ const DAY_TITLES = ["Yakshanba", "Dushanba", "Seshanba", "Chorshanba", "Payshanb
 const SEPARATOR = "━━━━━━━━━━━━━━━━━━";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const QR_CODE_RE = /^[A-Z0-9]{6}$/i;
+const QR_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const QR_CODE_LENGTH = 6;
+const QR_SESSION_MINUTES = 15;
 
 try {
   if (typeof process.loadEnvFile === "function") {
@@ -448,6 +453,7 @@ const HELP_TEXT = [
   "• /ertaga — ertangi darslar",
   "• /hafta — haftalik jadval (kun-kun)",
   "• /davomat — o'qituvchilar uchun bugungi darslar va davomat havolalari",
+  "• /qr — talaba: kod orqali davomat; o'qituvchi: davomat sessiyasi ochish",
   "• /imtihon — kelayotgan imtihonlar (30 kun)",
   "• /help — shu yordam",
   "",
@@ -464,6 +470,7 @@ function startText(name) {
     "• /ertaga — ertangi darslar",
     "• /hafta — haftalik jadval",
     "• /davomat — o'qituvchilar uchun davomat havolalari",
+    "• /qr — davomat kodi orqali belgilanish yoki sessiya ochish",
     "• /help — yordam",
     "",
     "📧 Boshlash uchun email manzilingizni yuboring (masalan: ozodbek@ttpu.uz).",
@@ -628,6 +635,219 @@ async function sendExams(chatId) {
   await sendMessage(chatId, examsText(sessions));
 }
 
+function checkInUrl(code) {
+  const base = process.env.APP_URL ?? "http://localhost:3000";
+  return `${base}/attendance/check-in?code=${encodeURIComponent(code)}`;
+}
+
+async function linkedUser(chatId) {
+  const email = links[String(chatId)];
+  if (!email) {
+    await sendMessage(chatId, "Avval email manzilingizni yuboring (masalan: ozodbek@ttpu.uz).");
+    return null;
+  }
+  const user = await getPrisma().user.findUnique({ where: { email }, include: { group: true } });
+  if (!user || !user.isActive) {
+    delete links[String(chatId)];
+    saveData();
+    await sendMessage(chatId, "Bog'langan foydalanuvchi topilmadi yoki faol emas. Emailni qayta yuboring.");
+    return null;
+  }
+  return user;
+}
+
+function generateQrCode() {
+  let code = "";
+  for (let index = 0; index < QR_CODE_LENGTH; index += 1) {
+    code += QR_CODE_ALPHABET[randomInt(QR_CODE_ALPHABET.length)];
+  }
+  return code;
+}
+
+async function uniqueQrCode() {
+  const db = getPrisma();
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const code = generateQrCode();
+    const existing = await db.attendanceSession.findUnique({ where: { code } });
+    if (!existing) return code;
+  }
+  return null;
+}
+
+function qrSessionText(head, courseTitle, groupName, session) {
+  const minutes = Math.max(1, Math.ceil((session.expiresAt.getTime() - Date.now()) / 60_000));
+  const lines = [head, `📚 Kurs: ${courseTitle}`];
+  if (groupName) lines.push(`👥 Guruh: ${groupName}`);
+  lines.push(`🔑 Kod: ${session.code}`);
+  lines.push(`🔗 ${checkInUrl(session.code)}`);
+  lines.push(`⏰ Amal muddati: ${timeText(session.expiresAt)} gacha (${minutes} daqiqa)`);
+  return lines.join("\n");
+}
+
+async function checkInByCode(chatId, user, rawCode) {
+  const code = rawCode.trim().toUpperCase();
+  if (!QR_CODE_RE.test(code)) {
+    await sendMessage(chatId, "Kod 6 ta harf yoki raqamdan iborat bo'lishi kerak (masalan: ABC123).");
+    return;
+  }
+  const db = getPrisma();
+  const session = await db.attendanceSession.findUnique({
+    where: { code },
+    include: { course: true },
+  });
+  if (!session) {
+    await sendMessage(chatId, "❌ Bunday kodli faol sessiya topilmadi. Kodni tekshirib, qayta yuboring.");
+    return;
+  }
+  if (session.expiresAt.getTime() <= Date.now()) {
+    await sendMessage(chatId, "⌛ Sessiya muddati tugagan. O'qituvchidan yangi kod so'rang.");
+    return;
+  }
+  const enrolled = await db.enrollment.findUnique({
+    where: { courseId_userId: { courseId: session.courseId, userId: user.id } },
+  });
+  if (!enrolled) {
+    await sendMessage(chatId, `⚠️ Siz "${session.course.title}" kursiga yozilmagansiz.`);
+    return;
+  }
+  const existing = await db.attendance.findUnique({
+    where: {
+      courseId_studentId_date: {
+        courseId: session.courseId,
+        studentId: user.id,
+        date: session.date,
+      },
+    },
+  });
+  if (existing) {
+    await sendMessage(
+      chatId,
+      `ℹ️ Bugun "${session.course.title}" kursi uchun davomat allaqachon belgilangan.`,
+    );
+    return;
+  }
+  await db.attendance.upsert({
+    where: {
+      courseId_studentId_date: {
+        courseId: session.courseId,
+        studentId: user.id,
+        date: session.date,
+      },
+    },
+    update: { status: "PRESENT" },
+    create: {
+      courseId: session.courseId,
+      studentId: user.id,
+      date: session.date,
+      status: "PRESENT",
+      note: "QR orqali (bot)",
+    },
+  });
+  await sendMessage(
+    chatId,
+    `✅ Davomat belgilandi!\n📚 Kurs: ${session.course.title}\n🗓 ${session.date.toISOString().slice(0, 10)} — qatnashgan deb qayd etildingiz.`,
+  );
+}
+
+async function openTeacherQr(chatId, user) {
+  const items = await collectTeacherLessons(user, new Date().getDay());
+  const first = items.find((item) => item.slug);
+  if (!first) {
+    await sendMessage(
+      chatId,
+      items.length === 0
+        ? "📭 Bugun darslaringiz yo'q. QR sessiyani faqat dars kunlari ochish mumkin."
+        : "⚠️ Bugungi darslaringiz uchun kurs topilmadi. Administrator bilan bog'laning.",
+    );
+    return;
+  }
+  const db = getPrisma();
+  const course = await db.course.findFirst({
+    where: { teacherId: user.id, slug: first.slug },
+    select: { id: true, title: true },
+  });
+  if (!course) {
+    await sendMessage(chatId, "⚠️ Kurs topilmadi. Administrator bilan bog'laning.");
+    return;
+  }
+  const now = new Date();
+  const active = await db.attendanceSession.findFirst({
+    where: { courseId: course.id, expiresAt: { gt: now } },
+    orderBy: { createdAt: "desc" },
+  });
+  if (active) {
+    await sendMessage(
+      chatId,
+      qrSessionText("ℹ️ Faol davomat sessiyasi", course.title, first.groupName, active),
+    );
+    return;
+  }
+  const code = await uniqueQrCode();
+  if (!code) {
+    await sendMessage(chatId, "❌ Kod yaratishda xatolik. Keyinroq qayta urinib ko'ring.");
+    return;
+  }
+  const expiresAt = new Date(now.getTime() + QR_SESSION_MINUTES * 60_000);
+  const session = await db.$transaction(async (tx) => {
+    await tx.attendanceSession.updateMany({
+      where: { courseId: course.id, expiresAt: { gt: now } },
+      data: { expiresAt: now },
+    });
+    return tx.attendanceSession.create({
+      data: {
+        courseId: course.id,
+        date: new Date(`${now.toISOString().slice(0, 10)}T00:00:00.000Z`),
+        code,
+        expiresAt,
+        createdById: user.id,
+      },
+    });
+  });
+  await sendMessage(
+    chatId,
+    qrSessionText("✅ Davomat sessiyasi ochildi", course.title, first.groupName, session),
+  );
+}
+
+async function sendQr(chatId, arg) {
+  const user = await linkedUser(chatId);
+  if (!user) return;
+  if (user.role === "STUDENT") {
+    if (!arg) {
+      await sendMessage(chatId, "🔑 Davomat uchun 6 belgili kodni yuboring: /qr ABC123");
+      return;
+    }
+    await checkInByCode(chatId, user, arg);
+    return;
+  }
+  if (user.role === "TEACHER") {
+    if (arg) {
+      await sendMessage(
+        chatId,
+        "ℹ️ O'qituvchilar /qr buyrug'ini argumentsiz yuboradi — davomat sessiyasi ochiladi.",
+      );
+      return;
+    }
+    await openTeacherQr(chatId, user);
+    return;
+  }
+  await sendMessage(chatId, "ℹ️ /qr talabalar va o'qituvchilar uchun. Sizning rolingiz uchun mavjud emas.");
+}
+
+async function handleQrCode(chatId, code) {
+  const user = await linkedUser(chatId);
+  if (!user) return;
+  if (user.role === "TEACHER") {
+    await sendMessage(chatId, "ℹ️ Kodni faqat talabalar kiritadi. Siz /qr buyrug'i bilan sessiya ochishingiz mumkin.");
+    return;
+  }
+  if (user.role !== "STUDENT") {
+    await sendMessage(chatId, "ℹ️ Kodni faqat talabalar kiritadi.");
+    return;
+  }
+  await checkInByCode(chatId, user, code);
+}
+
 async function handleMessage(message) {
   const chatId = message.chat.id;
   const text = (message.text ?? "").trim();
@@ -662,8 +882,17 @@ async function handleMessage(message) {
     await sendExams(chatId);
     return;
   }
+  if (command === "qr") {
+    const arg = text.trim().split(/\s+/)[1] ?? "";
+    await sendQr(chatId, arg);
+    return;
+  }
   if (command) {
     await sendMessage(chatId, `Noma'lum buyruq: /${command}.\n\n${HELP_TEXT}`);
+    return;
+  }
+  if (QR_CODE_RE.test(text)) {
+    await handleQrCode(chatId, text);
     return;
   }
   if (EMAIL_RE.test(text)) {

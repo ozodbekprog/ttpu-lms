@@ -68,7 +68,13 @@ function TileIcon({ tile }: { tile: (typeof TILES)[number]["key"] }) {
   );
 }
 
-export function StaffAttendanceOverview({ courses }: { courses: StaffCourseAttendanceRow[] }) {
+export function StaffAttendanceOverview({
+  courses,
+  qrEnabled,
+}: {
+  courses: StaffCourseAttendanceRow[];
+  qrEnabled: boolean;
+}) {
   const totals = courses.reduce(
     (accumulator, course) => ({
       students: accumulator.students + course.students,
@@ -232,15 +238,17 @@ export function StaffAttendanceOverview({ courses }: { courses: StaffCourseAtten
               </div>
 
               <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+                {qrEnabled ? (
+                  <ButtonLink href={`/courses/${course.slug}/attendance`} size="sm">
+                    QR sessiya
+                  </ButtonLink>
+                ) : null}
                 <ButtonLink
                   href={`/courses/${course.slug}/attendance/journal`}
                   variant="secondary"
                   size="sm"
                 >
                   Jurnal
-                </ButtonLink>
-                <ButtonLink href={`/courses/${course.slug}/attendance`} variant="ghost" size="sm">
-                  QR check-in
                 </ButtonLink>
                 {course.isPublished ? null : <Badge tone="amber">Qoralama</Badge>}
               </div>

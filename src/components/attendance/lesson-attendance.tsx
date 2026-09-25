@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Button, Card, CardBody, CardHeader, Label, Select } from "@/components/ui";
+import { Avatar, Badge, Button, Card, CardBody, CardHeader, Label, Select } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { CourseOption } from "@/components/attendance/lesson-utils";
 
@@ -109,6 +109,7 @@ export function LessonAttendance({
   selectedSlug,
   subGroup,
   cancelled,
+  qrEnabled,
 }: {
   courseId: string;
   date: string;
@@ -119,6 +120,7 @@ export function LessonAttendance({
   selectedSlug: string;
   subGroup: string | null;
   cancelled: boolean;
+  qrEnabled?: boolean;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Record<string, LessonStatus>>({});
@@ -287,7 +289,8 @@ export function LessonAttendance({
             <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>
           ) : null}
 
-          <p className="text-xs text-slate-400">
+          <p className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            {qrEnabled ? <Badge tone="green">QR faol</Badge> : null}
             QR orqali belgilanganlar avtomatik &quot;Keldi&quot; bo&apos;lib turadi.
           </p>
         </CardBody>

@@ -50,6 +50,18 @@ faqat `.env` dagi `DATABASE_URL` manzilida PostgreSQL ishlab turishi kerak.
   sana va vaqt, fan va imtihon nomi, xona, `🎫 O'rindiq` (varaq bo'lsa) hamda
   `✅ Ruxsat` / `❌ Ruxsat yo'q` (varaqa holatiga qarab). Imtihon bo'lmasa:
   `Kelayotgan imtihonlar yo'q`.
+- `/qr` — davomat:
+  - **talaba**: `/qr ABC123` yoki oddiy 6 belgili kod yuborsa, kod bo'yicha faol sessiya
+    topiladi, muddati va kursga yozilganlik tekshiriladi, so'ng davomat `PRESENT`
+    (izoh: `QR orqali (bot)`) qilib belgilanadi. Kod topilmasa, muddati tugagan bo'lsa,
+    kursga yozilmagan bo'lsa yoki bugun allaqachon belgilangan bo'lsa — tushunarli xabar
+    qaytadi;
+  - **o'qituvchi**: `/qr` (argumentsiz) — bugungi birinchi darsi kursi uchun faol sessiya
+    bo'lsa o'sha ko'rsatiladi, bo'lmasa yangi 6 belgili kod (alifbo
+    `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`, 15 daqiqa) ochiladi va shu kursdagi eski faol
+    sessiyalar yopiladi. Javobda kurs nomi, kod,
+    `.../attendance/check-in?code=...` havolasi va amal muddati bo'ladi;
+  - boshqa rollar uchun buyruq mavjud emasligi haqida xabar beriladi.
 - `/help` — buyruqlar ro'yxati
 
 ## Avtomatik eslatma
@@ -74,6 +86,7 @@ Eslatma bir kunda takroran yuborilmasligi uchun oxirgi yuborilgan sana
 ## Eslatmalar
 
 - `/davomat` va o'qituvchi eslatmasidagi havolalar `http://localhost:3000` ga ishora qiladi.
+- `/qr` havolasi `APP_URL` muhit o'zgaruvchisidan olinadi (berilmasa `http://localhost:3000`).
 - `bot/data.json` — `{ "links": { chatId: email }, "lastReminderDate": "YYYY-MM-DD" }`.
   Eski (faqat chatId → email) fayl ham o'qiladi va keyingi saqlashda yangi formatga o'tadi.
   Fayl gitga qo'shilmaydi (`.gitignore` da).

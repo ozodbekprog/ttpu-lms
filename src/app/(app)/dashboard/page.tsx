@@ -14,6 +14,7 @@ import {
   todayIso,
 } from "@/components/attendance/lesson-utils";
 import type { CourseOption } from "@/components/attendance/lesson-utils";
+import { getModuleFlags } from "@/server/settings";
 import type { ReactNode } from "react";
 
 const PAIR_TIMES: Record<number, string> = {
@@ -133,6 +134,25 @@ function FileTextIcon() {
       <path d="M14 3v5h5" />
       <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
       <path d="M9 13h6M9 17h4" />
+    </Icon>
+  );
+}
+
+function QrIcon() {
+  return (
+    <Icon className="size-4">
+      <rect x="3" y="3" width="5" height="5" rx="1" />
+      <rect x="16" y="3" width="5" height="5" rx="1" />
+      <rect x="3" y="16" width="5" height="5" rx="1" />
+      <path d="M21 16h-3a2 2 0 0 0-2 2v3" />
+      <path d="M21 21v.01" />
+      <path d="M12 7v3a2 2 0 0 1-2 2H7" />
+      <path d="M3 12h.01" />
+      <path d="M12 3h.01" />
+      <path d="M12 16v.01" />
+      <path d="M16 12h1" />
+      <path d="M21 12v.01" />
+      <path d="M12 21v-1" />
     </Icon>
   );
 }
@@ -460,6 +480,7 @@ function AdminAnalyticsSection({ data }: { data: AdminAnalytics }) {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const flags = await getModuleFlags();
   const now = new Date();
   const firstName = user.name.split(" ")[0];
   const roleLabel =
@@ -553,12 +574,18 @@ export default async function DashboardPage() {
             { href: "/schedule", label: "Jadval", icon: <CalendarIcon /> },
             { href: "/grades", label: "Topshiriqlar", icon: <ClipboardIcon /> },
             { href: "/quizzes", label: "Testlar", icon: <HelpCircleIcon /> },
+            ...(flags.qr_attendance
+              ? [{ href: "/attendance/qr", label: "QR davomat", icon: <QrIcon /> }]
+              : []),
           ]
         : [
             { href: "/admin", label: "Statistika", icon: <BarChartIcon /> },
             { href: "/admin/users", label: "Foydalanuvchilar", icon: <UsersIcon /> },
             { href: "/schedule", label: "Jadval", icon: <CalendarIcon /> },
             { href: "/reports", label: "Hisobotlar", icon: <FileTextIcon /> },
+            ...(flags.qr_attendance
+              ? [{ href: "/attendance/qr", label: "QR davomat", icon: <QrIcon /> }]
+              : []),
           ];
 
     return (
@@ -687,6 +714,11 @@ export default async function DashboardPage() {
                             Davomat belgilash
                           </ButtonLink>
                         ) : null}
+                        {lesson.href && flags.qr_attendance ? (
+                          <ButtonLink href={lesson.href} size="sm" variant="secondary">
+                            QR
+                          </ButtonLink>
+                        ) : null}
                       </div>
                     </div>
                   ))
@@ -742,6 +774,9 @@ export default async function DashboardPage() {
     { href: "/schedule", label: "Jadval", icon: <CalendarIcon /> },
     { href: assignmentsHref, label: "Topshiriqlar", icon: <ClipboardIcon /> },
     { href: "/quizzes", label: "Testlar", icon: <HelpCircleIcon /> },
+    ...(flags.qr_attendance
+      ? [{ href: "/attendance/check-in", label: "QR davomat", icon: <QrIcon /> }]
+      : []),
   ];
 
   return (

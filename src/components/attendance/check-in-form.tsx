@@ -4,18 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Card, CardBody, Input, Label } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
+import { normalizeQrCode } from "@/components/attendance/qr-utils";
 
 type CheckInResult = {
   course: { id: string; title: string; slug: string };
   date: string;
 };
 
-function sanitize(value: string) {
-  return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-}
-
 export function CheckInForm({ initialCode }: { initialCode?: string }) {
-  const [code, setCode] = useState(() => sanitize(initialCode ?? ""));
+  const [code, setCode] = useState(() => normalizeQrCode(initialCode ?? ""));
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<CheckInResult | null>(null);
@@ -23,7 +20,7 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
   const autoSubmitted = useRef(false);
 
   async function submit(value: string) {
-    const normalized = sanitize(value);
+    const normalized = normalizeQrCode(value);
     if (normalized.length !== 6) {
       setStatus("error");
       setMessage("Kod 6 belgidan iborat bo'lishi kerak");
@@ -55,7 +52,7 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
 
   useEffect(() => {
     if (autoSubmitted.current) return;
-    const initial = sanitize(initialCode ?? "");
+    const initial = normalizeQrCode(initialCode ?? "");
     if (initial.length !== 6) return;
     autoSubmitted.current = true;
     void submit(initial);
@@ -153,7 +150,7 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
             <Input
               value={code}
               onChange={(event) => {
-                setCode(sanitize(event.target.value));
+                setCode(normalizeQrCode(event.target.value));
                 if (status === "error") {
                   setStatus("idle");
                   setMessage(null);
