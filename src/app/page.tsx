@@ -49,7 +49,7 @@ const FEATURES = [
       "Fanlar bo'limlarga ajratilgan: ma'ruza matnlari, fayllar, videolar va qo'shimcha resurslar bir joyda.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -69,7 +69,7 @@ const FEATURES = [
       "Topshiriqlarni yuklash, muddatlarni kuzatish va o'qituvchi tomonidan onlayn baholash jarayoni.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -90,7 +90,7 @@ const FEATURES = [
       "Vaqt chegarasi bilan onlayn testlar, avtomatik baholash va natijalar tahlili bir zumda.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -111,7 +111,7 @@ const FEATURES = [
       "Semestr GPA si, yig'ilgan kreditlar va fan bo'yicha baholar real vaqtda hisoblanadi.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -131,7 +131,7 @@ const FEATURES = [
       "Transkript avtomatik shakllanadi: barcha semestrlar, baholar va kreditlar bitta hujjatda.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -152,7 +152,7 @@ const FEATURES = [
       "O'qituvchi kundaligi: mavzular, uy vazifalari va dars qaydlari yagona joyda saqlanadi.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -172,7 +172,7 @@ const FEATURES = [
       "Auditoriya, laboratoriya va jihozlarni band qilish bir necha bosqichda, tasdiqlash bilan.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -193,7 +193,7 @@ const FEATURES = [
       "Bildirishnomalar, baholar va muhim eslatmalar Telegram orqali darhol yetib boradi.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -222,7 +222,7 @@ const STEPS = [
     description:
       "Ism, email va parolni kiriting. Hisob 30 soniyada yaratiladi va darhol faollashadi.",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -242,7 +242,7 @@ const STEPS = [
     description:
       "Guruh va fakultetingizni tanlang — jadval hamda fanlar avtomatik biriktiriladi.",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -261,7 +261,7 @@ const STEPS = [
     description:
       "Kurslar, topshiriqlar va baholar shaxsiy kabinetda. Hech narsa sozlash shart emas.",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -296,6 +296,12 @@ const FOOTER_PLATFORM = [
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-800 focus:shadow-lg"
+      >
+        Asosiy kontentga o&apos;tish
+      </a>
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/" className="transition-opacity duration-150 hover:opacity-80">
@@ -323,7 +329,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <section className="relative overflow-hidden border-b border-slate-200/70 bg-gradient-to-b from-brand-50 via-white to-white">
           <div className="pointer-events-none absolute -left-24 top-12 size-72 rounded-full bg-brand-200/40 blur-3xl" />
           <div className="pointer-events-none absolute -right-20 -top-16 size-80 rounded-full bg-gold-300/20 blur-3xl" />
@@ -361,7 +367,7 @@ export default function HomePage() {
               <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 lg:justify-start">
                 {TRUST_ITEMS.map((item) => (
                   <li key={item} className="inline-flex items-center gap-2 text-sm text-slate-500">
-                    <svg
+                    <svg aria-hidden="true"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -391,7 +397,7 @@ export default function HomePage() {
                   <span className="size-5 rounded-md bg-brand-50" />
                 </div>
                 <div className="flex gap-2.5 rounded-xl bg-surface p-2.5 sm:p-3">
-                  <aside className="hidden w-36 shrink-0 flex-col gap-1 rounded-xl border border-slate-100 bg-white p-2.5 sm:flex">
+                  <aside aria-hidden="true" className="hidden w-36 shrink-0 flex-col gap-1 rounded-xl border border-slate-100 bg-white p-2.5 sm:flex">
                     {DASH_NAV.map((item) => (
                       <span
                         key={item.label}
@@ -498,7 +504,7 @@ export default function HomePage() {
 
               <div className="absolute -right-3 -top-6 hidden items-center gap-2.5 rounded-2xl border border-slate-200 bg-white/95 px-3.5 py-2.5 shadow-lift backdrop-blur sm:flex">
                 <span className="inline-flex size-8 items-center justify-center rounded-xl bg-gold-300/20 text-gold-600">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -518,7 +524,7 @@ export default function HomePage() {
 
               <div className="absolute -bottom-6 -left-3 hidden items-center gap-2.5 rounded-2xl border border-slate-200 bg-white/95 px-3.5 py-2.5 shadow-lift backdrop-blur sm:flex">
                 <span className="inline-flex size-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -632,6 +638,7 @@ export default function HomePage() {
         </section>
 
         <section id="statistika" className="px-4 py-20 sm:px-6 sm:py-24">
+          <h2 className="sr-only">Statistika</h2>
           <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-900 px-6 py-14 sm:px-12 sm:py-16">
             <div className="pointer-events-none absolute -right-16 -top-20 size-72 rounded-full bg-gold-400/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-16 size-72 rounded-full bg-brand-600/30 blur-3xl" />
@@ -728,7 +735,7 @@ export default function HomePage() {
               <p className="text-sm font-semibold text-brand-950">Aloqa</p>
               <ul className="mt-4 space-y-3.5 text-sm text-slate-500">
                 <li className="flex items-center gap-2.5">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -743,7 +750,7 @@ export default function HomePage() {
                   info@ttpu.uz
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -757,7 +764,7 @@ export default function HomePage() {
                   +998 71 289 99 00
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
