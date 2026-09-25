@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { Avatar, Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -173,10 +174,13 @@ export function AttendanceJournal({
     date: string,
   ) {
     const rect = event.currentTarget.getBoundingClientRect();
-    const width = 196;
-    const height = 132;
+    const width = 200;
+    const height = 150;
     const mobile = window.innerWidth < 640;
-    const left = Math.max(8, Math.min(rect.left - 8, window.innerWidth - width - 8));
+    const left = Math.max(
+      8,
+      Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8),
+    );
     const top =
       rect.bottom + height + 12 > window.innerHeight
         ? Math.max(8, rect.top - height - 8)
@@ -560,16 +564,17 @@ export function AttendanceJournal({
         )}
       </Card>
 
-      {editor ? (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setEditor(null)} />
-          <div
-            className={cn(
-              "animate-fade-up fixed z-50 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur",
-              editor.mobile ? "inset-x-3 bottom-3" : "w-48",
-            )}
-            style={editor.mobile ? undefined : { top: editor.top, left: editor.left }}
-          >
+      {editor && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setEditor(null)} />
+              <div
+                className={cn(
+                  "animate-fade-up fixed z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl ring-1 ring-slate-900/10",
+                  editor.mobile ? "inset-x-3 bottom-3" : "w-52",
+                )}
+                style={editor.mobile ? undefined : { top: editor.top, left: editor.left }}
+              >
             <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-400">
               {editingStudent?.name ?? ""} · {journalDateParts(editor.date).label}
             </p>
@@ -607,8 +612,10 @@ export function AttendanceJournal({
               </button>
             ) : null}
           </div>
-        </>
-      ) : null}
+            </>,
+            document.body,
+          )
+        : null}
 
       {error || message ? (
         <div
