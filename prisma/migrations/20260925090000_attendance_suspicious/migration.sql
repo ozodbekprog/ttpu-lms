@@ -1,0 +1,1 @@
+ALTER TYPE "AttendanceStatus" ADD VALUE 'SUSPICIOUS';
