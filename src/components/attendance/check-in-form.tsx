@@ -4,23 +4,46 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Card, CardBody, Input, Label } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
+import { requestBrowserLocation } from "./live-qr";
 
 type CheckInResult = {
   course: { id: string; title: string; slug: string };
   date: string;
+  status?: string;
+  reasons?: string[];
+};
+
+const REASON_LABELS: Record<string, string> = {
+  GEO_FAR: "Joylashuv o'qituvchi joyidan uzoq",
+  GEO_MISSING: "Qurilma joylashuvi aniqlanmadi",
+  GEO_ACCURACY_LOW: "Joylashuv aniqligi past",
+  IP_CHANGED: "IP manzil o'zgardi",
+  IP_SHARED: "Bir xil qurilmadan bir nechta belgilash aniqlandi",
+  VPN_SUSPECTED: "VPN yoki proxy aniqlandi",
+  IP_GEO_MISMATCH: "Tarmoq joylashuvi qurilma joylashuviga mos emas",
 };
 
 function sanitize(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 }
 
-export function CheckInForm({ initialCode }: { initialCode?: string }) {
+export function CheckInForm({
+  initialCode,
+  initialToken,
+}: {
+  initialCode?: string;
+  initialToken?: string;
+}) {
   const [code, setCode] = useState(() => sanitize(initialCode ?? ""));
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "suspicious" | "error">(
+    "idle",
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<CheckInResult | null>(null);
+  const [reasons, setReasons] = useState<string[]>([]);
   const [pop, setPop] = useState(false);
   const autoSubmitted = useRef(false);
+  const tokenSubmitted = useRef(false);
 
   async function submit(value: string) {
     const normalized = sanitize(value);
@@ -49,17 +72,77 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
 
     setResult(json.data);
     setPop(false);
-    setStatus("success");
+    if (json.data.status === "SUSPICIOUS") {
+      setReasons(Array.isArray(json.data.reasons) ? json.data.reasons : []);
+      setStatus("suspicious");
+    } else {
+      setReasons([]);
+      setStatus("success");
+    }
     window.requestAnimationFrame(() => setPop(true));
   }
 
   useEffect(() => {
     if (autoSubmitted.current) return;
+    if (initialToken) return;
     const initial = sanitize(initialCode ?? "");
     if (initial.length !== 6) return;
     autoSubmitted.current = true;
     void submit(initial);
-  }, [initialCode]);
+  }, [initialCode, initialToken]);
+
+  async function submitToken(token: string) {
+    const value = token.trim();
+    if (!value) {
+      setStatus("error");
+      setMessage("Token topilmadi");
+      return;
+    }
+
+    setStatus("loading");
+    setMessage("Joylashuv aniqlanmoqda...");
+
+    const location = await requestBrowserLocation();
+
+    setMessage("Tekshirilmoqda...");
+
+    const response = await apiFetch("/api/attendance/check-in", {
+      method: "POST",
+      body: JSON.stringify(
+        location
+          ? { token: value, lat: location.lat, lng: location.lng, accuracy: location.accuracy }
+          : { token: value },
+      ),
+    });
+    const json = (await response.json().catch(() => null)) as
+      | { ok?: boolean; error?: string; data?: CheckInResult }
+      | null;
+
+    if (!response.ok || !json?.ok || !json.data) {
+      setStatus("error");
+      setMessage(json?.error ?? "Belgilashda xatolik yuz berdi");
+      return;
+    }
+
+    setResult(json.data);
+    setPop(false);
+    if (json.data.status === "SUSPICIOUS") {
+      setReasons(Array.isArray(json.data.reasons) ? json.data.reasons : []);
+      setStatus("suspicious");
+    } else {
+      setReasons([]);
+      setStatus("success");
+    }
+    window.requestAnimationFrame(() => setPop(true));
+  }
+
+  useEffect(() => {
+    if (tokenSubmitted.current) return;
+    const token = (initialToken ?? "").trim();
+    if (!token) return;
+    tokenSubmitted.current = true;
+    void submitToken(token);
+  }, [initialToken]);
 
   if (status === "success" && result) {
     return (
@@ -104,6 +187,73 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
               setStatus("idle");
               setResult(null);
               setCode("");
+            }}
+          >
+            Yana kod kiritish
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (status === "suspicious" && result) {
+    return (
+      <Card className="animate-fade-up relative mx-auto max-w-lg overflow-hidden border-amber-200">
+        <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-gold-400" />
+        <span className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-amber-300/20 blur-3xl" />
+        <span className="pointer-events-none absolute -bottom-24 -left-12 size-48 rounded-full bg-gold-300/15 blur-3xl" />
+        <CardBody className="relative flex flex-col items-center gap-2.5 py-12 text-center">
+          <span className="relative flex size-24 items-center justify-center">
+            <span className="absolute inset-0 animate-pulse-ring rounded-full bg-amber-400/25" />
+            <span
+              className={cn(
+                "relative flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-8 ring-amber-50 transition-all duration-500 ease-out",
+                pop ? "scale-100 opacity-100" : "scale-50 opacity-0",
+              )}
+            >
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={cn(
+                  "transition-transform duration-500 delay-150 ease-out",
+                  pop ? "scale-100" : "scale-0",
+                )}
+              >
+                <path d="M12 3 2 20h20L12 3Z" />
+                <path d="M12 10v4" />
+                <path d="M12 17.5h.01" />
+              </svg>
+            </span>
+          </span>
+          <p className="mt-2 text-xl font-semibold text-amber-800">
+            Belgilandingiz, lekin tekshiruv shubhali
+          </p>
+          <p className="text-sm font-medium text-slate-700">{result.course.title}</p>
+          <p className="text-sm text-slate-500">{fmtDate(`${result.date}T00:00:00.000Z`)}</p>
+          {reasons.length > 0 ? (
+            <ul className="mt-2 w-full space-y-1.5 rounded-2xl bg-amber-50 px-4 py-3 text-left">
+              {reasons.map((reason) => (
+                <li key={reason} className="text-sm text-amber-800">
+                  · {REASON_LABELS[reason] ?? reason}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Button
+            variant="secondary"
+            className="mt-4 px-6"
+            onClick={() => {
+              setStatus("idle");
+              setResult(null);
+              setReasons([]);
+              setCode("");
+              setMessage(null);
             }}
           >
             Yana kod kiritish
