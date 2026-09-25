@@ -10,9 +10,10 @@ import { NextResponse, type NextRequest } from "next/server";
  * answer protected requests with a real HTTP 307 instead of a streamed 200
  * that only redirects via a meta-refresh/JS after `requireUser()` runs.
  *
- * Next.js 16 renamed the `middleware.ts` file convention to `proxy.ts`. Both
- * are still supported, but they cannot coexist (the build fails with E900),
- * so this file replaces the previous `src/proxy.ts`.
+ * Next.js 16 uses the `proxy.ts` file convention (formerly `middleware.ts`).
+ * This is the enhanced version of the repo's original `src/proxy.ts`: a
+ * stricter cookie-shape check, an encoded `next` parameter and a public
+ * allowlist instead of a hardcoded protected-prefix list.
  */
 
 const SESSION_COOKIE = "ttpu_session";
@@ -65,7 +66,7 @@ function looksLikeSessionCookie(value: string | undefined): boolean {
   return parts.length === 3 && parts.every((part) => part.length > 0);
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // Public pages and static/API assets never need the cookie gate.
