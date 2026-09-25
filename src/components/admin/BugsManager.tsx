@@ -33,6 +33,12 @@ const ROLE_LABELS: Record<string, string> = {
   STUDENT: "Talaba",
 };
 
+const SEVERITY_LABELS: Record<string, string> = {
+  low: "Past",
+  medium: "O'rta",
+  high: "Yuqori",
+};
+
 export function BugsManager({ reports }: { reports: BugItem[] }) {
   const [items, setItems] = useState(reports);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -90,6 +96,12 @@ export function BugsManager({ reports }: { reports: BugItem[] }) {
       {items.map((item) => {
         const suggestion = classifyBug(item.message, item.stack);
         const note = typeof item.meta?.note === "string" ? item.meta.note : null;
+        const ai = (item.meta?.ai ?? null) as {
+          summary?: string;
+          cause?: string;
+          fixHint?: string;
+          severity?: string;
+        } | null;
         const statusMeta = STATUS_META[item.status];
         const busy = busyId === item.id;
         return (
@@ -103,6 +115,29 @@ export function BugsManager({ reports }: { reports: BugItem[] }) {
               <p className="rounded-xl bg-brand-50/70 px-3 py-2 text-sm text-brand-900">
                 🤖 AI tahlili: <span className="font-semibold">{suggestion.title}</span> — {suggestion.hint}
               </p>
+
+              {ai ? (
+                <div className="space-y-1 rounded-xl bg-violet-50/70 px-3 py-2 text-sm text-violet-950">
+                  <p className="font-semibold">🧠 DeepSeek tahlili</p>
+                  {ai.summary ? <p>{ai.summary}</p> : null}
+                  {ai.cause ? (
+                    <p>
+                      <span className="font-medium">Sabab:</span> {ai.cause}
+                    </p>
+                  ) : null}
+                  {ai.fixHint ? (
+                    <p>
+                      <span className="font-medium">Yechim:</span> {ai.fixHint}
+                    </p>
+                  ) : null}
+                  {ai.severity ? (
+                    <p>
+                      <span className="font-medium">Jiddiylik:</span>{" "}
+                      {SEVERITY_LABELS[ai.severity] ?? ai.severity}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="grid gap-1.5 text-xs text-slate-500 sm:grid-cols-2">
                 <p>

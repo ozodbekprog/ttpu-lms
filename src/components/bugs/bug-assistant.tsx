@@ -102,7 +102,34 @@ export function BugAssistant() {
     }
   }
 
-  function handleSend() {
+  async function askAiReply(pending: ChatMessage[]): Promise<string> {
+    try {
+      const res = await apiFetch("/api/assistant/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          messages: pending
+            .slice(-8)
+            .map((message) => ({
+              role: message.role === "ai" ? "assistant" : "user",
+              content: message.text,
+            })),
+          context: captured.current
+            ? { url: captured.current.url, errorMessage: captured.current.message }
+            : undefined,
+        }),
+      });
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; data?: { reply?: string } }
+        | null;
+      const reply = json?.data?.reply;
+      if (typeof reply === "string" && reply.trim()) return reply.trim();
+    } catch {
+      void 0;
+    }
+    return "Rahmat! Tafsilotlarni adminga yuboraymi?";
+  }
+
+  async function handleSend() {
     const value = input.trim();
     if (!value || busy) return;
     if (stage === "sent") {
@@ -110,17 +137,19 @@ export function BugAssistant() {
       setInput("");
       return;
     }
-    setMessages((prev) => [...prev, { role: "user", text: value }]);
+    const pending: ChatMessage[] = [...messages, { role: "user", text: value }];
+    setMessages(pending);
     note.current = note.current ? `${note.current} | ${value}` : value;
     setInput("");
-    if (stage === "ask") {
-      aiSay("Rahmat! Tafsilotlarni adminga yuboraymi?");
-      setStage("confirm");
-      return;
-    }
     if (stage === "confirm") {
       aiSay("Yuborish uchun pastdagi tugmani bosing 🙂");
+      return;
     }
+    setBusy(true);
+    const reply = await askAiReply(pending);
+    setBusy(false);
+    aiSay(reply);
+    setStage("confirm");
   }
 
   return (
@@ -177,6 +206,11 @@ export function BugAssistant() {
                 {message.text}
               </div>
             ))}
+            {busy ? (
+              <div className="w-fit rounded-2xl bg-slate-100 px-3 py-2 text-sm text-slate-400">
+                AI yozmoqda…
+              </div>
+            ) : null}
           </div>
 
           <div className="space-y-2.5 border-t border-slate-100 px-4 py-3">

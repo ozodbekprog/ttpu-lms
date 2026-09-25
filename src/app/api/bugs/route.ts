@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { verifyCsrfFromRequest } from "@/lib/csrf";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createAuditLog, getClientInfo } from "@/lib/audit";
+import { analyzeBug } from "@/lib/ai";
 
 const reportSchema = z.object({
   message: z.string().trim().min(3).max(3000),
@@ -79,6 +80,25 @@ export async function POST(request: Request) {
     ip: clientInfo.ip,
     userAgent: clientInfo.userAgent,
   });
+
+  void analyzeBug({
+    message: parsed.data.message,
+    stack: parsed.data.stack,
+    url: parsed.data.url,
+  })
+    .then(async (analysis) => {
+      if (!analysis) return;
+      await prisma.bugReport.update({
+        where: { id: report.id },
+        data: {
+          meta: {
+            ...((report.meta ?? {}) as Record<string, unknown>),
+            ai: analysis,
+          },
+        },
+      });
+    })
+    .catch(() => {});
 
   return Response.json({ ok: true, data: { id: report.id } }, { status: 201 });
 }
