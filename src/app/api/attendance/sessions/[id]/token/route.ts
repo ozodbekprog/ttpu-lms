@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { canManageCourse } from "@/components/courses/course-access";
 import { QR_TOKEN_TTL_SECONDS } from "@/modules/attendance-security/config";
 import { checkInUrl, signQrToken } from "@/modules/attendance-security/qr-token";
+import { requestOrigin } from "@/lib/request-origin";
 
 const bodySchema = z.object({
   lat: z.number().min(-90).max(90).optional(),
@@ -52,8 +53,7 @@ export async function POST(
       : undefined;
 
   const token = await signQrToken({ sessionId: session.id, courseId: session.courseId, location });
-  const origin = new URL(request.url).origin;
-  const url = checkInUrl(origin, token);
+  const url = checkInUrl(requestOrigin(request), token);
 
   return Response.json({
     ok: true,
