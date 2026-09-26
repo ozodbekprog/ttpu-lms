@@ -9,7 +9,7 @@ const bulkSchema = z.object({
     .array(
       z.object({
         studentId: z.string().min(1),
-        status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED"]),
+        status: z.enum(["PRESENT", "ABSENT", "LATE", "EXCUSED", "SUSPICIOUS"]),
       }),
     )
     .min(1, "Kamida bitta yozuv kerak"),

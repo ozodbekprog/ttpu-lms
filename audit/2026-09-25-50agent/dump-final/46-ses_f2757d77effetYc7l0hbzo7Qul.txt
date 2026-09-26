@@ -1,0 +1,16 @@
+### SESSION ses_f2757d77effetYc7l0hbzo7Qul — Cross-route browser audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи browser read-only smoke audit публичных маршрутов /, /login, /register, /forgot-password, /help, /dashboard, /admin, /courses, /quizzes, /attendance/check-in на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Не входи и не отправляй формы; проверь load, console/network errors, redirects, 404/500, content mismatch. Максимум 10 маршрутов. Верни verified bugs с URL, evidence, severity, confidence, repro.
+
+[09-25 18:01 assistant]
+Проверю доступные headless-браузерные инструменты и затем выполню только GET-навигацию по указанным 10 маршрутам, без входа и отправки форм.
+
+[09-25 18:02 assistant]
+В окружении есть Playwright и Chromium; запускаю изолированный контекст без cookies/storage, перехватываю ответы, редиректы, failed requests, console и page errors для всех 10 URL.
+
+[09-25 18:04 assistant]
+Первый проход уже показывает 307→/login для `/help` и всех защищённых маршрутов; уточняю ожидаемую публичность `/help` по коду и отделяю штатные auth-редиректы от подтверждённых дефектов.
+
+[09-25 18:04 assistant]
+Повторяю аудит с обычной TLS-проверкой и разрешённым Service Worker, чтобы не принять артефакт тестового блокировки за ошибку приложения; запросы POST/PUT/PATCH всё равно не выполняю.

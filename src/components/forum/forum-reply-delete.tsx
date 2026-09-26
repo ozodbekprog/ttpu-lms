@@ -20,7 +20,7 @@ export function ForumReplyDelete({ replyId }: { replyId: string }) {
     <Button
       size="sm"
       variant="ghost"
-      className="text-slate-400 hover:text-rose-600"
+      className="text-slate-600 hover:text-rose-600"
       onClick={handleDelete}
       disabled={deleting}
     >

@@ -75,7 +75,7 @@ export function CoverUpload({ className }: { className?: string }) {
           <span className="block text-sm font-medium text-slate-700 transition-colors duration-150 group-hover:text-brand-800">
             {busy ? "Yuklanmoqda..." : "Muqovani almashtirish"}
           </span>
-          <span className="mt-0.5 block text-xs text-slate-400">PNG, JPG yoki WebP · 30 MB gacha (avtomatik siqiladi)</span>
+          <span className="mt-0.5 block text-xs text-slate-600">PNG, JPG yoki WebP · 30 MB gacha (avtomatik siqiladi)</span>
         </span>
       </button>
       <input ref={inputRef} type="file" accept={ACCEPT} className="hidden" onChange={onFileChange} />

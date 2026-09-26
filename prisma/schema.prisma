@@ -31,6 +31,14 @@ enum AttendanceStatus {
   ABSENT
   LATE
   EXCUSED
+  SUSPICIOUS
+}
+
+enum BugStatus {
+  NEW
+  IN_REVIEW
+  FIXED
+  REJECTED
 }
 
 enum QuestionType {
@@ -80,6 +88,7 @@ model User {
   examSheets           ExamSheet[]
   auditLogs            AuditLog[]
   passwordResets       PasswordResetToken[]
+  bugReports           BugReport[]
 
   subGroupId String?
   subGroup   SubGroup? @relation(fields: [subGroupId], references: [id], onDelete: SetNull)
@@ -634,4 +643,20 @@ model Message {
 
   @@index([conversationId, createdAt])
   @@index([senderId])
+}
+
+model BugReport {
+  id        String    @id @default(cuid())
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  url       String?
+  message   String
+  stack     String?
+  meta      Json?
+  status    BugStatus @default(NEW)
+  adminNote String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status, createdAt])
 }

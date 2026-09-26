@@ -1,0 +1,23 @@
+### SESSION ses_f27869fd7ffegWVjpyTUSkqvEp — Redirect behavior audit (@general subagent)
+
+[09-25 17:10 user]
+Проверь redirect behavior сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: нормальные redirects, HTTPS downgrade, open redirect через безопасный внешний/тестовый URL без обхода авторизации, path normalization. Не используй фишинговые домены и не изменяй данные; максимум 5 запросов. Верни verified findings с URL/status/location, severity, repro, confidence; если всё корректно — явно скажи.
+
+[09-25 17:10 assistant]
+Friday. Сделаю ровно 2 безопасных GET без следования редиректам: по HTTP и HTTPS, чтобы проверить downgrade и базовые заголовки.
+
+[09-25 17:11 assistant]
+Осталось 3 GET: прямой защищённый путь с `next=https://example.com/`, а также две нормализации пути. Redirects не следую; передача внешнего URL остаётся только в `Location`-проверке.
+
+[09-25 17:11 assistant]
+Проверено ровно **5 GET**, без cookies/авторизации и без следования redirects; `example.com` не запрашивался. **Подтверждённых уязвимостей нет.**
+
+| URL | Result | Severity / Confidence |
+|---|---|---|
+| `http://ozodbeks-macbook-pro.tail91a187.ts.net:8443/` | `curl (52) Empty reply`; HTTP status и `Location` отсутствуют. TLS-порт fail-closed, downgrade не обнаружен. | None / High |
+| `https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/` | `200`, `Location` отсутствует; присутствует HSTS. | None / High |
+| `https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/dashboard?next=https%3A%2F%2Fexample.com%2F` | `200`, без HTTP `Location`; внутри Next.js redirect `307 → /login`. Внешний URL отброшен, защищённые данные не отданы. | Info / High |
+| `https://ozodbeks-macbook-pro.tail91a187.ts.net:8443//dashboard?next=https%3A%2F%2Fexample.com%2F` | `308`, `Location: /dashboard?next=https%3A%2F%2Fexample.com%2F` — корректная нормализация. | None / High |
+| `https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/dashboard/.?next=https%3A%2F%2Fexample.com%2F` | `308`, тот же relative `Location`; auth bypass не обнаружен. | None / High |
+
+**Итог:** HTTPS downgrade, open redirect через `next=https://example.com/` и обход авторизации через проверенные варианты пути не подтверждены. Redirect авторизации реализован через Next.js streaming/meta-refresh вместо обычного HTTP `3xx`, что небезопасно не выглядит.

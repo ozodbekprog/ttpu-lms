@@ -445,7 +445,7 @@ export function AcademicCalendarView({ canManage }: { canManage: boolean }) {
                   <path d="M3 10h18" />
                 </svg>
                 <span>{rangeText(item)}</span>
-                <span className="text-slate-300">·</span>
+                <span className="text-slate-500">·</span>
                 <span>{durationText(item)}</span>
               </p>
               {item.description ? <p className="mt-2 text-sm leading-relaxed text-slate-500">{item.description}</p> : null}
@@ -494,11 +494,11 @@ export function AcademicCalendarView({ canManage }: { canManage: boolean }) {
           <span className={cn("size-1.5 shrink-0 rounded-full", pastSection ? "bg-slate-300" : "bg-brand-500")} />
           <h4 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{group.label}</h4>
           {group.key === currentMonthKey && !pastSection ? (
-            <span className="rounded-full bg-gold-300/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gold-600">
+            <span className="rounded-full bg-gold-300/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gold-800">
               Bu oy
             </span>
           ) : null}
-          <span className="ml-auto text-[11px] font-medium text-slate-400">{group.events.length} ta</span>
+          <span className="ml-auto text-[11px] font-medium text-slate-600">{group.events.length} ta</span>
         </div>
         <div className="relative space-y-3">
           <span aria-hidden="true" className="absolute bottom-6 left-5 top-6 w-px bg-slate-200" />

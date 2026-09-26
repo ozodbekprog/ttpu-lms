@@ -34,20 +34,43 @@ export default function RegisterPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const name = form.name.trim();
+    const email = form.email.trim();
+    if (name.length < 2) {
+      setError(t("authRegisterErrorName"));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError(t("authRegisterErrorEmail"));
+      return;
+    }
+    if (form.password.length < 12) {
+      setError(t("authRegisterErrorPassword"));
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await apiFetch("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify(form),
+        body: JSON.stringify({ name, email, password: form.password }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.ok) {
         setError(json?.error ?? t("authRegisterError"));
         return;
       }
-      router.push("/dashboard");
-      router.refresh();
+      const loginRes = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password: form.password }),
+      });
+      if (loginRes.ok) {
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+      setError(t("authRegisterLoginPending"));
+      return;
     } catch {
       setError(t("commonNetworkError"));
     } finally {
@@ -122,7 +145,7 @@ export default function RegisterPage() {
                 {t("authRegisterSubtitle")}
               </p>
             </div>
-            <form onSubmit={onSubmit} className="mt-8 space-y-5">
+            <form onSubmit={onSubmit} noValidate className="mt-8 space-y-5">
               <div>
                 <Label>{t("authRegisterName")}</Label>
                 <Input
@@ -152,9 +175,11 @@ export default function RegisterPage() {
                   onChange={(e) => update("password", e.target.value)}
                   placeholder={t("authRegisterPasswordPlaceholder")}
                   autoComplete="new-password"
-                  minLength={6}
+                  minLength={12}
+                  maxLength={100}
                   required
                 />
+                <p className="mt-1.5 text-xs text-slate-600">{t("authRegisterPasswordPlaceholder")}</p>
               </div>
               {error ? (
                 <div className="flex items-start gap-2.5 rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
@@ -188,7 +213,7 @@ export default function RegisterPage() {
               </Link>
             </p>
           </Card>
-          <p className="mt-6 text-center text-xs text-slate-400">
+          <p className="mt-6 text-center text-xs text-slate-600">
             {t("authRegisterTerms")}
           </p>
         </div>

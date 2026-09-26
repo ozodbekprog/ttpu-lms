@@ -47,7 +47,7 @@ const BADGE_TONES: Record<string, string> = {
   amber: "bg-amber-50 text-amber-700",
   rose: "bg-rose-50 text-rose-700",
   purple: "bg-purple-50 text-purple-700",
-  gold: "bg-gold-300/20 text-gold-600",
+  gold: "bg-gold-300/20 text-gold-800",
 };
 
 export function Badge({
@@ -86,7 +86,7 @@ export function Stat({
       <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
       <p className="text-sm font-medium text-slate-500">{label}</p>
       <p className="mt-1.5 text-3xl font-semibold tracking-tight text-brand-900">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-slate-400">{hint}</p> : null}
+      {hint ? <p className="mt-1 text-xs text-slate-600">{hint}</p> : null}
     </Card>
   );
 }
@@ -214,7 +214,7 @@ const BUTTON_VARIANTS = {
   secondary: "border border-slate-300 bg-white text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50",
   danger: "bg-rose-600 text-white shadow-sm hover:bg-rose-700",
   ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-  gold: "bg-gold-500 text-white shadow-sm hover:bg-gold-600",
+  gold: "bg-gold-500 text-brand-950 shadow-sm hover:bg-gold-600 active:bg-gold-600",
 };
 
 const BUTTON_SIZES = {
@@ -293,7 +293,7 @@ export function Input({
     <input
       {...props}
       className={cn(
-        "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10",
+        "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10",
         className,
       )}
     />
@@ -308,7 +308,7 @@ export function Textarea({
     <textarea
       {...props}
       className={cn(
-        "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10",
+        "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-500 focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10",
         className,
       )}
     />

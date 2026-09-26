@@ -13,7 +13,7 @@ export function WorkloadCoursesTable({
   return (
     <Table>
       <thead>
-        <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
           <th className="px-5 py-3 font-semibold">Kurs</th>
           {showTeacher ? <th className="px-5 py-3 font-semibold">O&apos;qituvchi</th> : null}
           <th className="px-5 py-3 text-right font-semibold">Talabalar</th>

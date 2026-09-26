@@ -1,0 +1,46 @@
+### SESSION ses_f2786b9d8ffeK9vOTUWt1bSczo — HTTP security headers (@general subagent)
+
+[09-25 17:10 user]
+Проведи read-only аудит https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 только по HTTP security headers: CSP, HSTS, frame protection, nosniff, referrer-policy, permissions-policy, cookie/security consistency. До 5 запросов, без payload attacks и изменений. Учитывай, что некоторые заголовки могут быть CDN/framework defaults. Верни verified findings с evidence, severity, confidence и воспроизведением; отдельно отметь корректные настройки, не выдумывай проблемы.
+
+[09-25 17:10 assistant]
+Проведу один read-only `HEAD`-запрос без переходов и без отправки payload; затем при необходимости уточню только факты из полученных заголовков.
+
+[09-25 17:10 assistant]
+Первый ответ — `200`, без `Set-Cookie`; проверю тем же read-only `GET`, потому что `HEAD` иногда не отражает cookie-поведение, и это будет второй из пяти запросов.
+
+[09-25 17:11 assistant]
+Уточнение по методу: предыдущие команды фактически выполнили два `GET` (`-I` не был добавлен). Для корректной проверки сравню их с настоящим `HEAD`; это третий read-only запрос из пяти, без переходов и payload.
+
+[09-25 17:12 assistant]
+## Итог
+
+Проверено **3/5 запросов**: два `GET` и один `HEAD`, без переходов, payload и изменений. Все ответили `HTTP/2 200`; security headers совпали. Ответ выглядит кэшированным/Next.js: `x-nextjs-cache: HIT`, `x-nextjs-prerender: 1`, `x-powered-by: Next.js`.
+
+## Подтверждённые findings
+
+| ID | Severity | Confidence | Evidence |
+|---|---|---|---|
+| CSP-01 | **Medium** | **High** | В enforced CSP: `script-src 'self' 'unsafe-inline' 'unsafe-eval'`. Это существенно ослабляет защиту от XSS: разрешены inline-скрипты и `eval`-подобное выполнение. Не доказывает наличие XSS или конкретной точки инъекции. `style-src 'unsafe-inline'` и `img-src ... https:` — permissive-наблюдения без отдельного severity. |
+
+Воспроизведение:
+
+```bash
+curl --http2 -sS -D - -o /dev/null --max-time 30 \
+  'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443'
+```
+
+`Content-Security-Policy-Report-Only` присутствует, но сам по себе не обеспечивает enforcement; при этом enforced CSP также присутствует, поэтому отдельного finding по этому поводу не заявляю.
+
+## Корректные настройки
+
+- **HSTS:** `max-age=31536000; includeSubDomains; preload` — корректно; фактическое включение в browser preload list не проверялось.
+- **Защита от framing:** `X-Frame-Options: DENY` и enforced CSP `frame-ancestors 'none'` — корректно и последовательно.
+- **MIME sniffing:** `X-Content-Type-Options: nosniff` — корректно.
+- **Referrer:** `Referrer-Policy: strict-origin-when-cross-origin` — корректно.
+- **Permissions:** явно запрещены `camera`, `microphone`, `geolocation`, `payment`, `usb`, `magnetometer`, `gyroscope`, `accelerometer`.
+- **Прочие CSP-ограничения:** `default-src 'self'`, `form-action 'self'`, `base-uri 'self'`, `object-src 'none'`, `connect-src 'self'`.
+
+## Cookie/security consistency
+
+`Set-Cookie` отсутствует во всех 3 ответах; cookie-флаги (`Secure`, `HttpOnly`, `SameSite`, `Domain`, `Path`) проверить невозможно. Отсутствие cookie не является finding. HTTPS-ответ содержит HSTS; plain HTTP и авторизованные маршруты не проверялись.

@@ -1,0 +1,63 @@
+### SESSION ses_f2757eb7effefDFM2q3vVhZfvm — Privacy and PII audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи read-only privacy/PII exposure audit публичных страниц и bundles сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Ищи email, телефон, внутренние URL, user IDs, персональные данные, debug info и публичные demo credentials; секретные значения маскируй. Не используй найденные учётные данные, максимум 10 same-origin resources. Верни evidence, severity, confidence, repro и отдельно низкорисковые observations.
+
+[09-25 18:01 assistant]
+Провожу только read-only проверку указанного публичного origin; ограничусь 10 same-origin resources, не буду входить, использовать найденные учётные данные или менять состояние сайта.
+
+[09-25 18:01 assistant]
+Корень уже содержит публичные контактные данные и демонстрационные персональные/учебные значения; отдельно проверяю `/login` и `/register`, затем адресно — только содержательные JS-бандлы (без загрузки шрифтов, иконок и CSS).
+
+[09-25 18:02 assistant]
+В login-бандле обнаружены три demo email, вшитые в клиентский код; паролей там нет и запросы авторизации не выполняю. Проверяю ещё общий runtime, публичную `/help` и манифест, оставаясь в пределах лимита.
+
+[09-25 18:02 assistant]
+Остался один ресурс в лимите; беру общий client entry-bundle, чтобы проверить конфигурацию API/окружения и возможные утечки, не обращаясь к защищённому dashboard и не вызывая auth endpoints.
+
+[09-25 18:04 assistant]
+## Итог
+
+Проверено **10/10 same-origin resources** (HTML + выбранные JS bundles), только GET/read-only; POST, регистрация, вход и проверка найденных учётных данных не выполнялись.  
+**High:** не обнаружено. **Medium (условно):** 2. Полные email, телефон и имя частично замаскированы.
+
+### F-01 — Medium (условно): публичные demo/account identifiers
+
+**Evidence:** `/_next/static/chunks/2cxfh6cppays_.js` содержит массив demo-ролей:
+
+- `authRoleStudent` → `o***@ttpu.uz`
+- `authRoleTeacher` → `n.m***@ttpu.uz`
+- `authRoleAdmin` → `a***@ttpu.uz`
+
+На `/login` одновременно отображаются «Demo hisoblar» и подсказка, что email автоматически подставляется.
+
+**Severity:** Medium, если адреса относятся к реальным/shared accounts; Low, если это исключительно синтетические demo-аккаунты.  
+**Confidence:** High для факта публикации; Medium для действительности аккаунтов.  
+**Repro:** открыть `/login`, View Source/DevTools → загрузить указанный chunk → найти `roleKey` и `email`. Не нажимать submit.
+
+Пароли, токены, API keys или session values в проверенном bundle не обнаружены; это не полный credential pair.
+
+### F-02 — Medium (условно): публичные учебные данные/профиль
+
+**Evidence:** HTML `/` содержит демонстрационный dashboard без авторизации:
+
+- `Salom, O***bek`
+- `AI2-26 · 2-semestr`
+- GPA `3.8`, посещаемость `94%`, задания `12`
+- отдельная оценка `92 ball`
+
+**Severity:** Medium, если это реальные данные студента; Low/Informational, если полностью синтетический mockup.  
+**Confidence:** High для публичного наличия; Low для подтверждения реальности записи.  
+**Repro:** открыть `/` и выполнить поиск по `AI2-26`, `GPA`, `Davomat`, `Topshiriq`; данные присутствуют в HTML.
+
+## Низкорисковные observations
+
+- Landing page публикует организационные контакты: `i***@ttpu.uz`, `+998 71 *** ** 00`, адрес в Ташкенте и часы работы. Похоже на намеренно публичную контактную информацию.
+- В декоративной рамке браузера указан `lms.ttpu.uz/dashboard`; это не hyperlink и не подтверждённый внутренний API.
+- `manifest.webmanifest` раскрывает `start_url: "/dashboard"` и `scope: "/"`.
+- JS раскрывает обычные endpoint-пути `/api/auth/login`, `/api/auth/register`, `/api/csrf`; секретных значений нет.
+- Публичны Next.js/Turbopack chunk names, module IDs и хеш RSC/build metadata (`hsXA…1a8q`); stack trace, env vars, DB URLs и private IP не обнаружены.
+- `/help` возвращает login-страницу; это, вероятно, ошибка маршрутизации, а не PII-утечка.
+- Имя в hostname (`ozodbeks-macbook-pro...`) является deployment metadata и отдельно не считается утечкой страницы.
+
+**Ограничения:** защищённый `/dashboard`, API-запросы, browser storage и оставшиеся bundles не проверялись; лимит 10 ресурсов исчерпан.

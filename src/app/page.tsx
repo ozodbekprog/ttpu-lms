@@ -1,6 +1,59 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, ButtonLink, Card } from "@/components/ui";
 import { Logo } from "@/components/brand/logo";
+
+export const revalidate = 300;
+
+const SITE_URL = "https://lms.ttpu.uz";
+const OG_TITLE = "TTPU LMS — O'quv boshqaruv tizimi";
+const OG_DESCRIPTION =
+  "Turin Politexnika Universiteti uchun zamonaviy o'quv boshqaruv tizimi: kurslar, topshiriqlar, testlar, GPA, transkript va jadval.";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+    siteName: "TTPU LMS",
+  },
+  twitter: {
+    card: "summary",
+    title: OG_TITLE,
+    description: OG_DESCRIPTION,
+  },
+};
+
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Turin Politexnika Universiteti",
+      alternateName: "TTPU LMS",
+      url: SITE_URL,
+      email: "info@ttpu.uz",
+      telephone: "+998 71 289 99 00",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Toshkent",
+        addressCountry: "UZ",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "TTPU LMS",
+      url: SITE_URL,
+      inLanguage: "uz",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+  ],
+};
 
 const NAV_LINKS = [
   { href: "#imkoniyatlar", label: "Imkoniyatlar" },
@@ -49,7 +102,7 @@ const FEATURES = [
       "Fanlar bo'limlarga ajratilgan: ma'ruza matnlari, fayllar, videolar va qo'shimcha resurslar bir joyda.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -69,7 +122,7 @@ const FEATURES = [
       "Topshiriqlarni yuklash, muddatlarni kuzatish va o'qituvchi tomonidan onlayn baholash jarayoni.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -90,7 +143,7 @@ const FEATURES = [
       "Vaqt chegarasi bilan onlayn testlar, avtomatik baholash va natijalar tahlili bir zumda.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -111,7 +164,7 @@ const FEATURES = [
       "Semestr GPA si, yig'ilgan kreditlar va fan bo'yicha baholar real vaqtda hisoblanadi.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -131,7 +184,7 @@ const FEATURES = [
       "Transkript avtomatik shakllanadi: barcha semestrlar, baholar va kreditlar bitta hujjatda.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -152,7 +205,7 @@ const FEATURES = [
       "O'qituvchi kundaligi: mavzular, uy vazifalari va dars qaydlari yagona joyda saqlanadi.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -172,7 +225,7 @@ const FEATURES = [
       "Auditoriya, laboratoriya va jihozlarni band qilish bir necha bosqichda, tasdiqlash bilan.",
     badge: "Yangi",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -193,7 +246,7 @@ const FEATURES = [
       "Bildirishnomalar, baholar va muhim eslatmalar Telegram orqali darhol yetib boradi.",
     badge: null,
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -222,7 +275,7 @@ const STEPS = [
     description:
       "Ism, email va parolni kiriting. Hisob 30 soniyada yaratiladi va darhol faollashadi.",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -242,7 +295,7 @@ const STEPS = [
     description:
       "Guruh va fakultetingizni tanlang — jadval hamda fanlar avtomatik biriktiriladi.",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -261,7 +314,7 @@ const STEPS = [
     description:
       "Kurslar, topshiriqlar va baholar shaxsiy kabinetda. Hech narsa sozlash shart emas.",
     icon: (
-      <svg
+      <svg aria-hidden="true"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -296,34 +349,44 @@ const FOOTER_PLATFORM = [
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+      />
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-brand-800 focus:shadow-lg"
+      >
+        Asosiy kontentga o&apos;tish
+      </a>
       <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/" className="transition-opacity duration-150 hover:opacity-80">
             <Logo />
           </Link>
-          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 md:flex">
+          <nav className="hidden items-center gap-7 text-sm font-medium text-slate-600 lg:flex">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="transition-colors duration-150 hover:text-brand-800"
+                className="whitespace-nowrap transition-colors duration-150 hover:text-brand-800"
               >
                 {link.label}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <ButtonLink href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <ButtonLink href="/login" variant="ghost" size="sm" className="max-sm:hidden">
               Kirish
             </ButtonLink>
-            <ButtonLink href="/register" size="sm">
+            <ButtonLink href="/register" size="sm" className="whitespace-nowrap">
               Ro&apos;yxatdan o&apos;tish
             </ButtonLink>
           </div>
         </div>
       </header>
 
-      <main className="flex-1">
+      <main id="main" className="flex-1">
         <section className="relative overflow-hidden border-b border-slate-200/70 bg-gradient-to-b from-brand-50 via-white to-white">
           <div className="pointer-events-none absolute -left-24 top-12 size-72 rounded-full bg-brand-200/40 blur-3xl" />
           <div className="pointer-events-none absolute -right-20 -top-16 size-80 rounded-full bg-gold-300/20 blur-3xl" />
@@ -361,7 +424,7 @@ export default function HomePage() {
               <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 lg:justify-start">
                 {TRUST_ITEMS.map((item) => (
                   <li key={item} className="inline-flex items-center gap-2 text-sm text-slate-500">
-                    <svg
+                    <svg aria-hidden="true"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -385,13 +448,13 @@ export default function HomePage() {
                   <span className="size-2.5 rounded-full bg-rose-300" />
                   <span className="size-2.5 rounded-full bg-gold-300" />
                   <span className="size-2.5 rounded-full bg-emerald-300" />
-                  <span className="ml-2 hidden h-5 flex-1 items-center rounded-md bg-slate-100 px-2.5 text-[10px] font-medium text-slate-400 sm:flex">
+                  <span className="ml-2 hidden h-5 flex-1 items-center rounded-md bg-slate-100 px-2.5 text-[10px] font-medium text-slate-600 sm:flex">
                     lms.ttpu.uz/dashboard
                   </span>
                   <span className="size-5 rounded-md bg-brand-50" />
                 </div>
                 <div className="flex gap-2.5 rounded-xl bg-surface p-2.5 sm:p-3">
-                  <aside className="hidden w-36 shrink-0 flex-col gap-1 rounded-xl border border-slate-100 bg-white p-2.5 sm:flex">
+                  <aside aria-hidden="true" className="hidden w-36 shrink-0 flex-col gap-1 rounded-xl border border-slate-100 bg-white p-2.5 sm:flex">
                     {DASH_NAV.map((item) => (
                       <span
                         key={item.label}
@@ -420,9 +483,9 @@ export default function HomePage() {
                         </span>
                         <div className="min-w-0">
                           <p className="truncate text-[11px] font-semibold text-slate-800">
-                            Salom, Ozodbek
+                            Salom, Aziza
                           </p>
-                          <p className="truncate text-[10px] text-slate-400">
+                          <p className="truncate text-[10px] text-slate-600">
                             AI2-26 · 2-semestr
                           </p>
                         </div>
@@ -437,7 +500,7 @@ export default function HomePage() {
                           key={stat.label}
                           className="rounded-xl border border-slate-100 bg-white px-3 py-2.5"
                         >
-                          <p className="text-[10px] font-medium text-slate-400">{stat.label}</p>
+                          <p className="text-[10px] font-medium text-slate-600">{stat.label}</p>
                           <p className="mt-0.5 text-sm font-semibold tracking-tight text-brand-900">
                             {stat.value}
                           </p>
@@ -449,7 +512,7 @@ export default function HomePage() {
                         <p className="text-[11px] font-semibold text-slate-700">
                           Haftalik faollik
                         </p>
-                        <span className="text-[10px] font-medium text-slate-400">6/7 kun</span>
+                        <span className="text-[10px] font-medium text-slate-600">6/7 kun</span>
                       </div>
                       <div className="mt-3 flex h-20 items-end gap-1.5">
                         {DASH_BARS.map((bar) => (
@@ -465,7 +528,7 @@ export default function HomePage() {
                               }
                               style={{ height: `${bar.value}%` }}
                             />
-                            <span className="text-[9px] font-medium text-slate-400">
+                            <span className="text-[9px] font-medium text-slate-600">
                               {bar.day}
                             </span>
                           </div>
@@ -486,7 +549,7 @@ export default function HomePage() {
                             <p className="truncate text-[11px] font-semibold text-slate-800">
                               {item.title}
                             </p>
-                            <p className="text-[10px] text-slate-400">{item.room}</p>
+                            <p className="text-[10px] text-slate-600">{item.room}</p>
                           </div>
                           <span className="size-1.5 shrink-0 rounded-full bg-slate-200" />
                         </div>
@@ -497,8 +560,8 @@ export default function HomePage() {
               </div>
 
               <div className="absolute -right-3 -top-6 hidden items-center gap-2.5 rounded-2xl border border-slate-200 bg-white/95 px-3.5 py-2.5 shadow-lift backdrop-blur sm:flex">
-                <span className="inline-flex size-8 items-center justify-center rounded-xl bg-gold-300/20 text-gold-600">
-                  <svg
+                <span className="inline-flex size-8 items-center justify-center rounded-xl bg-gold-300/20 text-gold-800">
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -512,13 +575,13 @@ export default function HomePage() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold text-slate-800">GPA 3.8</p>
-                  <p className="text-[10px] text-slate-400">Semestr reytingi</p>
+                  <p className="text-[10px] text-slate-600">Semestr reytingi</p>
                 </div>
               </div>
 
               <div className="absolute -bottom-6 -left-3 hidden items-center gap-2.5 rounded-2xl border border-slate-200 bg-white/95 px-3.5 py-2.5 shadow-lift backdrop-blur sm:flex">
                 <span className="inline-flex size-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -532,7 +595,7 @@ export default function HomePage() {
                 </span>
                 <div>
                   <p className="text-xs font-semibold text-slate-800">Topshiriq baholandi</p>
-                  <p className="text-[10px] text-slate-400">Matematika · 92 ball</p>
+                  <p className="text-[10px] text-slate-600">Matematika · 92 ball</p>
                 </div>
               </div>
             </div>
@@ -632,6 +695,7 @@ export default function HomePage() {
         </section>
 
         <section id="statistika" className="px-4 py-20 sm:px-6 sm:py-24">
+          <h2 className="sr-only">Statistika</h2>
           <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-brand-900 px-6 py-14 sm:px-12 sm:py-16">
             <div className="pointer-events-none absolute -right-16 -top-20 size-72 rounded-full bg-gold-400/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-16 size-72 rounded-full bg-brand-600/30 blur-3xl" />
@@ -728,7 +792,7 @@ export default function HomePage() {
               <p className="text-sm font-semibold text-brand-950">Aloqa</p>
               <ul className="mt-4 space-y-3.5 text-sm text-slate-500">
                 <li className="flex items-center gap-2.5">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -743,7 +807,7 @@ export default function HomePage() {
                   info@ttpu.uz
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -757,7 +821,7 @@ export default function HomePage() {
                   +998 71 289 99 00
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <svg
+                  <svg aria-hidden="true"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -771,32 +835,15 @@ export default function HomePage() {
                   </svg>
                   Toshkent, O&apos;zbekiston
                 </li>
-                <li className="text-xs text-slate-400">Dushanba — Shanba, 09:00 — 18:00</li>
+                <li className="text-xs text-slate-600">Dushanba — Shanba, 09:00 — 18:00</li>
               </ul>
             </div>
           </div>
         </div>
         <div className="border-t border-slate-100">
           <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-6 sm:flex-row sm:px-6">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600">
               © 2026 Turin Politexnika Universiteti. Barcha huquqlar himoyalangan.
-            </p>
-            <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-4 text-brand-500"
-              >
-                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" />
-              </svg>
-              Demo:
-              <span className="font-medium text-slate-600">ozodbek@ttpu.uz</span>
-              <span className="text-slate-300">/</span>
-              <span className="font-medium text-slate-600">ttpu1234</span>
             </p>
           </div>
         </div>

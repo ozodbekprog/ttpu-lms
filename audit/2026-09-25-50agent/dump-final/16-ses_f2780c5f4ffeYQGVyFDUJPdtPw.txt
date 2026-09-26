@@ -1,0 +1,45 @@
+### SESSION ses_f2780c5f4ffeYQGVyFDUJPdtPw — Public API inventory (@general subagent)
+
+[09-25 17:16 user]
+Составь минимальный read-only инвентарь публичных API/health/data endpoints на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 по ссылкам из HTML/JS и распространённым безопасным путям; максимум 15 same-origin запросов, без POST/PUT/PATCH/DELETE и без auth bypass. Проверь только status, headers и минимальный несекретный ответ. Найди методы/маршруты с неожиданным доступом или утечкой. Верни evidence/repro/severity/confidence.
+
+[09-25 17:17 assistant]
+Friday. Начинаю с одного read-only GET корня: сниму статус, заголовки и максимум 8 КиБ публичного HTML без перехода по редиректам.
+
+[09-25 17:17 assistant]
+Проверю два подключённых приложением JS-чанка (#2–#3), извлекая только строки маршрутов и признаки `fetch/API`; читаю не более 64 КиБ каждого.
+
+[09-25 17:17 assistant]
+Корень игнорирует Range, поэтому запрос #4 повторно получит только 64 КиБ префикса и покажет ссылки на оставшиеся JS-чанки без вывода страницы.
+
+[09-25 17:17 assistant]
+Из HTML следуют `/login` и `/register`; проверю их как #5–#6, извлекая только статус/заголовки, referenced paths и route-подобные строки.
+
+[09-25 17:18 assistant]
+Теперь проверю три уникальных page-specific чанка (#7–#9), чтобы найти фактические auth/API-вызовы без отправки форм.
+
+[09-25 17:18 assistant]
+Из чанков видны `apiFetch`, но регулярка скрыла контекст; перечитаю только два файла (#10–#11) и покажу фрагменты вокруг `/api`, без полного JS.
+
+[09-25 17:18 assistant]
+Остались 4 запроса (#12–#15): проверю `/api/csrf`, `/api/health`, `/health`, `/api/data`; значения token/cookie/PII не выведу, только форму ответа.
+
+[09-25 17:20 assistant]
+Проведено ровно **15/15 same-origin GET**, без редиректов, авторизации и повторного использования cookie.
+
+| Endpoint | Результат |
+|---|---|
+| `GET /` | `200`, публичный HTML, `s-maxage=31536000` |
+| `GET /login`, `GET /register` | `200`, `private, no-cache, no-store` |
+| `GET /api/csrf` | `200`, `{ok:true, token:<112 chars>}`; cookie имеет `Secure`, `HttpOnly`, `SameSite` |
+| `POST /api/auth/login` | Найден в JS, не вызывался |
+| `POST /api/auth/register` | Найден в JS, не вызывался |
+| `GET /api/health` | `404`, JSON `Not Found` |
+| `GET /health`, `GET /api/data` | `404`, стандартный Next.js HTML |
+| `/help`, `/forgot-password` | Найдены в HTML, не проверялись из-за лимита |
+
+**Findings**
+- Неожиданный доступ/утечка не обнаружены — **severity: Info, confidence: High**. Все проверенные unauthenticated data/health routes вернули 404; CSRF-токен предназначен для выдачи клиенту.
+- Enforced CSP содержит `script-src 'self' 'unsafe-inline' 'unsafe-eval'` — **severity: Low, confidence: High**. Repro: `GET /` и проверить `Content-Security-Policy`; ослабляет защиту при наличии XSS.
+- `/api/csrf` не задаёт `Cache-Control: no-store/private` — **severity: Low, confidence: Medium**. Token может быть mis-cached промежуточным proxy; фактической утечки не подтверждено.
+- `X-Powered-By: Next.js` и ETags раскрывают технологию — **severity: Info, confidence: High**.

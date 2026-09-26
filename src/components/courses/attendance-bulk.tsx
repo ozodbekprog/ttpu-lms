@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Avatar, Button, Card, CardBody, CardHeader, Input, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
-export type AttendanceStatusValue = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+export type AttendanceStatusValue = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | "SUSPICIOUS";
 
 const OPTIONS: {
   value: AttendanceStatusValue;
@@ -17,6 +17,7 @@ const OPTIONS: {
   { value: "ABSENT", short: "A", label: "Yo'q", active: "bg-rose-500 text-white shadow-sm" },
   { value: "LATE", short: "L", label: "Kechikkan", active: "bg-amber-500 text-white shadow-sm" },
   { value: "EXCUSED", short: "E", label: "Sababli", active: "bg-brand-600 text-white shadow-sm" },
+  { value: "SUSPICIOUS", short: "Sh", label: "Shubhali", active: "bg-violet-500 text-white shadow-sm" },
 ];
 
 function todayIso() {
@@ -107,7 +108,7 @@ export function AttendanceBulk({
                 }}
                 required
               />
-              <p className="mt-1.5 text-xs text-slate-400 sm:hidden">
+              <p className="mt-1.5 text-xs text-slate-600 sm:hidden">
                 P — Bor, A — Yo&apos;q, L — Kechikkan, E — Sababli
               </p>
             </div>

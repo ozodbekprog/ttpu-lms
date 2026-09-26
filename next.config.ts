@@ -4,7 +4,17 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  // 'unsafe-inline' shart: Next.js statik (prerender) sahifalarga hydration
+  // uchun kerakli bootstrap skriptlarni HTML ichiga yozadi va statik HTML'ga
+  // request paytida nonce qo'shib bo'lmaydi. Nonce faqat dinamik renderda
+  // ishlaydi — bu middleware/proxy orqali amalga oshirilishi mumkin, ammo
+  // hozirgi vazifa doirasidan tashqarida (keyingi ish).
+  // 'unsafe-eval' productionda kerak emas (React/Next ishlatmaydi).
+  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
+  // Inline `on*=` event handler'larni butunlay o'chiradi (XSS'da eng ko'p
+  // uchraydigan vektor). React sintetik event'lari addEventListener orqali
+  // ishlaydi, shuning uchun bu interfeysni buzmaydi.
+  "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
@@ -15,27 +25,28 @@ const cspDirectives = [
   "object-src 'none'",
 ].join("; ");
 
-const cspReportOnlyDirectives = [
-  ...cspDirectives.split("; ").filter(d => !d.includes("'unsafe-inline'") && !d.includes("'unsafe-eval'")),
-  "script-src 'self' 'nonce-{NONCE}'",
-  "style-src 'self' 'nonce-{NONCE}'",
-].join("; ");
-
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" },
+  {
+    key: "Permissions-Policy",
+    value:
+      "camera=(self), geolocation=(self), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+  },
   { key: "Content-Security-Policy", value: cspDirectives },
   ...(isProduction
     ? [
-        { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
-        { key: "Content-Security-Policy-Report-Only", value: cspReportOnlyDirectives.replace(/{NONCE}/g, "dynamic") },
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=31536000; includeSubDomains; preload",
+        },
       ]
     : []),
 ];
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   async headers() {
     return [
       {
@@ -48,8 +59,20 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+          {
+            key: "Permissions-Policy",
+            value:
+              "camera=(self), geolocation=(self), microphone=(), payment=(), usb=()",
+          },
         ],
+      },
+      {
+        // CSRF token foydalanuvchi cookie'siga bog'liq. `Vary: Cookie` oraliq
+        // kesh (proxy/CDN) bir foydalanuvchi javobini boshqasiga bermasligini
+        // kafolatlaydi. Route o'zining `Cache-Control: no-store, private`
+        // sarlavhasini saqlab qoladi — bu qoida uni o'zgartirmaydi.
+        source: "/api/csrf",
+        headers: [{ key: "Vary", value: "Cookie" }],
       },
     ];
   },

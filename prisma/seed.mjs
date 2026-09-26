@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === "production" && !process.env.SEED_PASSWORD) {
   console.error("SEED_PASSWORD environment variable is required in production");
   process.exit(1);
 }
-if (PASSWORD.length < 12) {
+if (process.env.SEED_PASSWORD && PASSWORD.length < 12) {
   console.error("SEED_PASSWORD must be at least 12 characters");
   process.exit(1);
 }

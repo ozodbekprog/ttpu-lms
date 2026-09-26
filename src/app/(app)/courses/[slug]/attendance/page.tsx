@@ -22,13 +22,15 @@ const STATUS_LABELS: Record<string, string> = {
   ABSENT: "Yo'q",
   LATE: "Kechikkan",
   EXCUSED: "Sababli",
+  SUSPICIOUS: "Shubhali",
 };
 
-const STATUS_TONES: Record<string, "green" | "rose" | "amber" | "blue"> = {
+const STATUS_TONES: Record<string, "green" | "rose" | "amber" | "blue" | "purple"> = {
   PRESENT: "green",
   ABSENT: "rose",
   LATE: "amber",
   EXCUSED: "blue",
+  SUSPICIOUS: "purple",
 };
 
 function dateKey(value: Date) {
@@ -115,7 +117,7 @@ export default async function CourseAttendancePage({
                       <td className="px-3 py-3">
                         <Badge tone={STATUS_TONES[entry.status]}>{STATUS_LABELS[entry.status]}</Badge>
                       </td>
-                      <td className="px-3 py-3 text-xs text-slate-400">{entry.note ?? "—"}</td>
+                      <td className="px-3 py-3 text-xs text-slate-600">{entry.note ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>

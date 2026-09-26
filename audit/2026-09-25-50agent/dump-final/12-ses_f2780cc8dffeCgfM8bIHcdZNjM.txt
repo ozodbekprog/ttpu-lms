@@ -1,0 +1,40 @@
+### SESSION ses_f2780cc8dffeCgfM8bIHcdZNjM — Bundle exposure audit (@general subagent)
+
+[09-25 17:16 user]
+Проведи публичный read-only аудит JS/CSS chunks сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 на утечку секретов, токенов, API base URLs, internal-only endpoints и debug-код. Максимум 10同-origin ресурсов, не скачивай/не выводи полные секретные значения; заменяй их маскированными. Не используй найденные учётные данные. Верни evidence, severity, confidence и repro.
+
+[09-25 17:16 assistant]
+Friday, проведу read-only аудит: максимум 10 same-origin JS/CSS, значения масскирую, найденные учётные данные не использую.
+
+[09-25 17:17 assistant]
+Проверяю 9 связанных CSS/JS-ресурсов (вместе с уже открытым HTML — ровно 10) скриптом в памяти; выводятся только тип, строка и маскированные совпадения.
+
+[09-25 17:18 assistant]
+## Результат
+
+Проверено **10 same-origin GET-ресурсов**: `/`, 2 CSS и 7 JS. Запросы только на чтение; найденные учётные данные не использовались, полные значения секретов не приводятся.
+
+### Findings
+
+| ID | Evidence | Severity | Confidence |
+|---|---|---|---|
+| F1 | `/` содержит plaintext demo email/password в HTML-футере: `Demo: <email redacted> / <password redacted>`. Это не JS/CSS chunk, но секрет доступен без аутентификации. | **High**, если аккаунль активен; **Medium**, если это изолированный demo-аккаунт | **0.99** для утечки; валидность и привилегии не проверялись |
+| F2 | `/_next/static/chunks/19mx3mg6lkumu.js:1` раскрывает build path `"/ROOT/node_modules/next/dist/compiled/process/"`; `/_next/static/chunks/turbopack-1otuxod_nkio7.js:1` содержит `` `/ROOT/${…}` ``. | **Low** — fingerprinting/build metadata | **0.99** |
+| F3 | Framework-код содержит `console.error`: `/_next/static/chunks/19mx3mg6lkumu.js:1`, `/_next/static/chunks/27t_qfc-3_lzs.js:1`, `/_next/static/chunks/2-rtuqsgzmno4.js:1-2`. Секретов в аргументах не обнаружено. | **Info** | **0.95** |
+
+### Не обнаружено
+
+- API base URLs, bearer/JWT, private keys или типичные provider-токены.
+- Endpoints `/api/*`, `/admin/*`, `/internal/*`, `/debug/*`, GraphQL.
+- `debugger`, `sourceMappingURL`, `localhost` или иных internal hosts.
+- Упоминания `/_next/*`, `/sw.js`, `/logo.svg` относятся к публичному framework/service-worker ресурсу.
+- `lms.ttpu.uz/dashboard` встречается только как текст UI-макета, не как API URL.
+- В двух CSS-ресурсах подозрительных совпадений нет.
+
+### Repro
+
+1. Открыть `/` в приватном окне → View Page Source → поиск `Demo:`; не выполнять вход.
+2. DevTools → Sources → открыть указанные chunks → поиск `/ROOT/` или `console.error`.
+3. В DevTools Sources, ограничив поиск JS/CSS, проверить: `API_URL|NEXT_PUBLIC_|localhost|127\.0\.0\.1|\.ts\.net|debugger|sourceMappingURL|/(api|admin|internal|debug|graphql)\b`.
+
+Рекомендация: убрать demo-credentials из HTML и ротировать их, если аккаунт мог использоваться реально.

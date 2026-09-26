@@ -236,7 +236,7 @@ export default async function GradesPage({
                   </div>
                   <Progress value={course.percent} max={100} className="h-2" />
                   {course.eligible ? null : (
-                    <p className="text-xs text-slate-400">Kamida 80% kerak</p>
+                    <p className="text-xs text-slate-600">Kamida 80% kerak</p>
                   )}
                 </div>
               ))}
@@ -257,7 +257,7 @@ export default async function GradesPage({
                 <p className="text-sm font-semibold text-slate-600">Umumiy o&apos;rtacha</p>
                 {me ? <Badge tone="gold">Reytingda #{me.rank}</Badge> : null}
               </div>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-600">
                 {maxSum > 0 ? "Baholangan topshiriq va testlar asosida" : "Hali baho yo'q"}
               </p>
               <div className="mt-5">
@@ -280,7 +280,7 @@ export default async function GradesPage({
                     <p className="text-xl font-semibold tracking-tight tabular-nums text-brand-900">
                       {item.value}
                     </p>
-                    <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-600">
                       {item.label}
                     </p>
                   </div>
@@ -319,7 +319,7 @@ export default async function GradesPage({
                 action={
                   groupAverage(group) != null ? (
                     <span className="flex items-center gap-2">
-                      <span className="hidden text-[11px] font-medium uppercase tracking-wide text-slate-400 sm:block">
+                      <span className="hidden text-[11px] font-medium uppercase tracking-wide text-slate-600 sm:block">
                         Kurs o&apos;rtachasi
                       </span>
                       <GradeBadge percent={groupAverage(group)} size="md" />
@@ -331,7 +331,7 @@ export default async function GradesPage({
                 {group.submissions.length > 0 ? (
                   <Table>
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wide text-slate-400">
+                      <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wide text-slate-600">
                         <th className="py-2.5 pr-3 text-left font-medium">Topshiriq</th>
                         <th className="px-3 py-2.5 text-left font-medium">Muddat</th>
                         <th className="px-3 py-2.5 text-left font-medium">Holat</th>
@@ -363,7 +363,7 @@ export default async function GradesPage({
                             <td className="px-3 py-3 text-right">
                               <span className="inline-flex items-center gap-2.5">
                                 {submission.score != null ? (
-                                  <span className="text-xs font-medium tabular-nums text-slate-400">
+                                  <span className="text-xs font-medium tabular-nums text-slate-600">
                                     {submission.score}/{submission.assignment.maxScore}
                                   </span>
                                 ) : null}
@@ -379,12 +379,12 @@ export default async function GradesPage({
 
                 {group.attempts.length > 0 ? (
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
                       Test urinishlari
                     </p>
                     <Table>
                       <thead>
-                        <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wide text-slate-400">
+                        <tr className="border-b border-slate-100 bg-slate-50/70 text-xs uppercase tracking-wide text-slate-600">
                           <th className="py-2.5 pr-3 text-left font-medium">Test</th>
                           <th className="px-3 py-2.5 text-left font-medium">Sana</th>
                           <th className="px-3 py-2.5 text-left font-medium">Holat</th>
@@ -420,7 +420,7 @@ export default async function GradesPage({
                               <td className="px-3 py-3 text-right">
                                 <span className="inline-flex items-center gap-2.5">
                                   {attempt.score != null && quizMax > 0 ? (
-                                    <span className="text-xs font-medium tabular-nums text-slate-400">
+                                    <span className="text-xs font-medium tabular-nums text-slate-600">
                                       {attempt.score}/{quizMax}
                                     </span>
                                   ) : null}
@@ -650,7 +650,7 @@ export default async function GradesPage({
                         className="sticky top-0 z-20 min-w-28 bg-slate-50 px-3 py-3 text-center font-medium shadow-[inset_0_-1px_0_#e2e8f0]"
                       >
                         <span className="mx-auto block max-w-32 truncate">{assignment.title}</span>
-                        <span className="block font-normal text-slate-400">
+                        <span className="block font-normal text-slate-600">
                           max {assignment.maxScore}
                         </span>
                       </th>
@@ -687,7 +687,7 @@ export default async function GradesPage({
                                   <SubmissionBadge status={submission.status} />
                                 )
                               ) : (
-                                <span className="text-slate-300">—</span>
+                                <span className="text-slate-500">—</span>
                               )}
                             </td>
                           );
@@ -696,7 +696,7 @@ export default async function GradesPage({
                           {average != null ? (
                             <span className={gradeColor(average)}>{average}%</span>
                           ) : (
-                            <span className="text-slate-300">—</span>
+                            <span className="text-slate-500">—</span>
                           )}
                         </td>
                       </tr>

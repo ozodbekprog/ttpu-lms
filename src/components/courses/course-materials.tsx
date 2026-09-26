@@ -276,7 +276,7 @@ export function CourseMaterials({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold text-slate-900">{section.title}</span>
-                  <span className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-slate-400">
+                  <span className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-slate-600">
                     <span className="inline-flex size-4 items-center justify-center rounded-md bg-slate-100 text-[9px] font-semibold tabular-nums text-slate-500">
                       {section.materials.length}
                     </span>
@@ -288,7 +288,7 @@ export function CourseMaterials({
                     "inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-all duration-200",
                     open[section.id]
                       ? "bg-brand-50 text-brand-700"
-                      : "bg-slate-100/70 text-slate-400 group-hover:bg-slate-100",
+                      : "bg-slate-100/70 text-slate-600 group-hover:bg-slate-100",
                   )}
                 >
                   <svg
@@ -332,10 +332,10 @@ export function CourseMaterials({
             <div className="space-y-2 border-t border-slate-100 bg-slate-50/50 px-4 py-4 md:px-5">
               {section.materials.length === 0 ? (
                 <div className="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-white/70 px-4 py-3">
-                  <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                  <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
                     <TypeIcon type="TEXT" />
                   </span>
-                  <p className="text-sm text-slate-400">Hozircha material qo&apos;shilmagan.</p>
+                  <p className="text-sm text-slate-600">Hozircha material qo&apos;shilmagan.</p>
                 </div>
               ) : null}
 

@@ -1,0 +1,200 @@
+### SESSION ses_f2757c923ffeI81TivKQt1dRrc — Independent finding validation (@general subagent)
+
+[09-25 18:01 user]
+Сделай независимую финальную перепроверку только этих уже заявленных областей на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: публичные demo credentials (не использовать), enforced CSP unsafe-inline/eval, Service Worker caching no-store, /api/csrf headers, protected-route 200 shell, malformed URL 400, mobile header wrapping. Используй только GET/HEAD, максимум 15 запросов, без payload/brute force/login. Для каждого пункта дай confirmed/not confirmed, точные headers/snippets, severity, confidence и repro.
+
+[09-25 18:01 assistant]
+Провожу независимую пассивную проверку с жёстким бюджетом: только `GET/HEAD`, без переходов, авторизации и отправки данных; каждый запрос учитываю отдельно.
+
+[09-25 18:02 assistant]
+Первый `GET /` занял 1/15. Теперь точечно проверяю login (только публичный HTML), SW, CSRF, защищённый маршрут и один некорректно экранированный путь — ещё 5 запросов.
+
+[09-25 18:02 assistant]
+Использовано 6/15. Результаты уже показывают: CSRF-защита на месте, `/dashboard` отвечает `307`, а malformed path на HTTP/2 завершился `PROTOCOL_ERROR`; отдельно уточняю HTTP/1.1-ветку, публичный demo-код в клиентском bundle и возможную admin-защиту.
+
+[09-25 18:09 assistant]
+Для mobile-проверки использую локальный headless Firefox: подставлю уже полученный HTML, запрошу только два CSS-файла, остальные ресурсы локально отсеку. Это добавит 2 upstream `GET` и не изменит состояние сайта.
+
+[09-25 18:09 assistant]
+Доступен Playwright/Chromium, поэтому mobile-проверку можно сделать без обхода лимита: разрешу только `GET /` и два CSS, остальные HTTP-запросы локально завершу `204`, без отправки на сервер. Это 3/6 оставшихся запросов.
+
+[09-25 18:10 assistant]
+Предыдущий headless-запрос разрешил только 2 upstream-ресурса, поэтому для надёжности mobile-результата повторяю с явным разрешением ровно трёх (`/` + оба CSS), с проверкой, что stylesheet действительно загрузились; это доведёт общий счёт до 14/15.
+
+[09-25 18:10 assistant]
+Второй headless-запуск получил временный `HTTP_RESPONSE_CODE_FAILURE` на документ, поэтому не засчитываю его как доказательство. Для чистой mobile-измерялки использую сохранённый свежий HTML из запроса №1 и отдельно запрошу только два CSS (№13–14); браузер к цели больше не подключится.
+
+[09-25 18:11 assistant]
+Локальная попытка с отключённым JavaScript показала нулевые размеры, потому что Next.js отдаёт основной UI через streaming-шаблоны; это не валидная mobile-метрика. Повторяю измерение локально с включённым JS, без единого обращения к цели.
+
+[09-25 18:11 assistant]
+Локальный HTML требует hydration-чанки для переноса шаблонов; подключаю только уже имеющиеся локаль копии тем же JS-чанкам (сеть не используется), чтобы получить корректные computed bounds.
+
+[09-25 18:12 assistant]
+Для точного mobile-доказаства извлекаю header из свежего HTML и подаю его в локальный DOM с двумя свежими CSS; это измеряет именно классы/медиаправила ответа, без обращения к хосту.
+
+[09-25 18:14 assistant]
+В локальном измерении обнаружился горизонтальный overflow на 320px, но второй CSS был stale/сокращённым (9 байт). Использую последний разрешённый запрос №15 только для актуального `20c9...css`, затем зафиксирую итог без дальнейшей сети.
+
+[09-25 18:16 assistant]
+Проверено **15/15 запросов** к origin: только `GET/HEAD`, без `POST`, payload, brute force, login и без переходов по redirect. Demo-кнопки не нажимались.
+
+Общий CSP на проверенных HTML/API/ SW-ответах:
+
+```http
+content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+```
+
+### 1. Публичные demo credentials — **CONFIRMED частично**
+
+**Evidence:** `/login` публично показывает:
+
+```html
+Demo hisoblar
+Bosilganda demo email avtomatik to'ldiriladi
+```
+
+Клиентский bundle содержит:
+
+```js
+{roleKey:"authRoleStudent",email:"ozodbek@ttpu.uz"}
+{roleKey:"authRoleTeacher",email:"n.mahamatov@ttpu.uz"}
+{roleKey:"authRoleAdmin",email:"admin@ttpu.uz"}
+onClick:()=>{p(e.email),y(null)}
+```
+
+Пароль в проверенных HTML/JS не обнаружен; вход не выполнялся.  
+**Severity:** Low/Info для публичных email; Medium только если demo-аккаунты имеют реальные права и пароль公开о доступен.  
+**Confidence:** High для disclosure, Low для фактической доступности аккаунтов.  
+**Repro:** `GET /login`; `GET /_next/static/chunks/2cxfh6cppays_.js`.
+
+### 2. Enforced CSP `unsafe-inline/eval` — **NOT CONFIRMED as stated**
+
+CSP-заголовок enforcing, но:
+
+```http
+script-src 'self' 'unsafe-inline'
+style-src 'self' 'unsafe-inline'
+```
+
+`unsafe-eval` отсутствует. Runtime bypass не проверялся, поскольку payload запрещён.  
+**Severity:** Medium из-за `unsafe-inline`; для `unsafe-eval` — не подтверждено.  
+**Confidence:** High для заголовков, Medium для runtime enforcement.  
+**Repro:** `GET /`, `GET /login`, `GET /api/csrf`, `GET /sw.js`.
+
+### 3. Service Worker caching `no-store` — **NOT CONFIRMED as blanket policy**
+
+`GET /sw.js` → `HTTP/2 200`:
+
+```http
+cache-control: public, max-age=0
+```
+
+В коде:
+
+```js
+if (url.pathname.startsWith("/api/")) return;
+if (request.mode === "navigate") event.respondWith(networkFirst(request));
+return !/no-store|private/i.test(cacheControl);
+```
+
+Обычные navigation/cache-first запросы не кэшируют `no-store|private`, но precache выполняется без этой проверки:
+
+```js
+const PRECACHE_URLS = ["/sw.js", "/manifest.webmanifest", "/logo.svg", "/icon.svg"];
+cache.add(url)
+```
+
+**Severity:** Low/Info; потенциальная оговорка с precache.  
+**Confidence:** High для исходного кода, Medium для runtime cache state.  
+**Repro:** `GET /sw.js`.
+
+### 4. `/api/csrf` headers — **CONFIRMED**
+
+`HEAD /api/csrf` → `HTTP/2 200`:
+
+```http
+cache-control: no-store, private
+content-type: application/json
+set-cookie: csrf_token=<JWT omitted>; Path=/; Expires=Fri, 25 Sep 2026 14:02:38 GMT; Max-Age=3600; Secure; HttpOnly; SameSite=lax
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+```
+
+**Severity:** Info (positive control).  
+**Confidence:** High.  
+**Repro:** `curl -I "$O/api/csrf"`.
+
+### 5. Protected-route `200` shell — **NOT CONFIRMED**
+
+```http
+GET /dashboard
+HTTP/2 307
+location: /login
+```
+
+Тело:
+
+```text
+/login
+```
+
+`GET /admin` также вернул `307 → /login`; redirect не_follow’ился.  
+**Severity:** Info / finding не подтверждён.  
+**Confidence:** High.  
+**Repro:** `GET /dashboard`, `GET /admin`.
+
+### 6. Malformed URL → `400` — **CONFIRMED для HTTP/1.1**
+
+```http
+GET /%
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Connection: close
+
+400 Bad Request
+```
+
+По HTTP/2 curl получил:
+
+```text
+curl: (92) HTTP/2 stream 1 was not closed cleanly: PROTOCOL_ERROR (err 1)
+```
+
+**Severity:** Info.  
+**Confidence:** High.  
+**Repro:** `curl --http1.1 --path-asis ... "$O/%"`; для HTTP/2 убрать `--http1.1`.
+
+### 7. Mobile header wrapping — **CONFIRMED для текущего deployed render, с caveat**
+
+Свежий HTML содержит:
+
+```html
+<span class="block text-[10px] ... tracking-[0.14em] ...">Turin Polytechnic</span>
+<nav class="hidden ... lg:flex">
+<a class="... max-sm:hidden ...">Kirish</a>
+<a class="... whitespace-nowrap ...">Ro&#x27;yxatdan o&#x27;tish</a>
+```
+
+В контролируемом mobile render при `320px` header занимал `304×54px`, а элементы располагались на строках `y=26`, `y=44`, `y=62`; при `375px` высота также оставалась `54px`.
+
+Дополнительно root ссылается на:
+
+```text
+/_next/static/chunks/20c9onax7k-6v.css
+```
+
+но независимый `GET` этого файла вернул:
+
+```http
+HTTP/2 404
+cache-control: private, no-cache, no-store, max-age=0, must-revalidate
+content-type: text/plain; charset=utf-8
+
+Not Found
+```
+
+**Severity:** Low для responsive UX; Medium, если 404 сохраняется и ломает production UI.  
+**Confidence:** Medium.  
+**Repro:** `GET /`, затем viewport `320×812` и `375×812`; отдельно `GET /_next/static/chunks/20c9onax7k-6v.css`.

@@ -84,7 +84,7 @@ function LessonRow({
             <span className="truncate">{lesson.group}</span>
             {lesson.room ? (
               <>
-                <span className="text-slate-300">·</span>
+                <span className="text-slate-500">·</span>
                 <span className="truncate">{lesson.room}</span>
               </>
             ) : null}
@@ -128,7 +128,7 @@ function LessonRow({
                   <Button size="sm" disabled>
                     Kundalikni ochish
                   </Button>
-                  <span className="text-[11px] text-slate-400">Kurs topilmadi</span>
+                  <span className="text-[11px] text-slate-600">Kurs topilmadi</span>
                 </span>
               )}
             </>
@@ -176,7 +176,7 @@ export function JournalWeek({ lessons, today }: { lessons: JournalLesson[]; toda
                     ? "bg-brand-900 text-white shadow-sm"
                     : isPast
                       ? "bg-slate-100 text-slate-500"
-                      : "bg-white text-slate-400 ring-1 ring-slate-200",
+                      : "bg-white text-slate-600 ring-1 ring-slate-200",
                 )}
               >
                 <span>{shortDayName(first.dayOfWeek)}</span>
@@ -191,9 +191,9 @@ export function JournalWeek({ lessons, today }: { lessons: JournalLesson[]; toda
                     <span className="ml-2 text-xs font-medium text-brand-600">Bugun</span>
                   ) : null}
                 </p>
-                <p className="text-xs text-slate-400">{formatShortIso(group.date)}</p>
+                <p className="text-xs text-slate-600">{formatShortIso(group.date)}</p>
               </div>
-              <span className="ml-auto text-xs text-slate-400">
+              <span className="ml-auto text-xs text-slate-600">
                 {group.items.length} ta dars
               </span>
             </div>

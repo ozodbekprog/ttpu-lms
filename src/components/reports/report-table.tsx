@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import type { CourseReport } from "@/components/reports/report-data";
 
 function percentTone(value: number | null) {
-  if (value === null) return "text-slate-300";
+  if (value === null) return "text-slate-500";
   if (value >= 80) return "bg-emerald-50 text-emerald-700 ring-emerald-200/70";
   if (value >= 60) return "bg-amber-50 text-amber-700 ring-amber-200/70";
   return "bg-rose-50 text-rose-700 ring-rose-200/70";
@@ -27,7 +27,7 @@ function PercentCell({ value, emphasis = false }: { value: number | null; emphas
           {value}%
         </span>
       ) : (
-        <span className="text-slate-300">—</span>
+        <span className="text-slate-500">—</span>
       )}
     </td>
   );
@@ -41,7 +41,7 @@ export function ReportStudentsTable({ report }: { report: CourseReport }) {
   return (
     <Table className="max-h-[70vh]">
       <thead>
-        <tr className="text-xs uppercase tracking-wide text-slate-400">
+        <tr className="text-xs uppercase tracking-wide text-slate-600">
           <th className="sticky top-0 z-10 border-b border-slate-100 bg-white/95 py-2.5 pr-4 text-left font-medium backdrop-blur">
             Talaba
           </th>
@@ -69,7 +69,7 @@ export function ReportStudentsTable({ report }: { report: CourseReport }) {
               <p className="text-sm font-medium text-slate-800 transition-colors duration-150 group-hover:text-brand-900">
                 {student.name}
               </p>
-              <p className="text-xs text-slate-400">{student.group ?? student.email}</p>
+              <p className="text-xs text-slate-600">{student.group ?? student.email}</p>
             </td>
             <PercentCell value={student.assignmentAverage} />
             <PercentCell value={student.quizAverage} />

@@ -1,0 +1,16 @@
+### SESSION ses_f2757e37effeJjRjeCKFmR71eq — Dependency advisory audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи read-only fingerprinting/version audit публично доступных JS chunks и framework headers на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Определи только точные обнаруженные версии; не угадывай и не используй уязвимости без подтверждённого advisory. Можно сверить официальные advisories через web search, максимум 10 локальных запросов, без exploitation. Верни доказанные CVE/outdated components с evidence, confidence и repro; если версия не установлена — скажи.
+
+[09-25 18:01 assistant]
+Friday. Проведу только GET/HEAD-аудит без эксплуатации; первый запрос — корневой документ для фиксации заголовков и ссылок на chunks.
+
+[09-25 18:02 assistant]
+Корень (1/10) показал Next.js/Turbopack-структуру и 8 публичных JS URL; framework version header не заявлен. Сейчас заберу эти chunks (8 запросов) с сохранением заголовков для точного анализа.
+
+[09-25 18:02 assistant]
+Запросы к цели исчерпаны на 9/10; дальше анализирую только сохранённые ответы локально. Извлеку version-like строки, package identifiers и source-map/comment markers, не обращаясь к хосту.
+
+[09-25 18:03 assistant]
+В chunks обнаружены точные строки `window.next.version="16.3.5"` и React/ReactDOM `19.3.0-canary-cbb046ab-20260731`; отдельно встречается `core-js 3.38.1`. Проверю только официальные security advisories/NVD, без новых запросов к цели.

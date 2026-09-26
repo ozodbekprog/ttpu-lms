@@ -174,7 +174,7 @@ function StatTile({
           </span>
         </div>
         <p className="relative mt-3 text-3xl font-semibold tabular-nums tracking-tight text-brand-950">{value}</p>
-        <p className="relative mt-1 text-xs text-slate-400">{hint}</p>
+        <p className="relative mt-1 text-xs text-slate-600">{hint}</p>
       </Card>
     </div>
   );

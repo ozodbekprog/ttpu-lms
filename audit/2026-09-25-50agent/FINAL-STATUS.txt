@@ -1,0 +1,4 @@
+Holat: barcha sessiyalar 5 daqiqa jim — tugadi
+Vaqt: 2026-09-25 18:23:05
+Manba sessiya: ses_f2789e24effe3uxiayDo45PFf2
+Fayllar: FINAL-REPORT.md, dump-final/, audit-final.tgz

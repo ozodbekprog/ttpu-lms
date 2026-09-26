@@ -1,0 +1,10 @@
+### SESSION ses_f2757cddfffeNo7YWsZqnK2Ny9 — Performance measurement audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи измерение производительности публичной главной и auth pages https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 в read-only режиме: TTFB, размер HTML/CSS/JS, количество запросов, long tasks/CPU из headless browser, cache/loading issues. Один холодный и один повторный bounded load, без стресс-теста и без форм. Верни только воспроизводимые bottlenecks с evidence, severity, confidence и условиями; не выставляй субъективные оценки.
+
+[09-25 18:01 assistant]
+Сначала проверю доступные headless-инструменты и публичную структуру сайта, затем выполню по одному ограниченному холодному и повторному GET-загрузке без отправки форм.
+
+[09-25 18:02 assistant]
+Обнаружены Chromium и Playwright в локальном проекте. Использую отдельный временный профиль для каждого холодного измерения, тот же профиль для повторного, блокирую все не-GET/HEAD-запросы и жду фиксированное окно после `load`; это не меняет серверные данные.

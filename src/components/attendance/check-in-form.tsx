@@ -1,42 +1,79 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button, Card, CardBody, Input, Label } from "@/components/ui";
+import { Button, Card, CardBody } from "@/components/ui";
 import { cn, fmtDate } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
+import { requestBrowserLocation, type QrScanPayload } from "./live-qr";
+import { QrScanner } from "./qr-scanner";
 
 type CheckInResult = {
   course: { id: string; title: string; slug: string };
   date: string;
+  status?: string;
+  reasons?: string[];
 };
 
-function sanitize(value: string) {
-  return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-}
+const REASON_LABELS: Record<string, string> = {
+  GEO_FAR: "Joylashuv o'qituvchi joyidan uzoq",
+  GEO_MISSING: "Qurilma joylashuvi aniqlanmadi",
+  GEO_ACCURACY_LOW: "Joylashuv aniqligi past",
+  IP_CHANGED: "IP manzil o'zgardi",
+  IP_SHARED: "Bir xil qurilmadan bir nechta belgilash aniqlandi",
+  VPN_SUSPECTED: "VPN yoki proxy aniqlandi",
+  IP_GEO_MISMATCH: "Tarmoq joylashuvi qurilma joylashuviga mos emas",
+};
 
-export function CheckInForm({ initialCode }: { initialCode?: string }) {
-  const [code, setCode] = useState(() => sanitize(initialCode ?? ""));
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+export function CheckInForm({ initialPayload }: { initialPayload?: QrScanPayload }) {
+  const [status, setStatus] = useState<"idle" | "scanning" | "loading" | "success" | "suspicious" | "error">(
+    "idle",
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<CheckInResult | null>(null);
+  const [reasons, setReasons] = useState<string[]>([]);
   const [pop, setPop] = useState(false);
-  const autoSubmitted = useRef(false);
+  const tokenSubmitted = useRef(false);
 
-  async function submit(value: string) {
-    const normalized = sanitize(value);
-    if (normalized.length !== 6) {
+  async function submitScan(payload: QrScanPayload) {
+    const token = payload.token?.trim() ?? "";
+    const code = (payload.code ?? "").trim().toUpperCase();
+    if (!token && !code) {
       setStatus("error");
-      setMessage("Kod 6 belgidan iborat bo'lishi kerak");
+      setMessage("QR kod o'qilmadi. Qayta urinib ko'ring.");
       return;
     }
 
     setStatus("loading");
-    setMessage(null);
+    setMessage("QR o'qildi ✓ — joylashuv aniqlanmoqda...");
 
-    const response = await apiFetch("/api/attendance/check-in", {
-      method: "POST",
-      body: JSON.stringify({ code: normalized }),
-    });
+    const location = await requestBrowserLocation();
+
+    setMessage("Tekshirilmoqda...");
+
+    const body = token
+      ? location
+        ? { token, lat: location.lat, lng: location.lng, accuracy: location.accuracy }
+        : { token }
+      : location
+        ? { code, lat: location.lat, lng: location.lng, accuracy: location.accuracy }
+        : { code };
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 20000);
+    let response: Response;
+    try {
+      response = await apiFetch("/api/attendance/check-in", {
+        method: "POST",
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch {
+      window.clearTimeout(timer);
+      setStatus("error");
+      setMessage("Serverdan javob kelmadi. Internetni tekshirib, qayta urinib ko'ring.");
+      return;
+    }
+    window.clearTimeout(timer);
     const json = (await response.json().catch(() => null)) as
       | { ok?: boolean; error?: string; data?: CheckInResult }
       | null;
@@ -49,17 +86,22 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
 
     setResult(json.data);
     setPop(false);
-    setStatus("success");
+    if (json.data.status === "SUSPICIOUS") {
+      setReasons(Array.isArray(json.data.reasons) ? json.data.reasons : []);
+      setStatus("suspicious");
+    } else {
+      setReasons([]);
+      setStatus("success");
+    }
     window.requestAnimationFrame(() => setPop(true));
   }
 
   useEffect(() => {
-    if (autoSubmitted.current) return;
-    const initial = sanitize(initialCode ?? "");
-    if (initial.length !== 6) return;
-    autoSubmitted.current = true;
-    void submit(initial);
-  }, [initialCode]);
+    if (tokenSubmitted.current) return;
+    if (!initialPayload?.token && !initialPayload?.code) return;
+    tokenSubmitted.current = true;
+    void submitScan(initialPayload);
+  }, [initialPayload]);
 
   if (status === "success" && result) {
     return (
@@ -103,11 +145,104 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
             onClick={() => {
               setStatus("idle");
               setResult(null);
-              setCode("");
             }}
           >
-            Yana kod kiritish
+            Yana skanerlash
           </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (status === "suspicious" && result) {
+    return (
+      <Card className="animate-fade-up relative mx-auto max-w-lg overflow-hidden border-amber-200">
+        <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-gold-400" />
+        <span className="pointer-events-none absolute -right-16 -top-20 size-48 rounded-full bg-amber-300/20 blur-3xl" />
+        <span className="pointer-events-none absolute -bottom-24 -left-12 size-48 rounded-full bg-gold-300/15 blur-3xl" />
+        <CardBody className="relative flex flex-col items-center gap-2.5 py-12 text-center">
+          <span className="relative flex size-24 items-center justify-center">
+            <span className="absolute inset-0 animate-pulse-ring rounded-full bg-amber-400/25" />
+            <span
+              className={cn(
+                "relative flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-8 ring-amber-50 transition-all duration-500 ease-out",
+                pop ? "scale-100 opacity-100" : "scale-50 opacity-0",
+              )}
+            >
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={cn(
+                  "transition-transform duration-500 delay-150 ease-out",
+                  pop ? "scale-100" : "scale-0",
+                )}
+              >
+                <path d="M12 3 2 20h20L12 3Z" />
+                <path d="M12 10v4" />
+                <path d="M12 17.5h.01" />
+              </svg>
+            </span>
+          </span>
+          <p className="mt-2 text-xl font-semibold text-amber-800">
+            Belgilandingiz, lekin tekshiruv shubhali
+          </p>
+          <p className="text-sm font-medium text-slate-700">{result.course.title}</p>
+          <p className="text-sm text-slate-500">{fmtDate(`${result.date}T00:00:00.000Z`)}</p>
+          {reasons.length > 0 ? (
+            <ul className="mt-2 w-full space-y-1.5 rounded-2xl bg-amber-50 px-4 py-3 text-left">
+              {reasons.map((reason) => (
+                <li key={reason} className="text-sm text-amber-800">
+                  · {REASON_LABELS[reason] ?? reason}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Button
+            variant="secondary"
+            className="mt-4 px-6"
+            onClick={() => {
+              setStatus("idle");
+              setResult(null);
+              setReasons([]);
+              setMessage(null);
+            }}
+          >
+            Yana skanerlash
+          </Button>
+        </CardBody>
+      </Card>
+    );
+  }
+
+  if (status === "scanning" || status === "loading") {
+    return (
+      <Card className="animate-fade-up relative mx-auto max-w-lg overflow-hidden">
+        <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
+        <CardBody className="space-y-5 px-6 py-8 sm:px-8">
+          {status === "scanning" ? (
+            <QrScanner
+              onDetected={(payload) => {
+                void submitScan(payload);
+              }}
+              onCancel={() => setStatus("idle")}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-4 py-10 text-center">
+              <span className="size-10 animate-spin rounded-full border-[3px] border-brand-100 border-t-brand-600" />
+              <p className="text-sm font-medium text-slate-600">
+                {message ?? "Tekshirilmoqda..."}
+              </p>
+              <p className="text-xs text-slate-600">
+                Joylashuv so&apos;ralsa — ruxsat bering
+              </p>
+            </div>
+          )}
         </CardBody>
       </Card>
     );
@@ -135,79 +270,34 @@ export function CheckInForm({ initialCode }: { initialCode?: string }) {
               <path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M21 21v.01M17.5 21v.01M21 17.5v.01" />
             </svg>
           </span>
-          <p className="text-base font-semibold text-slate-900">Kodni kiriting</p>
+          <p className="text-base font-semibold text-slate-900">QR davomat</p>
           <p className="max-w-sm text-sm text-slate-500">
-            O&apos;qituvchi ko&apos;rsatgan 6 belgili kodni kiriting yoki QR kodni skanerlang.
+            O&apos;qituvchi ekranidagi QR kodni telefon kamerasi bilan skanerlang — davomat
+            avtomatik belgilanadi.
           </p>
         </div>
 
-        <form
-          className="space-y-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submit(code);
+        {message ? (
+          <p
+            className={cn(
+              "flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium",
+              status === "error" ? "bg-rose-50 text-rose-700" : "text-slate-500",
+            )}
+          >
+            {message}
+          </p>
+        ) : null}
+
+        <Button
+          size="lg"
+          className="w-full py-3 text-base"
+          onClick={() => {
+            setMessage(null);
+            setStatus("scanning");
           }}
         >
-          <div>
-            <Label className="text-center">Kod</Label>
-            <Input
-              value={code}
-              onChange={(event) => {
-                setCode(sanitize(event.target.value));
-                if (status === "error") {
-                  setStatus("idle");
-                  setMessage(null);
-                }
-              }}
-              placeholder="A1B2C3"
-              aria-label="Davomat kodi"
-              autoFocus
-              autoComplete="off"
-              autoCapitalize="characters"
-              spellCheck={false}
-              inputMode="text"
-              maxLength={6}
-              className="rounded-2xl py-5 text-center font-mono text-4xl tracking-[0.45em] uppercase placeholder:text-slate-300"
-            />
-          </div>
-
-          {message ? (
-            <p
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium",
-                status === "error" ? "bg-rose-50 text-rose-700" : "text-slate-500",
-              )}
-            >
-              {status === "error" ? (
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="shrink-0"
-                >
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 8v4" />
-                  <path d="M12 16h.01" />
-                </svg>
-              ) : null}
-              {message}
-            </p>
-          ) : null}
-
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full py-3 text-base"
-            disabled={status === "loading" || code.length !== 6}
-          >
-            {status === "loading" ? "Tekshirilmoqda..." : "Belgilash"}
-          </Button>
-        </form>
+          QR skanerlash
+        </Button>
       </CardBody>
     </Card>
   );

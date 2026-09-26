@@ -88,7 +88,7 @@ export default async function RoomsPage({
           >
             <input type="hidden" name="type" value={type} />
             <div className="relative flex-1">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-600">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="7" />
                   <path d="m20 20-3.5-3.5" />
@@ -115,7 +115,7 @@ export default async function RoomsPage({
           </form>
 
           <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
               Turi
             </span>
             <Link href={buildHref(q, "")} className={segmentClass(type === "")}>
@@ -197,7 +197,7 @@ export default async function RoomsPage({
                       <span className="size-1.5 rounded-full bg-emerald-400" />
                       {room.name}
                       {room.building ? (
-                        <span className="text-slate-400">· {room.building}</span>
+                        <span className="text-slate-600">· {room.building}</span>
                       ) : null}
                     </Link>
                   ))}

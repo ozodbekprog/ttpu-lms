@@ -251,7 +251,7 @@ export default function ImportManager() {
             <span
               className={cn(
                 "mb-1 inline-flex size-11 items-center justify-center rounded-full transition-colors duration-150",
-                dragging ? "bg-brand-100 text-brand-700" : "bg-white text-slate-400 shadow-sm",
+                dragging ? "bg-brand-100 text-brand-700" : "bg-white text-slate-600 shadow-sm",
               )}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -263,7 +263,7 @@ export default function ImportManager() {
             <span className="max-w-full truncate text-sm font-medium text-slate-700">
               {fileName ?? "CSV faylni bu yerga tashlang"}
             </span>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               {fileName ? "Import qilish uchun tugmani bosing" : "yoki bosib fayl tanlang · maks 5MB"}
             </span>
           </label>
@@ -271,7 +271,7 @@ export default function ImportManager() {
             <Button onClick={upload} disabled={busy || !fileName}>
               {busy ? "Import qilinmoqda..." : "Import qilish"}
             </Button>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-600">
               {busy ? "Qatorlar tekshirilmoqda, biroz kuting" : "Takroriy yozuvlar o'tkazib yuboriladi"}
             </span>
           </div>
@@ -321,7 +321,7 @@ export default function ImportManager() {
             {result.items.length > 0 ? (
               <Table className="mt-4 max-h-[60vh] overflow-y-auto rounded-xl border border-slate-100">
                 <thead>
-                  <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                     <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-4 py-3 font-semibold backdrop-blur">Qator</th>
                     <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-4 py-3 font-semibold backdrop-blur">Holat</th>
                     <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-4 py-3 font-semibold backdrop-blur">Ma&apos;lumot</th>
@@ -350,7 +350,7 @@ export default function ImportManager() {
                             {item.password}
                           </code>
                         ) : (
-                          <span className="text-slate-300">—</span>
+                          <span className="text-slate-500">—</span>
                         )}
                       </td>
                     </tr>

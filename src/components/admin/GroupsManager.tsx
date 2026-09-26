@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
 import { Badge, Button, Card, CardBody, CardHeader, EmptyState, Input, Label, Select, Table } from "@/components/ui";
 
 export type AdminGroup = {
@@ -75,7 +76,7 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
     setError(null);
     setNotice(null);
     try {
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,
@@ -238,7 +239,7 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button onClick={openCreate}>+ Yangi guruh</Button>
         <div className="relative w-full sm:w-64">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-600">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
@@ -332,7 +333,7 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
         ) : (
           <Table className="max-h-[68vh] overflow-y-auto">
             <thead>
-              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <tr className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Nomi</th>
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">Yil</th>
                 <th className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/95 px-5 py-3 font-semibold backdrop-blur">A&apos;zolar</th>
@@ -394,9 +395,9 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
                       <tr className="border-b border-slate-100 bg-slate-50/50 last:border-0">
                         <td colSpan={4} className="px-5 py-4">
                           {detailsLoading && !data ? (
-                            <p className="text-sm text-slate-400">Yuklanmoqda…</p>
+                            <p className="text-sm text-slate-600">Yuklanmoqda…</p>
                           ) : !data ? (
-                            <p className="text-sm text-slate-400">Ma&apos;lumot yuklanmadi.</p>
+                            <p className="text-sm text-slate-600">Ma&apos;lumot yuklanmadi.</p>
                           ) : (
                             <div className="grid gap-5 lg:grid-cols-2">
                               <div className="space-y-4">
@@ -418,10 +419,10 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
                                 <div>
                                   <div className="mb-1.5 flex items-center justify-between">
                                     <Label className="mb-0">Kichik guruhlar</Label>
-                                    <span className="text-xs text-slate-400">{data.subGroups.length} ta</span>
+                                    <span className="text-xs text-slate-600">{data.subGroups.length} ta</span>
                                   </div>
                                   {data.subGroups.length === 0 ? (
-                                    <p className="text-xs text-slate-400">Hozircha kichik guruh yo&apos;q.</p>
+                                    <p className="text-xs text-slate-600">Hozircha kichik guruh yo&apos;q.</p>
                                   ) : (
                                     <div className="flex flex-wrap gap-1.5">
                                       {data.subGroups.map((item) => (
@@ -440,13 +441,13 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
                                           >
                                             {item.name}
                                           </button>
-                                          <span className="text-[10px] tabular-nums text-slate-400">
+                                          <span className="text-[10px] tabular-nums text-slate-600">
                                             {item.userCount}
                                           </span>
                                           <button
                                             type="button"
                                             aria-label={`${item.name} kichik guruhini o'chirish`}
-                                            className="text-slate-400 transition-colors hover:text-rose-600"
+                                            className="text-slate-600 transition-colors hover:text-rose-600"
                                             onClick={() => void removeSubGroup(group.id, item)}
                                           >
                                             ×
@@ -513,10 +514,10 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
                               <div>
                                 <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                                   <Label className="mb-0">Talabalar</Label>
-                                  <span className="text-xs text-slate-400">{data.students.length} ta</span>
+                                  <span className="text-xs text-slate-600">{data.students.length} ta</span>
                                 </div>
                                 {data.students.length === 0 ? (
-                                  <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400">
+                                  <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-600">
                                     Bu guruhda talaba yo&apos;q.
                                   </p>
                                 ) : (
@@ -528,7 +529,7 @@ export default function GroupsManager({ groups }: { groups: AdminGroup[] }) {
                                       >
                                         <div className="min-w-0">
                                           <p className="truncate text-sm font-medium text-slate-800">{student.name}</p>
-                                          <p className="truncate text-[11px] text-slate-400">{student.email}</p>
+                                          <p className="truncate text-[11px] text-slate-600">{student.email}</p>
                                         </div>
                                         <div className="w-36 shrink-0">
                                           <Select

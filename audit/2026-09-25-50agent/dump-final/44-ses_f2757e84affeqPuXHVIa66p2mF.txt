@@ -1,0 +1,32 @@
+### SESSION ses_f2757e84affeqPuXHVIa66p2mF — Debug and comments audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи read-only аудит HTML/JS/CSS на debug/comment leakage на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: TODO secrets, internal paths, test endpoints, verbose errors, source comments, disabled features. Максимум 12 same-origin resources, без изменения состояния. Не выводи полные секреты. Верни только конкретные verified findings с evidence/severity/confidence/repro.
+
+[09-25 18:01 assistant]
+Friday проведу пассивный GET-аудит: сначала получу только корневую страницу, затем вручную проверю не более 11 связанных same-origin ресурсов без переходов и любых изменений состояния.
+
+[09-25 18:01 assistant]
+Проверяю TLS, заголовки и HTML корневой страницы; команда делает ровно один HTTPS GET и запрещает redirect, чтобы внешний хост не был затронут.
+
+[09-25 18:01 assistant]
+Извлекаю из уже скачанного HTML перечень локальных `src`/`href`, чтобы выбрать 11 статических ресурзов без автоматических запросов.
+
+[09-25 18:02 assistant]
+Запрашиваю оставшиеся 11 ресурсов: 8 JS, 2 CSS и manifest — все по путям, найденным в HTML, только `GET`, без redirect/cookies. Это исчерпывает лимит 12.
+
+[09-25 18:02 assistant]
+Минифицированные bundle-файлы имеют гигантские строки, поэтому обычный поиск упёрся в лимит вывода. Считаю только совпадения и затем извлеку небольшие контексты локально, не выполняя новых сетевых запросов.
+
+[09-25 18:02 assistant]
+Извлекаю толькоredacted-контексты совпадений (до 220 символов), чтобы отличить реальные утечки от стандартных библиотечных строк.
+
+[09-25 18:03 assistant]
+Проверяю фактические комментарии (`<!--…-->`, `/*…*/`) и ссылки на source maps; это локальный анализ уже полученных файлов.
+
+[09-25 18:03 assistant]
+Дополнительно проверяю типовые сигнатуры hardcoded credentials/JWT/private keys/DSN; выводятся только количество и тип совпадения, не значения.
+
+[09-25 18:04 assistant]
+- **F-01 — Low — Hard-coded персональные academic-данные в публичном HTML.** **Evidence:** неавторизованный `GET /` → `200`; HTML содержит имя, `AI2-26 · 2-semestr`, GPA `3.8`, посещаемость `94%`, курсы/аудитории и `lms.ttpu.uz/dashboard` (byte offsets 9543, 11334). **Confidence:** High. **Repro:** открыть `/` без cookies и найти `Salom, Ozodbek`, `GPA`, `Davomat` в View Source.
+- **F-02 — Informational — Раскрыт точный canary-build/commit React.** **Evidence:** `/_next/static/chunks/2-rtuqsgzmno4.js` и `27t_qfc-3_lzs.js` содержат `19.3.0-canary-cbb046ab-20260731`; также公开 `Next.js 16.3.5`. **Confidence:** High. **Repro:** GET этих JS и поиск `19.3.0-canary-`.

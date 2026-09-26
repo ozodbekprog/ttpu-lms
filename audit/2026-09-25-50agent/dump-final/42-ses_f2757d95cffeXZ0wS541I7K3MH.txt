@@ -1,0 +1,48 @@
+### SESSION ses_f2757d95cffeXZ0wS541I7K3MH — External link safety audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи read-only аудит внешних ссылок/redirect targets на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443, извлекая их из HTML/JS. Не переходи по потенциально опасным доменам, максимум 10 same-origin GET/HEAD, не отправляй формы. Проверь target=_blank rel, misleading links, broken external references только по фактическому контексту. Верни конкретные findings с evidence/severity/confidence/repro.
+
+[09-25 18:01 assistant]
+Проверю только исходный URL, без следования редиректам; затем проанализирую HTML и подключённые same-origin JS в пределах лимита запросов. Внешние URL проверю только по коду и контексту, без переходов.
+
+[09-25 18:02 assistant]
+Сейчас выполню до 8 параллельных same-origin GET (всего станет 9/10): только перечисленные в HTML JS-ресурсы. Для каждого потоково покажу HTTP-метаданные, URL/email/tel-подобные строки и код редиректов; переходов по найденным адресам не будет.
+
+[09-25 18:03 assistant]
+Остался офлайн-разбор сохранённого HTML: перечислю фактические `<a>` с `href/target/rel`, внешние URL и mail/tel-контексты. Новых сетевых запросов не будет.
+
+[09-25 18:03 assistant]
+Использую последний (10/10) same-origin GET для `/sw.js`: он реально регистрируется приложением и может содержать собственные внешние URL/cache/redirect-контексты. Переходов и форм не будет.
+
+[09-25 18:04 assistant]
+## Итог
+
+**Критических/высоких/средних/низких уязвимостей не найдено.** Использовано ровно **10/10 same-origin GET**; все ответили `200`, редиректов и `Location` не было. Внешние домены не посещались, формы не отправлялись.
+
+### F-01 — Внешних hyperlink/redirect targets нет
+
+- **Severity:** Info
+- **Confidence:** High
+- **Evidence:** HTML содержит 18 `<a>`; все `href` — `/`, `/login`, `/register`, `/help` или fragment. Внешних `href/src`, `mailto:` и `tel:` нет. Корневой ответ: `HTTP/2 200`, без `Location`.
+- **Repro:** Просмотреть HTML,DevTools → Elements → выбрать все `a[href]`; все URL относительные.
+- **Риск `target="_blank"` без `rel`:** отсутствует — `target="_blank` найден **0 раз**.
+
+### F-02 — Внешние строки в framework JS не являются ссылками
+
+- **Severity:** Info
+- **Confidence:** High
+- **Evidence:** В framework-чанках есть `react.dev/errors/*`, `nextjs.org/docs/*`, W3C namespace URLs и GitHub core-js metadata, но только внутри текстов ошибок/package metadata. Они не используются как `href`, `window.open` или конкретный redirect target.
+- **Repro:** Проверить эти URL в контексте соответствующих minified-чанков; ссылочных или навигационных обращений к ним нет.
+
+### F-03 — Service worker не обслуживает внешние origins
+
+- **Severity:** Info
+- **Confidence:** High
+- **Evidence:** `/sw.js` возвращает `200`; перед обработкой запроса содержит `if (url.origin !== self.location.origin) return`. Hardcoded redirect fallback — только `/`.
+- **Repro:** Загрузить `/sw.js` и найти проверку origin.
+
+### Не считаю findings
+
+- `lms.ttpu.uz/dashboard`, `info@ttpu.uz` и телефон отображаются как обычный текст, не как ссылки.
+- `/login`, `/register`, `/help` и динамические chunks авторизованных маршрутов не обходились из-за исчерпания лимита; глобальное отсутствие внешних ссылок для всего приложения не утверждается.

@@ -30,7 +30,7 @@ function PasswordInput({
     <div>
       <Label>{label}</Label>
       <div className="relative">
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="4" y="10" width="16" height="11" rx="2" />
             <path d="M8 10V7a4 4 0 0 1 8 0v3" />
@@ -52,7 +52,7 @@ function PasswordInput({
           onClick={() => setVisible((current) => !current)}
           aria-label={visible ? "Parolni yashirish" : "Parolni ko'rsatish"}
           title={visible ? "Parolni yashirish" : "Parolni ko'rsatish"}
-          className="absolute right-1.5 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30"
+          className="absolute right-1.5 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30"
         >
           {visible ? (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -164,7 +164,7 @@ export function PasswordForm() {
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <span className={cn("inline-flex items-center gap-1.5", lengthOk ? "text-emerald-600" : "text-slate-400")}>
+            <span className={cn("inline-flex items-center gap-1.5", lengthOk ? "text-emerald-600" : "text-slate-600")}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="9" />
                 {lengthOk ? <path d="m8.5 12.5 2.5 2.5 4.5-5" /> : <path d="M12 8v4.5" />}

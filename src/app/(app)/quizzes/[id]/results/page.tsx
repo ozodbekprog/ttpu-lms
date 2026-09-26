@@ -101,7 +101,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                   >
                     {heroScore ?? "—"}
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-400">{maxScore} balldan</p>
+                  <p className="mt-0.5 text-xs text-slate-600">{maxScore} balldan</p>
                   <div className="mt-3">
                     {heroPercent != null ? (
                       <Badge tone={percentTone(heroPercent)}>{heroPercent}% o&apos;zlashtirish</Badge>
@@ -138,7 +138,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
             <CardBody>
               <Table>
                 <thead>
-                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-600">
                     {staff ? <th className="pb-2.5 pr-3 font-medium">Talaba</th> : null}
                     <th className="pb-2.5 pr-3 font-medium">Boshlangan</th>
                     <th className="pb-2.5 pr-3 font-medium">Tugagan</th>
@@ -158,7 +158,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                         {staff ? (
                           <td className="py-3 pr-3">
                             <span className="font-medium text-slate-800">{attempt.student.name}</span>
-                            <span className="block text-xs text-slate-400">{attempt.student.email}</span>
+                            <span className="block text-xs text-slate-600">{attempt.student.email}</span>
                           </td>
                         ) : null}
                         <td className="py-3 pr-3 text-slate-600">{fmtDateTime(attempt.startedAt)}</td>
@@ -186,7 +186,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                                 >
                                   {attempt.score ?? "—"}
                                 </span>
-                                <span className="text-xs text-slate-400">/ {maxScore}</span>
+                                <span className="text-xs text-slate-600">/ {maxScore}</span>
                               </span>
                               {attempt.score != null ? (
                                 <Progress value={attempt.score} max={maxScore} className="hidden w-24 sm:block" />
@@ -196,7 +196,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                               ) : null}
                             </div>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-600">—</span>
                           )}
                         </td>
                       </tr>
@@ -235,7 +235,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                       >
                         {attempt.score ?? "—"}
                       </span>
-                      <span className="text-sm text-slate-400">/ {maxScore} ball</span>
+                      <span className="text-sm text-slate-600">/ {maxScore} ball</span>
                       {percent != null ? (
                         <Badge tone={percentTone(percent)}>{percent}%</Badge>
                       ) : (
@@ -276,7 +276,7 @@ export default async function QuizResultsPage({ params }: { params: Promise<{ id
                             ) : (
                               <Badge tone="amber">Qo&apos;lda baholanadi</Badge>
                             )}
-                            <span className="ml-auto text-xs text-slate-400">{question.points} ball</span>
+                            <span className="ml-auto text-xs text-slate-600">{question.points} ball</span>
                           </div>
 
                           {question.type === "TEXT" ? (

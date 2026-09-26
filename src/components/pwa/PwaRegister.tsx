@@ -72,7 +72,7 @@ export function PwaRegister() {
         type="button"
         onClick={dismiss}
         aria-label="Yopish"
-        className="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+        className="shrink-0 rounded-lg p-1.5 text-slate-600 transition hover:bg-slate-100 hover:text-slate-600"
       >
         <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />

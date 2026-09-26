@@ -1,6 +1,7 @@
 "use client";
 
 import { LOCALES, LOCALE_COOKIE, LOCALE_MAX_AGE, type Locale } from "@/i18n/config";
+import { useI18n } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 function applyLocale(next: Locale) {
@@ -15,11 +16,12 @@ export default function LanguageSwitcher({
   locale: Locale;
   className?: string;
 }) {
+  const { t } = useI18n();
   return (
     <div
       className={cn("inline-flex items-center gap-0.5 rounded-full bg-slate-100 p-1", className)}
       role="group"
-      aria-label="Language"
+      aria-label={t("commonLanguage")}
     >
       {LOCALES.map((code) => {
         const active = code === locale;

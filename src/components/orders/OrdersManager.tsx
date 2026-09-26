@@ -90,7 +90,7 @@ function TimelineRow({ label, date, dot }: { label: string; date: string; dot: s
     <div className="flex items-center gap-2 text-xs">
       <span className={cn("size-1.5 shrink-0 rounded-full", dot)} />
       <span className="font-medium text-slate-600">{label}</span>
-      <span className="ml-auto text-slate-400">{date}</span>
+      <span className="ml-auto text-slate-600">{date}</span>
     </div>
   );
 }
@@ -110,7 +110,7 @@ function OrderTimelineItem({ order }: { order: OrderItem }) {
               <Badge tone={ORDER_STATUS_TONE[status]}>{ORDER_STATUS_LABEL[status]}</Badge>
             </div>
           </div>
-          <span className="text-xs text-slate-400">{fmtDateTime(order.createdAt)}</span>
+          <span className="text-xs text-slate-600">{fmtDateTime(order.createdAt)}</span>
         </div>
         {order.note ? (
           <p className="mt-2.5 text-xs leading-relaxed text-slate-500">{order.note}</p>

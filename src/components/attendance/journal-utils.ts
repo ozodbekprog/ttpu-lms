@@ -1,4 +1,4 @@
-export type JournalStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+export type JournalStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | "SUSPICIOUS";
 
 export type JournalStudent = {
   id: string;
@@ -12,6 +12,7 @@ export type JournalSummaryRow = {
   absent: number;
   late: number;
   excused: number;
+  suspicious: number;
   total: number;
   percent: number;
   eligible: boolean;
@@ -33,7 +34,14 @@ export type JournalData = {
 
 export const JOURNAL_MIN_PERCENT = 80;
 
-export const JOURNAL_STATUS_ORDER: JournalStatus[] = ["PRESENT", "ABSENT", "LATE", "EXCUSED"];
+export function shortName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return name.trim();
+  const last = parts[parts.length - 1];
+  return `${parts.slice(0, -1).join(" ")} ${last.charAt(0).toUpperCase()}.`;
+}
+
+export const JOURNAL_STATUS_ORDER: JournalStatus[] = ["PRESENT", "SUSPICIOUS", "LATE", "EXCUSED", "ABSENT"];
 
 export const JOURNAL_STATUS_META: Record<
   JournalStatus,
@@ -62,6 +70,12 @@ export const JOURNAL_STATUS_META: Record<
     label: "Sababli",
     chip: "bg-slate-100 text-slate-600 ring-1 ring-slate-200/80",
     badge: "bg-slate-400 text-white shadow-sm shadow-slate-400/30",
+  },
+  SUSPICIOUS: {
+    short: "Sh",
+    label: "Shubhali",
+    chip: "bg-violet-50 text-violet-700 ring-1 ring-violet-200/80",
+    badge: "bg-violet-500 text-white shadow-sm shadow-violet-500/30",
   },
 };
 

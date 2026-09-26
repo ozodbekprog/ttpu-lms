@@ -67,7 +67,7 @@ export function CourseBrowser({
             search
           ) : searchable ? (
             <div className="relative w-full sm:w-96">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-600">
                 <svg
                   width="15"
                   height="15"

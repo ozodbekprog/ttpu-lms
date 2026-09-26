@@ -3,14 +3,14 @@ import { cn } from "@/lib/utils";
 import type { CuratorStudent } from "@/app/api/curator/data";
 
 function percentTone(value: number | null) {
-  if (value === null) return "text-slate-300";
+  if (value === null) return "text-slate-500";
   if (value >= 80) return "bg-emerald-50 text-emerald-700 ring-emerald-200/70";
   if (value >= 60) return "bg-amber-50 text-amber-700 ring-amber-200/70";
   return "bg-rose-50 text-rose-700 ring-rose-200/70";
 }
 
 function PercentValue({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-slate-300">—</span>;
+  if (value === null) return <span className="text-slate-500">—</span>;
   return (
     <span
       className={cn(
@@ -31,7 +31,7 @@ export function CuratorStudentsTable({ students }: { students: CuratorStudent[] 
   return (
     <Table>
       <thead>
-        <tr className="text-xs uppercase tracking-wide text-slate-400">
+        <tr className="text-xs uppercase tracking-wide text-slate-600">
           <th className="border-b border-slate-100 py-2.5 pr-4 text-left font-medium">Talaba</th>
           <th className="border-b border-slate-100 px-3 py-2.5 text-right font-medium">Davomat</th>
           <th className="border-b border-slate-100 px-3 py-2.5 text-right font-medium">
@@ -60,7 +60,7 @@ export function CuratorStudentsTable({ students }: { students: CuratorStudent[] 
             >
               <td className="py-3 pr-4">
                 <p className="text-sm font-medium text-slate-800">{student.name}</p>
-                <p className="text-xs text-slate-400">{student.email}</p>
+                <p className="text-xs text-slate-600">{student.email}</p>
               </td>
               <td className="px-3 py-3">
                 <div className="flex items-center justify-end gap-2">
@@ -81,7 +81,7 @@ export function CuratorStudentsTable({ students }: { students: CuratorStudent[] 
                   className={cn(
                     "text-sm font-semibold tabular-nums",
                     student.gpa === null
-                      ? "text-slate-300"
+                      ? "text-slate-500"
                       : student.gpa < 2
                         ? "text-rose-600"
                         : "text-slate-800",

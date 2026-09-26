@@ -114,13 +114,13 @@ export default async function AssignmentDetailPage({
         {assignment.dueAt ? (
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 px-4 py-3">
-              <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Muddat</p>
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">Muddat</p>
               <p className="mt-1 text-sm font-medium text-slate-800">
                 {fmtDateTime(assignment.dueAt)}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 px-4 py-3">
-              <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+              <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                 Holat
               </p>
               <p
@@ -135,7 +135,7 @@ export default async function AssignmentDetailPage({
           </div>
         ) : null}
         <div>
-          <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+          <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
             Topshiriq sharti
           </p>
           <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap text-slate-600">
@@ -239,7 +239,7 @@ export default async function AssignmentDetailPage({
                       >
                         {submission.score}
                       </span>
-                      <span className="text-sm text-slate-400">/ {assignment.maxScore} ball</span>
+                      <span className="text-sm text-slate-600">/ {assignment.maxScore} ball</span>
                     </div>
                     {percent != null ? (
                       <Badge tone={percent >= 80 ? "green" : percent >= 60 ? "amber" : "rose"}>
@@ -255,7 +255,7 @@ export default async function AssignmentDetailPage({
                 </div>
                 {submission.feedback ? (
                   <div className="rounded-2xl border border-gold-300/40 bg-gold-300/10 p-4">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-gold-600 uppercase">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-gold-800 uppercase">
                       <svg
                         width="13"
                         height="13"
@@ -277,7 +277,7 @@ export default async function AssignmentDetailPage({
                 ) : null}
                 {submission.text ? (
                   <div className="rounded-xl bg-slate-50 p-4">
-                    <p className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                    <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                       Yuborilgan javob
                     </p>
                     <p className="mt-1.5 text-sm leading-relaxed whitespace-pre-wrap text-slate-600">
@@ -298,10 +298,10 @@ export default async function AssignmentDetailPage({
                     <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-700">
                       {submission.fileUrl.split("?")[0]?.split("/").pop() || "Yuklangan fayl"}
                     </span>
-                    <span className="shrink-0 text-xs text-slate-400">Ochish</span>
+                    <span className="shrink-0 text-xs text-slate-600">Ochish</span>
                   </a>
                 ) : null}
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   Baholangan: {fmtDateTime(submission.gradedAt)}
                 </p>
               </>

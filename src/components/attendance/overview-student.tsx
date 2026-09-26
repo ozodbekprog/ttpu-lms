@@ -30,6 +30,7 @@ const STATUS_TILE: Record<JournalStatus, string> = {
   ABSENT: "border-rose-100 bg-rose-50/70 text-rose-600",
   LATE: "border-amber-100 bg-amber-50/70 text-amber-600",
   EXCUSED: "border-slate-200 bg-slate-50 text-slate-500",
+  SUSPICIOUS: "border-violet-100 bg-violet-50/70 text-violet-600",
 };
 
 function StatusGlyph({ status, size = 14 }: { status: JournalStatus; size?: number }) {
@@ -170,7 +171,7 @@ export function StudentAttendanceOverview({
 
             <p className="mt-5 text-sm text-slate-500">
               <span className="text-3xl font-semibold tabular-nums text-brand-950">{attended}</span>
-              <span className="text-slate-400"> / {overall.total} darsda qatnashdingiz</span>
+              <span className="text-slate-600"> / {overall.total} darsda qatnashdingiz</span>
             </p>
 
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -193,7 +194,7 @@ export function StudentAttendanceOverview({
                     <p className="mt-2.5 text-xl font-semibold tabular-nums text-brand-950">
                       {count}
                     </p>
-                    <p className="text-xs text-slate-400">{meta.label}</p>
+                    <p className="text-xs text-slate-600">{meta.label}</p>
                   </div>
                 );
               })}
@@ -259,7 +260,7 @@ export function StudentAttendanceOverview({
                         <span className="block truncate text-sm font-semibold text-slate-800 transition-colors duration-150 group-hover:text-brand-800">
                           {course.courseTitle}
                         </span>
-                        <span className="mt-0.5 block text-xs text-slate-400">
+                        <span className="mt-0.5 block text-xs text-slate-600">
                           Keldi: <span className="font-semibold text-slate-600">{courseAttended}</span>{" "}
                           / {course.total} dars
                         </span>
@@ -338,7 +339,7 @@ export function StudentAttendanceOverview({
                       >
                         {row.courseTitle}
                       </Link>
-                      <p className="text-xs text-slate-400">{fmtDate(row.date)}</p>
+                      <p className="text-xs text-slate-600">{fmtDate(row.date)}</p>
                     </div>
                     <span
                       className={cn(

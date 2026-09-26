@@ -227,7 +227,7 @@ export function StaffExamCard({ exam }: { exam: StaffExamItem }) {
         >
           Tahrirlash
         </ButtonLink>
-        <span className="ml-auto text-xs text-slate-400">Maks: {exam.maxAttempts}</span>
+        <span className="ml-auto text-xs text-slate-600">Maks: {exam.maxAttempts}</span>
       </div>
     </Card>
   );

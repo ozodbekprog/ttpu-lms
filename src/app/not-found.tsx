@@ -1,5 +1,9 @@
 import { ButtonLink } from "@/components/ui";
 
+export const metadata = {
+  title: "Sahifa topilmadi",
+};
+
 export default function NotFound() {
   return (
     <div className="flex flex-1 items-center justify-center bg-slate-50 px-4 py-16">

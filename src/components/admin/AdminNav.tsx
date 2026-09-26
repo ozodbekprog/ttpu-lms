@@ -115,6 +115,17 @@ const LINKS: { href: string; label: string; icon: ReactNode }[] = [
       </svg>
     ),
   },
+  {
+    href: "/admin/bugs",
+    label: "Xatoliklar",
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 8v4" />
+        <path d="M12 16h.01" />
+        <circle cx="12" cy="12" r="9" />
+      </svg>
+    ),
+  },
 ];
 
 export default function AdminNav() {
@@ -139,7 +150,7 @@ export default function AdminNav() {
             <span
               className={cn(
                 "transition-all duration-200",
-                active ? "text-gold-300" : "text-slate-400 group-hover:scale-110 group-hover:text-brand-600",
+                active ? "text-gold-300" : "text-slate-600 group-hover:scale-110 group-hover:text-brand-600",
               )}
             >
               {link.icon}

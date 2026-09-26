@@ -1,0 +1,46 @@
+### SESSION ses_f2786c0d4ffe2hiz4p8NQAj9LB — TLS and transport audit (@general subagent)
+
+[09-25 17:10 user]
+Проведи только read-only black-box проверку сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Область: TLS/HTTPS, certificate chain, hostname, protocol downgrade, redirect to HTTP. Максимум 5 запросов, без изменения данных, brute force, DoS и эксплуатации. Если цель недоступна — сообщи. Верни только подтверждённые факты: severity, evidence (команда/URL/статус/заголовок), воспроизведение, impact, confidence. Не исправляй сайт.
+
+[09-25 17:11 assistant]
+Friday — выполняю пять максимум read-only сетевых проверок; данные не изменяю.
+
+[09-25 17:11 assistant]
+Проверяю оставшиеся два пункта: поведение HTTP на порту 80 и принятие TLS 1.1; автоматические редиректы не следую.
+
+[09-25 17:12 assistant]
+Friday — цель доступна. Выполнено ровно 5 read-only проверок; подтверждённых High/Critical/Medium уязвимостей не выявлено.
+
+### 1. TLS, цепочка сертификатов, hostname
+- **Severity:** None / Informational
+- **Evidence:** `openssl s_client -connect ozodbeks-macbook-pro.tail91a187.ts.net:8443 -servername ozodbeks-macbook-pro.tail91a187.ts.net -showcerts -verify_hostname ...`
+  - `Verification: OK`
+  - `Verified peername: ozodbeks-macbook-pro.tail91a187.ts.net`
+  - цепочка: leaf → Let’s Encrypt `YE2` → `Root YE` → `ISRG Root X2`
+  - срок leaf: `Sep 25 08:29:19 2026` — `Dec 24 08:29:18 2026`
+  - `curl`: `HTTP/1.1 200 OK`, `verify=0`
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+- **Воспроизведение:** указанная команда `openssl`; `curl --noproxy '*' --http1.1 https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/`
+- **Impact:** подтверждённой ошибки TLS, цепочки или hostname не выявлено.
+- **Confidence:** High.
+
+### 2. Устаревшие TLS / protocol downgrade
+- **Severity:** None observed
+- **Evidence:**
+  - default handshake: `Protocol: TLSv1.3`, `Cipher: TLS_AES_128_GCM_SHA256`, `ALPN protocol: h2`
+  - TLS 1.0: `tlsv1 alert protocol version`
+  - TLS 1.1: `tlsv1 alert protocol version`
+- **Воспроизведение:** `openssl s_client ... -tls1` и `openssl s_client ... -tls1_1`
+- **Impact:** TLS 1.0/1.1 не приняты; подтверждённого downgrade на этих версиях нет. TLS 1.2 отдельно не проверялся.
+- **Confidence:** High.
+
+### 3. Redirect с HTTP
+- **Severity:** Informational; security impact не подтверждён
+- **Evidence:** `curl http://ozodbeks-macbook-pro.tail91a187.ts.net/`
+  - `HTTP/1.1 302 Found`
+  - `Location: https://ozodbeks-macbook-pro.tail91a187.ts.net/`
+  - destination указывает наimplicit port 443, без `:8443`
+- **Воспроизведение:** `curl --noproxy '*' --http1.1 --max-redirs 0 -D - -o /dev/null http://ozodbeks-macbook-pro.tail91a187.ts.net/`
+- **Impact:** подтверждено только несоответствие порта в redirect; доступность и содержимое `https://.../` не проверялись. Redirect с HTTPS на HTTP не наблюдался.
+- **Confidence:** High для заголовка; Medium для потенциального impact.

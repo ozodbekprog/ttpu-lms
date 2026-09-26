@@ -123,12 +123,12 @@ export default function SettingsManager({
             <p className="text-sm font-medium text-slate-500">Faol modullar</p>
             <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-brand-950">
               {enabledCount}
-              <span className="ml-1 text-base font-medium text-slate-400">/ {modules.length}</span>
+              <span className="ml-1 text-base font-medium text-slate-600">/ {modules.length}</span>
             </p>
           </div>
           <div className="w-full max-w-xs">
             <Progress value={enabledCount} max={modules.length} />
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-slate-600">
               O&apos;zgarishlar saqlanadi va darhol kuchga kiradi
             </p>
           </div>

@@ -1,0 +1,75 @@
+### SESSION ses_f2757d2bcfferKpmL4yTIn05LZ — Static injection audit (@general subagent)
+
+[09-25 18:01 user]
+Проведи read-only аудит HTML/URL rendering sinks на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 без эксплуатации: innerHTML/dangerouslySetInnerHTML, document.write, URL/param rendering, reflected input sinks, server error reflection. Можно использовать только безвредный уникальный маркер без script/event payload; максимум 8 GET/HEAD, не сохраняй и не отправляй данные. Не утверждай XSS без фактического отражения/выполнения. Верни evidence/severity/confidence/repro.
+
+[09-25 18:01 assistant]
+Проверяю базовую страницу одним GET без сохранения файлов, cookies и передачи полезной нагрузки; затем уложу остальные проверки в общий лимит 8 запросов.
+
+[09-25 18:01 assistant]
+Базовый ответ — Next.js. Сейчас извлекаю из уже полученного ответа перечень клиентских ресурсов и проверяю, не осталось ли локальных артефактов; новых запросов пока нет.
+
+[09-25 18:02 assistant]
+Из-за однострочного RSC-ответа поиск упёрся в лимит инструмента; локально извлекаю только заголовки, URL ресурсов и совпадения sink-терминов, без сетевого обращения.
+
+[09-25 18:02 assistant]
+Запрос 2/8: читаю только page-specific JS-чанк и сразу анализирую поток в памяти на sink-термины и динамические импорты; полный ответ на диск не попадёт.
+
+[09-25 18:02 assistant]
+Запрос 3/8: один безвредный маркер в нескольких типовых query-параметрах; проверяю только точное отражение в HTML и контекст, без вывода страницы целиком.
+
+[09-25 18:03 assistant]
+Запрос 4/8: тот же маркер в несуществующем path и query проверяет серверный 404/error reflection; оценивается только текстовая/контекстная рефлексия.
+
+[09-25 18:03 assistant]
+Запрос 5/8: анализирую preload-чанк страницы на реальные HTML/URL sinks и источники URL/query; выводятся только совпадения и контексты.
+
+[09-25 18:03 assistant]
+Запрос 6/8: проверяю основной runtime-чанк, особенно источник `errorThemeCss` и остальные HTML sinks; вывод ограничен контекстами, без сохранения JS.
+
+[09-25 18:03 assistant]
+Запрос 7/8: проверяю первый bootstrap/runtime-чанк на DOM HTML sinks и URL-driven assignments; полный код не выводится.
+
+[09-25 18:03 assistant]
+Запрос 8/8: последний бюджет использую для клиентского React/DOM-чанка, где потенциально реализован `innerHTML`; это проверка статического sink-кода, не payload-тест.
+
+[09-25 18:04 assistant]
+Бюджет исчерпан: 8/8 запросов. Удаляю единственный автоматически созданный opencode полный вывод базового ответа; остальные ответы обрабатывались только в памяти.
+
+[09-25 18:05 assistant]
+## Итог
+
+**XSS не подтверждён.** Общая severity: **Informational**, confidence: **Medium**. Выполнено ровно **8 GET**, без POST/body/cookies; передан только разрешённый маркер. Постоянных артефактов не осталось.
+
+### 1. Query/path reflection в RSC payload
+
+- **Evidence:** `GET /?q=FridayRenderAudit_7f3a92c1&next=…&redirect=…&url=…&error=…&message=…` → `200`, 18 отражений маркера.
+- Наблюдённый контекст: `self.__next_f.push([1,"…"])` → `0:{"P":null,"c":["","?q=Friday…"],…}` и `__PAGE__?{"q":"Friday…"}`.
+- `GET /FridayRenderAudit_7f3a92c1?error=…&message=…` → `404`, 7 отражений в аналогичных RSC-полях.
+- Видимая 404-разметка осталась статической: `Sahifa topilmadi`; stack trace, digest или `Internal Server Error` не отражены.
+- **Severity:** Informational.
+- **Confidence:** High для отражения; Medium для отсутствия DOM-выполнения — браузерная проверка не проводилась.
+- **Repro:** привести точное значение выше в query/path; искать маркер в inline RSC bootstrap.
+
+### 2. `dangerouslySetInnerHTML` в error boundary
+
+- **Evidence:** `/_next/static/chunks/310vm2bl3xxpt.js:1`:
+  ```js
+  jsx("style",{dangerouslySetInnerHTML:{__html:i.errorThemeCss}})
+  ```
+  Здесь `i=e.r(18576)`; аргумент sink — экспортированный `errorThemeCss`, а не request/query/error digest.
+- Digest рендерится React-текстом: `children:["ERROR ",r]`.
+- **Severity:** Informational — отражаемого URL-до-sink потока не установлено.
+- **Confidence:** High для данного чанка; Medium глобально, поскольку тело модуля `18576` не попало в изученные файлы.
+- **Repro:** GET указанного чанка и поиск `dangerouslySetInnerHTML`.
+
+### 3. CSP
+
+- **Evidence:** `script-src 'self' 'unsafe-inline'`; также присутствуют `nosniff`, `X-Frame-Options: DENY`, `object-src 'none'`, `base-uri 'self'`.
+- `unsafe-inline` не позволило сделать вывод о XSS и ослабляет защиту при наличии будущего sink.
+- **Severity:** Informational.
+- **Confidence:** High.
+
+### Отрицательные результаты и покрытие
+
+В 5 проверенных JS-чанках не найдено `document.write`, `insertAdjacentHTML`, `srcdoc` или прямого URL→`innerHTML` потока; `URLSearchParams`/`location.search` относились к router plumbing. Не проверены из-за лимита: `27t_qfc-3_lzs.js`, `turbopack-1otuxod_nkio7.js`, `0cz1d0mv5g_q7.js`; authenticated routes и browser execution также не проверялись.

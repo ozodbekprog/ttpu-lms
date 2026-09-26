@@ -86,7 +86,7 @@ function StudentPicker({
   );
 }
 
-export const metadata = { title: "Akademik Transkript — TTPU LMS" };
+export const metadata = { title: "Akademik Transkript" };
 
 export default async function TranscriptPage({
   searchParams,

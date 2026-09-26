@@ -1,0 +1,35 @@
+### SESSION ses_f2786835effewRO1eJM5AzdL0z — HTML accessibility audit (@general subagent)
+
+[09-25 17:10 user]
+Проведи read-only обзор главной страницы https://ozodbeks-macbook-pro.tail91a187.ts.net:8443 на базовую HTML/accessibility структуру: title, lang, landmarks, headings, skip link, labels, alt, buttons/links и дубли id. Не меняй сайт, максимум 3–5 запросов/ресурсов. Это статический аудит, не запускай тяжёлый crawler. Верни только конкретные подтверждённые проблемы с URL/элементом/evidence, severity, repro и confidence.
+
+[09-25 17:12 assistant]
+Проверяю только HTML главной страницы: один дополнительный GET без обхода ресурсов; локальный парсер извлечёт нужные семантические признаки и дубли `id`.
+
+[09-25 17:12 assistant]
+Первый разбор показал уникальные `id`; делаю ещё один GET той же страницы только для компактной выборки landmark/heading/link/image evidence, без обхода ссылок и assets.
+
+[09-25 17:15 assistant]
+1. **Средняя — отсутствует skip-link**  
+   **URL/элемент:** `https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/` → `header` → `main`  
+   **Evidence:** `<main class="flex-1">` без `id`; fragment-ссылки ведут только на `#imkoniyatlar`, `#boshlash`, `#statistika`, `#aloqa`; ссылки «Skip to content»/перехода к main нет.  
+   **Repro:** начать клавиатурную навигацию с первого focusable-элемента — фокус последовательно проходит через логотип, навигацию и auth-ссылки перед содержимым main.  
+   **Confidence:** High.
+
+2. **Низкая — hero-мокап dashboard暴露为 дополнительный landmark**  
+   **URL/элемент:** `/` → `main` → `aside class="hidden ... sm:flex"`  
+   **Evidence:** при ширине `sm+` видимый мокап содержит текст `Boshqaruv`, `Kurslar`, `Jadval`, `Baholar`, `Transkript`, `Bron qilish`, но не имеет `aria-hidden` или имени; это не реальная навигация, а текстовые `span`.  
+   **Repro:** при ширине от 640 px открыть Accessibility Tree/читать страницу скринридером: после hero обнаруживается unnamed `complementary` region с посторонними данными dashboard.  
+   **Confidence:** High.
+
+3. **Низкая — неполная семантика headings**  
+   **URL/элемент:** `/` → `section#statistika`, `footer#aloqa`  
+   **Evidence:** `section#statistika` не содержит ни одного `h1`–`h6` или accessible name; подписи колонок `Platforma`, `Modullar`, `Aloqa` в footer размечены как `<p class="text-sm font-semibold">`, а не как headings.  
+   **Repro:** перейти по ссылке `Statistika` или открыть список headings экранным диктором — соответствующие секции отсутствуют в heading outline.  
+   **Confidence:** High.
+
+4. **Низкая — декоративные inline-SVG не скрыты от accessibility tree**  
+   **URL/элемент:** `/` → 20 из 21 inline `<svg>` в feature/step/contact-блоках  
+   **Evidence:** только загрузочный SVG имеет `aria-hidden="true"`; остальные не имеют `aria-hidden`, `role="presentation"`, `aria-label` или `<title>`, хотя соседний текст уже передаёт их смысл.  
+   **Repro:** проверить SVG в Accessibility Tree или воспользоваться скринридером — возможны безымянные graphics/noise announcements.  
+   **Confidence:** Medium.

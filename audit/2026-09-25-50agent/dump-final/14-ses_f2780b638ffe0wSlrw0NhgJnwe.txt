@@ -1,0 +1,18 @@
+### SESSION ses_f2780b638ffe0wSlrw0NhgJnwe — Error handling audit (@general subagent)
+
+[09-25 17:16 user]
+Проведи read-only аудит обработки ошибок на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: 404, malformed path, unsupported Accept, неверный query безопасно, stack traces, framework debug info и нестабильные 5xx. Не отправляй payload, не изменяй состояние, максимум 8 безопасных запросов. Ищи только реальные утечки/некорректные ответы с evidence/repro/severity/confidence.
+
+[09-25 17:17 assistant]
+Friday. Проведу максимум 8 последовательных GET без тела, redirect и изменений состояния; сначала фиксирую базовый ответ.
+
+[09-25 17:18 assistant]
+Запросы 2–8: три одинаковых 404 для проверки стабильности, один malformed path, один unsupported `Accept` и два безопасных варианта неверного query на `/login`; redirects автоматически не следуются.
+
+[09-25 17:19 assistant]
+8/8 запросов: только GET, без body/redirect; лимит исчерпан.
+
+- **F-01 — Low / Confidence: High:** раскрываются Next.js и внутренние cache/prerender-параметры: `X-Powered-By`, `X-Nextjs-Cache`, `X-Nextjs-Prerender`, `X-Nextjs-Stale-Time`.
+- **Evidence:** данные присутствовали на `/` и трёх 404. **Repro:** `curl -sk --http1.1 --max-time 15 -H 'Accept: text/html' -D - -o /dev/null 'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/__read_only_audit_missing_20260925__'`
+- 404 стабилен: 3/3 `404`, одинаковый SHA-256 `2eda01af…`; `/%ZZ` → безопасный `400`; unsupported `Accept` → тот же 404; query-тесты → `200`.
+- Stack traces, filesystem paths, source maps, secrets и нестабильные 5xx не обнаружены. `200` на malformed query не классифицирован как дефект без доказательства расхождения парсеров.

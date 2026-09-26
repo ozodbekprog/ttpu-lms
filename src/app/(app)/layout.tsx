@@ -7,7 +7,8 @@ import { Avatar } from "@/components/ui";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { UnreadBadge } from "@/components/chat/UnreadBadge";
 import { Logo } from "@/components/brand/logo";
-import { MobileTabBar, NavLinks, type MobileTab } from "./nav-links";
+import { MobileTabBar, NavLinks, type MobileTab, type MobileTabIcon } from "./nav-links";
+import { BugAssistant } from "@/components/bugs/bug-assistant";
 
 export default async function AppLayout({
   children,
@@ -40,6 +41,7 @@ export default async function AppLayout({
         { href: "/gpa", label: "GPA" },
         { href: "/transcript", label: "Transkript" },
         { href: "/attendance", label: "Davomat" },
+        ...(isStaff(user.role) ? [{ href: "/journal", label: "Jurnal" }] : []),
         ...(modules.certificates ? [{ href: "/certificates", label: "Sertifikatlar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/journals", label: "Kundaliklar" }] : []),
         ...(isStaff(user.role) ? [{ href: "/question-bank", label: "Savollar banki" }] : []),
@@ -83,6 +85,9 @@ export default async function AppLayout({
   const tabs: MobileTab[] = [
     { href: "/dashboard", label: "Dashboard", icon: "home" },
     { href: "/courses", label: "Kurslar", icon: "book" },
+    ...(isStaff(user.role)
+      ? [{ href: "/journal", label: "Jurnal", icon: "list" as MobileTabIcon }]
+      : []),
     { href: "/schedule", label: "Jadval", icon: "calendar" },
     { href: "/grades", label: isStaff(user.role) ? "Baholash" : "Baholar", icon: "chart" },
   ];
@@ -147,6 +152,7 @@ export default async function AppLayout({
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-20 md:px-8 md:pt-8 md:pb-8">{children}</main>
       </div>
       <MobileTabBar tabs={tabs} />
+      <BugAssistant />
     </div>
     </LocaleProvider>
   );

@@ -9,6 +9,7 @@ export type AttendanceCounts = {
   absent: number;
   late: number;
   excused: number;
+  suspicious: number;
   total: number;
   percent: number;
   eligible: boolean;
@@ -32,16 +33,18 @@ export function attendanceCounts(statuses: AttendanceStatus[]): AttendanceCounts
     ABSENT: 0,
     LATE: 0,
     EXCUSED: 0,
+    SUSPICIOUS: 0,
   };
   for (const status of statuses) totals[status] += 1;
   const total = statuses.length;
-  const attended = totals.PRESENT + totals.LATE + totals.EXCUSED;
+  const attended = totals.PRESENT + totals.LATE + totals.EXCUSED + totals.SUSPICIOUS;
   const percent = total > 0 ? Math.round((attended / total) * 100) : 0;
   return {
     present: totals.PRESENT,
     absent: totals.ABSENT,
     late: totals.LATE,
     excused: totals.EXCUSED,
+    suspicious: totals.SUSPICIOUS,
     total,
     percent,
     eligible: percent >= EXAM_MIN_PERCENT,

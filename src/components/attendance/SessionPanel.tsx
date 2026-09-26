@@ -5,8 +5,13 @@ import QRCode from "qrcode";
 import { Badge, Button, Card, CardBody, CardHeader, Label, Select, Table } from "@/components/ui";
 import { fmtDateTime } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
+import {
+  formatSecondsLeft,
+  requestBrowserLocation,
+  type BrowserLocation,
+} from "./live-qr";
 
-type AttendanceStatusValue = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
+type AttendanceStatusValue = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" | "SUSPICIOUS";
 
 type SessionMark = {
   studentId: string;
@@ -29,6 +34,7 @@ const STATUS_LABELS: Record<AttendanceStatusValue, string> = {
   ABSENT: "Yo'q",
   LATE: "Kechikkan",
   EXCUSED: "Sababli",
+  SUSPICIOUS: "Shubhali",
 };
 
 const STATUS_TONES: Record<AttendanceStatusValue, "green" | "rose" | "amber" | "blue"> = {
@@ -36,6 +42,7 @@ const STATUS_TONES: Record<AttendanceStatusValue, "green" | "rose" | "amber" | "
   ABSENT: "rose",
   LATE: "amber",
   EXCUSED: "blue",
+  SUSPICIOUS: "amber",
 };
 
 const MINUTE_OPTIONS = [5, 10, 15, 30, 60];
@@ -63,6 +70,15 @@ export function SessionPanel({
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [qr, setQr] = useState<{ code: string; url: string } | null>(null);
+  const [teacherLocation, setTeacherLocation] = useState<BrowserLocation | null>(null);
+  const [dynamicQr, setDynamicQr] = useState<{
+    token: string;
+    url: string;
+    expiresIn: number;
+    fetchedAt: number;
+  } | null>(null);
+  const [dynamicImg, setDynamicImg] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const response = await apiFetch(
@@ -117,11 +133,88 @@ export function SessionPanel({
     };
   }, [latestCode]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void requestBrowserLocation().then((location) => {
+      if (!cancelled && location) setTeacherLocation(location);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const latestId = latest?.id ?? null;
+
   const remainingMs = useMemo(() => {
     if (!latest) return 0;
     return new Date(latest.expiresAt).getTime() - now;
   }, [latest, now]);
   const latestActive = Boolean(latest && remainingMs > 0);
+
+  useEffect(() => {
+    if (!latestId || !latestActive) {
+      setDynamicQr(null);
+      setDynamicImg(null);
+      setTokenError(null);
+      return;
+    }
+    let cancelled = false;
+    async function fetchToken() {
+      const response = await apiFetch(`/api/attendance/sessions/${latestId}/token`, {
+        method: "POST",
+        body: JSON.stringify(
+          teacherLocation ? { lat: teacherLocation.lat, lng: teacherLocation.lng } : {},
+        ),
+      });
+      const json = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; data?: { token: string; url: string; expiresIn: number } }
+        | null;
+      if (cancelled) return;
+      if (!response.ok || !json?.ok || !json.data) {
+        setTokenError(json?.error ?? "Dinamik QR yangilashda xatolik");
+        return;
+      }
+      setTokenError(null);
+      setDynamicQr({
+        token: json.data.token,
+        url: json.data.url,
+        expiresIn: json.data.expiresIn,
+        fetchedAt: Date.now(),
+      });
+    }
+    void fetchToken();
+    const timer = window.setInterval(() => {
+      void fetchToken();
+    }, 10_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [latestId, latestActive, teacherLocation]);
+
+  useEffect(() => {
+    if (!dynamicQr) {
+      setDynamicImg(null);
+      return;
+    }
+    let cancelled = false;
+    QRCode.toDataURL(dynamicQr.url, { width: 512, margin: 1 })
+      .then((url) => {
+        if (!cancelled) setDynamicImg(url);
+      })
+      .catch(() => {
+        if (!cancelled) setDynamicImg(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dynamicQr]);
+
+  const tokenRemainingMs = useMemo(() => {
+    if (!dynamicQr) return 0;
+    return dynamicQr.expiresIn * 1000 - (now - dynamicQr.fetchedAt);
+  }, [dynamicQr, now]);
+
   const remainingRatio = useMemo(() => {
     if (!latest) return 0;
     const total = new Date(latest.expiresAt).getTime() - new Date(latest.createdAt).getTime();
@@ -167,11 +260,18 @@ export function SessionPanel({
 
   const history = sessions.slice(1, 6);
 
+  const qrSrc =
+    dynamicImg ?? (qr && latest && qr.code === latest.code ? qr.url : null);
+  const tokenRatio =
+    dynamicQr && dynamicQr.expiresIn > 0
+      ? Math.max(0, Math.min(1, tokenRemainingMs / (dynamicQr.expiresIn * 1000)))
+      : 0;
+
   return (
     <Card>
       <CardHeader
         title="QR davomat sessiyasi"
-        subtitle="Talabalar QR kodni skanerlaydi yoki kodni kiritadi"
+        subtitle="Talabalar QR kodni skanerlaydi"
         action={
           <Button
             variant="ghost"
@@ -230,9 +330,9 @@ export function SessionPanel({
             <div className="mx-auto w-full max-w-64">
               <div className="rounded-3xl border border-slate-100 bg-white p-3 shadow-lift ring-1 ring-slate-900/5">
                 <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white p-2">
-                  {qr && latest && qr.code === latest.code ? (
+                  {qrSrc ? (
                     <img
-                      src={qr.url}
+                      src={qrSrc}
                       alt="Davomat uchun QR kod"
                       className="aspect-square w-full rounded-xl"
                     />
@@ -241,13 +341,9 @@ export function SessionPanel({
                   )}
                 </div>
               </div>
-              <p className="mt-5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Sessiya kodi
+              <p className="mt-5 text-center text-xs text-slate-600">
+                Talabalar QR kodni telefon kamerasi bilan skanerlaydi
               </p>
-              <p className="mt-1 text-center font-mono text-4xl font-semibold tracking-[0.3em] text-brand-950 sm:text-5xl sm:tracking-[0.2em]">
-                {latest.code}
-              </p>
-              <p className="mt-2 text-center text-xs text-slate-400">/attendance/check-in</p>
             </div>
 
             <div className="space-y-4">
@@ -259,6 +355,7 @@ export function SessionPanel({
                 ) : (
                   <Badge tone="slate">Yopilgan</Badge>
                 )}
+                {latestActive ? <Badge tone="blue">Dinamik QR · 10s</Badge> : null}
                 {latestActive ? (
                   <span className="relative inline-flex size-16 items-center justify-center">
                     <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90">
@@ -281,7 +378,7 @@ export function SessionPanel({
                         className="stroke-gold-400 drop-shadow-[0_0_6px_rgba(212,175,55,0.45)]"
                       />
                     </svg>
-                    <span className="font-mono text-[11px] font-semibold tabular-nums text-gold-600">
+                    <span className="font-mono text-[11px] font-semibold tabular-nums text-gold-800">
                       {formatRemaining(remainingMs)}
                     </span>
                   </span>
@@ -290,14 +387,50 @@ export function SessionPanel({
                     Tugadi: {fmtDateTime(latest.expiresAt)}
                   </span>
                 )}
+                {latestActive && dynamicQr ? (
+                  <span
+                    className="relative inline-flex size-16 items-center justify-center"
+                    title="Token yangilanishiga qoldi"
+                  >
+                    <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r={TIMER_RADIUS}
+                        fill="none"
+                        strokeWidth="3.5"
+                        className="stroke-brand-100"
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r={TIMER_RADIUS}
+                        fill="none"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeDasharray={`${tokenRatio * TIMER_CIRCUMFERENCE} ${TIMER_CIRCUMFERENCE}`}
+                        className="stroke-brand-600"
+                      />
+                    </svg>
+                    <span className="font-mono text-[11px] font-semibold tabular-nums text-brand-800">
+                      {formatSecondsLeft(tokenRemainingMs)}
+                    </span>
+                  </span>
+                ) : null}
               </div>
+              {latestActive && !teacherLocation ? (
+                <p className="text-xs text-slate-500">
+                  Joylashuv ruxsati berilmagan — masofa tekshiruvi ishlamaydi
+                </p>
+              ) : null}
+              {tokenError ? <p className="text-xs text-rose-600">{tokenError}</p> : null}
 
               <div>
                 <p className="text-sm font-medium text-slate-800">
                   Belgilanganlar:{" "}
                   <span className="font-semibold text-brand-800">{latest.marked.length}</span>
                   {studentCount ? (
-                    <span className="text-slate-400"> / {studentCount}</span>
+                    <span className="text-slate-600"> / {studentCount}</span>
                   ) : null}
                 </p>
                 {latest.marked.length === 0 ? (
@@ -320,7 +453,7 @@ export function SessionPanel({
                 )}
               </div>
 
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600">
                 Ro&apos;yxat 30 sekundda bir marta avtomatik yangilanadi.
               </p>
             </div>
@@ -333,14 +466,13 @@ export function SessionPanel({
 
         {history.length > 0 ? (
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
               So&apos;nggi sessiyalar
             </p>
             <Table>
               <thead>
-                <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-400">
-                  <th className="py-2.5 pr-3 text-left font-medium">Kod</th>
-                  <th className="px-3 py-2.5 text-left font-medium">Sana</th>
+                <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-600">
+                  <th className="py-2.5 pr-3 text-left font-medium">Sana</th>
                   <th className="px-3 py-2.5 text-left font-medium">Holat</th>
                   <th className="px-3 py-2.5 text-right font-medium">Belgilangan</th>
                 </tr>
@@ -351,12 +483,7 @@ export function SessionPanel({
                     key={session.id}
                     className="border-b border-slate-50 transition-colors duration-150 last:border-0 hover:bg-slate-50/70"
                   >
-                    <td className="py-2.5 pr-3">
-                      <span className="rounded-lg bg-slate-100 px-2 py-0.5 font-mono text-xs tracking-wider text-slate-700">
-                        {session.code}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-xs text-slate-500">
+                    <td className="py-2.5 pr-3 text-xs text-slate-500">
                       {fmtDateTime(session.createdAt)}
                     </td>
                     <td className="px-3 py-2.5">

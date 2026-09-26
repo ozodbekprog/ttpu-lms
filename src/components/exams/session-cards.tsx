@@ -117,19 +117,19 @@ export function StudentSessionCard({ session }: { session: StudentSessionItem })
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-xl bg-slate-50 px-3 py-2.5">
-          <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Vaqt</p>
+          <p className="text-[10px] font-semibold tracking-wider text-slate-600 uppercase">Vaqt</p>
           <p className="mt-1 font-medium text-slate-700">{sessionTime(session)}</p>
         </div>
         <div className="rounded-xl bg-slate-50 px-3 py-2.5">
-          <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Xona</p>
+          <p className="text-[10px] font-semibold tracking-wider text-slate-600 uppercase">Xona</p>
           <p className="mt-1 font-medium text-slate-700">{session.room ?? "—"}</p>
         </div>
         <div className="rounded-xl bg-slate-50 px-3 py-2.5">
-          <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">O&apos;rindiq</p>
+          <p className="text-[10px] font-semibold tracking-wider text-slate-600 uppercase">O&apos;rindiq</p>
           <p className="mt-1 font-semibold text-slate-700">{session.sheet?.seat ?? "—"}</p>
         </div>
         <div className="rounded-xl bg-slate-50 px-3 py-2.5">
-          <p className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">Natija</p>
+          <p className="text-[10px] font-semibold tracking-wider text-slate-600 uppercase">Natija</p>
           <p className="mt-1 font-medium text-slate-700">
             {session.sheet
               ? `${sheetStatusLabel(session.sheet.status)}${session.sheet.score != null ? ` · ${session.sheet.score}` : ""}`

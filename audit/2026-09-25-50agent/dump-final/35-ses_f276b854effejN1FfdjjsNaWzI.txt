@@ -1,0 +1,66 @@
+### SESSION ses_f276b854effejN1FfdjjsNaWzI — API cache policy audit (@general subagent)
+
+[09-25 17:40 user]
+Проведи read-only проверку Cache-Control/Vary/ETag на обнаруженных API и auth-adjacent GET маршрутах https://ozodbeks-macbook-pro.tail91a187.ts.net:8443, максимум 15 same-origin GET/HEAD. Не отправляй POST и не используй credentials. Ищи публичный кэш токенов/данных или несогласованный Vary, но отделяй подтверждённое от теоретического. Верни evidence/severity/confidence/repro.
+
+[09-25 17:40 assistant]
+Friday. Проверю только пассивно, без cookies/auth и без POST; сначала получу главную страницу и её ссылки на маршруты, затем выполню ограниченный набор GET/HEAD.
+
+[09-25 17:40 assistant]
+Запрашиваю только корень одним HTTPS GET, сохраняя заголовки и тело для анализа; redirect’ы и credentials не разрешаю.
+
+[09-25 17:40 assistant]
+Корень отвечает `200` и уже показывает публично кэшируемую HTML-страницу (`s-maxage=31536000`). Локально извлекаю из полученного HTML найденные ссылки и API/auth-пути, не увеличивая сетевой лимит.
+
+[09-25 17:41 assistant]
+Для обнаружения API-путей запрошу только три клиентских JS-чанка, на которые ссылается тот же HTML (3 GET; всего станет 4 из 15), затем поищу строки `fetch`/маршрутов локально.
+
+[09-25 17:41 assistant]
+В этих чанках endpoint-строк нет; они содержат только runtime/UI-код. Проверю оставшиеся четыре подключённых чанка (до 8/15), чтобы не угадывать API-маршруты.
+
+[09-25 17:41 assistant]
+Теперь проверю три auth-adjacent страницы `/login`, `/register`, `/dashboard` (3 GET; всего 11/15), сохраняя ответы для поиска endpoint-ссылок и заголовков.
+
+[09-25 17:42 assistant]
+В auth-страницах обнаружены их page-specific чанки; запрошу три из них (до 14/15), чтобы точно определить GET API/endpoint и не использовать предположения.
+
+[09-25 17:42 assistant]
+Обнаружен единственный явно GET auth-adjacent API маршрут: `/api/csrf` (остальные auth endpoints вызываются POST и не трогаю). Использую последний допустимый запрос GET без cookies, чтобы проверить, не кэшируется ли выдаваемый CSRF-токен.
+
+[09-25 17:43 assistant]
+Сетевой лимит исчерпан (15/15). Локально сверю, что CSRF-токен в body совпадает с выданным cookie, и не раскрывая его, зафиксирую длину/хэш и наличие токеноподобных строк в HTML.
+
+[09-25 17:45 assistant]
+## Итог
+
+Проверено **15/15 same-origin GET**, без `POST`, cookies, `Authorization` и redirect-follow. **Подтверждённой публичной утечки токенов или приватных данных не обнаружено.**
+
+### Наблюдения
+
+| Маршрут | Evidence | Оценка |
+|---|---|---|
+| `/` | `Cache-Control: s-maxage=31536000`; `ETag: "ffd1dfvn8k22lc"`; `X-Nextjs-Cache: HIT`; `X-Nextjs-Prerender: 1` | **Severity: Info**, **Confidence: High**. Shared-cache разрешён, но тело — публичная marketing-страница; JWT/CSRF-токенов и пользовательских данных не найдено. |
+| `/login`, `/register`, `/dashboard` | `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate`; `ETag` отсутствует | Хорошая защита. Анонимный `/dashboard` содержит redirect-marker на `/login`, приватных данных нет. |
+| `/api/csrf` | `200`; `Cache-Control: no-store, private`; `ETag` отсутствует; JSON возвращает CSRF token; `Set-Cookie` содержит тот же token с `Secure; HttpOnly; SameSite=lax` | **Severity: Info/Low**, **Confidence: High**. Корректного public cache не обнаружено. |
+
+### Теоретический риск
+
+`/api/csrf` имеет `Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch`, но **не содержит `Cookie`/`Authorization`**. На auth-страницах также отсутствует `Vary: Cookie`.
+
+- **Severity: Low**
+- **Confidence: Medium** — omission подтверждена, эксплуатируемость не подтверждена.
+- При нарушении/игнорировании `no-store` intermediary теоретически возможен cache mix-up CSRF token/cookie; сейчас `no-store, private` блокирует это по стандарту.
+- `Vary: Cookie` на `/` не является текущей уязвимостью: ответ статический, user-specific расхождение не проверялось credentials.
+
+### Repro
+
+```bash
+BASE='https://ozodbeks-macbook-pro.tail91a187.ts.net:8443'
+
+curl -sS --http1.1 --max-redirs 0 -D - -o /dev/null "$BASE/"
+curl -sS --http1.1 --max-redirs 0 --cookie '' \
+  -H 'Accept: application/json' -D - "$BASE/api/csrf"
+curl -sS --http1.1 --max-redirs 0 -D - -o /dev/null "$BASE/login"
+```
+
+`/api/auth/login`, `/api/auth/register` и другие POST-маршруты обнаружены в клиентском bundle, но намеренно не запрашивались.

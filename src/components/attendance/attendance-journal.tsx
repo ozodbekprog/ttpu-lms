@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { Avatar, Badge, ButtonLink, Card, CardHeader, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -11,6 +12,7 @@ import {
   journalMonthKey,
   journalMonthKeys,
   journalMonthLabel,
+  shortName,
 } from "@/components/attendance/journal-utils";
 import type {
   JournalStatus,
@@ -23,6 +25,7 @@ type EditorState = {
   date: string;
   top: number;
   left: number;
+  mobile: boolean;
 };
 
 const EMPTY_SUMMARY: JournalSummaryRow = {
@@ -30,6 +33,7 @@ const EMPTY_SUMMARY: JournalSummaryRow = {
   absent: 0,
   late: 0,
   excused: 0,
+  suspicious: 0,
   total: 0,
   percent: 0,
   eligible: false,
@@ -96,17 +100,18 @@ export function AttendanceJournal({
   const summary = useMemo(() => {
     const map: Record<string, JournalSummaryRow> = {};
     for (const student of visibleStudents) {
-      const counts = { present: 0, absent: 0, late: 0, excused: 0 };
+      const counts = { present: 0, absent: 0, late: 0, excused: 0, suspicious: 0 };
       for (const date of dates) {
         const status = records[student.id]?.[date];
         if (!status) continue;
         if (status === "PRESENT") counts.present += 1;
         else if (status === "ABSENT") counts.absent += 1;
         else if (status === "LATE") counts.late += 1;
-        else counts.excused += 1;
+        else if (status === "EXCUSED") counts.excused += 1;
+        else counts.suspicious += 1;
       }
-      const total = counts.present + counts.absent + counts.late + counts.excused;
-      const attended = counts.present + counts.late + counts.excused;
+      const total = counts.present + counts.absent + counts.late + counts.excused + counts.suspicious;
+      const attended = counts.present + counts.late + counts.excused + counts.suspicious;
       const percent = total > 0 ? Math.round((attended / total) * 100) : 0;
       map[student.id] = {
         ...counts,
@@ -147,12 +152,10 @@ export function AttendanceJournal({
   }, [visibleDates, totals]);
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.mobile) return;
     const close = () => setEditor(null);
-    window.addEventListener("scroll", close, true);
     window.addEventListener("resize", close);
     return () => {
-      window.removeEventListener("scroll", close, true);
       window.removeEventListener("resize", close);
     };
   }, [editor]);
@@ -169,14 +172,18 @@ export function AttendanceJournal({
     date: string,
   ) {
     const rect = event.currentTarget.getBoundingClientRect();
-    const width = 196;
-    const height = 132;
-    const left = Math.max(8, Math.min(rect.left - 8, window.innerWidth - width - 8));
+    const width = 200;
+    const height = 150;
+    const mobile = window.innerWidth < 640;
+    const left = Math.max(
+      8,
+      Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 8),
+    );
     const top =
       rect.bottom + height + 12 > window.innerHeight
         ? Math.max(8, rect.top - height - 8)
         : rect.bottom + 6;
-    setEditor({ studentId, date, top, left });
+    setEditor({ studentId, date, top, left, mobile });
   }
 
   function setStatusLocally(studentId: string, date: string, status: JournalStatus | null) {
@@ -365,7 +372,7 @@ export function AttendanceJournal({
               <table className="w-full border-separate border-spacing-0 text-left text-sm">
                 <thead>
                   <tr>
-                    <th className="sticky left-0 top-0 z-30 min-w-36 border-b border-r border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[2px_0_10px_-8px_rgba(15,23,42,0.45)] sm:min-w-44">
+                    <th className="sticky left-0 top-0 z-30 min-w-32 border-b border-r border-slate-200 bg-slate-50 px-2 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[2px_0_10px_-8px_rgba(15,23,42,0.45)] sm:min-w-44 sm:px-3">
                       Talaba
                     </th>
                     {visibleDates.map((date) => {
@@ -390,7 +397,7 @@ export function AttendanceJournal({
                           </span>
                           <span
                             className={cn(
-                              "block text-[10px] font-normal text-slate-400",
+                              "block text-[10px] font-normal text-slate-600",
                               isToday && "font-semibold text-brand-500",
                             )}
                           >
@@ -399,7 +406,7 @@ export function AttendanceJournal({
                         </th>
                       );
                     })}
-                    <th className="sticky right-0 top-0 z-30 min-w-28 border-b border-l border-slate-200 bg-slate-50 px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.45)]">
+                    <th className="sticky right-0 top-0 z-30 min-w-20 border-b border-l border-slate-200 bg-slate-50 px-2 py-2.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.45)] sm:min-w-28 sm:px-3">
                       Keldi %
                     </th>
                   </tr>
@@ -424,13 +431,14 @@ export function AttendanceJournal({
                               src={student.avatarUrl}
                               className="size-7! text-[10px]"
                             />
-                            <span
+                             <span
                               className={cn(
-                                "max-w-24 truncate text-sm font-medium text-slate-800 sm:max-w-none",
+                                "max-w-20 truncate text-sm font-medium text-slate-800 sm:max-w-none",
                                 isMe && "text-brand-900",
                               )}
                             >
-                              {student.name}
+                              <span className="sm:hidden">{shortName(student.name)}</span>
+                              <span className="hidden sm:inline">{student.name}</span>
                             </span>
                             {isMe ? (
                               <span className="shrink-0 text-[10px] font-semibold text-brand-600">
@@ -475,7 +483,7 @@ export function AttendanceJournal({
                         })}
                         <td
                           className={cn(
-                            "sticky right-0 z-10 border-b border-l border-slate-100 px-3 py-1.5 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)] transition-colors duration-150",
+                            "sticky right-0 z-10 border-b border-l border-slate-100 px-2 py-1.5 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)] transition-colors duration-150 sm:px-3",
                             rowBg,
                           )}
                         >
@@ -485,7 +493,7 @@ export function AttendanceJournal({
                             </span>
                             <Badge
                               tone={rowSummary.eligible ? "green" : "rose"}
-                              className="px-1.5 py-0.5 text-[10px]"
+                              className="hidden px-1.5 py-0.5 text-[10px] sm:inline-flex"
                             >
                               {rowSummary.eligible ? "Ruxsat" : "Ruxsat yo'q"}
                             </Badge>
@@ -515,7 +523,7 @@ export function AttendanceJournal({
                         </td>
                       );
                     })}
-                    <td className="sticky right-0 z-10 border-l border-slate-100 bg-slate-50 px-3 py-2.5 text-right text-[10px] font-semibold tabular-nums text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)]">
+                    <td className="sticky right-0 z-10 border-l border-slate-100 bg-slate-50 px-2 py-2.5 text-right text-[10px] font-semibold tabular-nums text-slate-500 shadow-[-2px_0_10px_-8px_rgba(15,23,42,0.35)] sm:px-3">
                       {overall.attended}/{overall.total}
                     </td>
                   </tr>
@@ -546,7 +554,7 @@ export function AttendanceJournal({
                 </span>
                 Belgilanmagan
               </span>
-              <span className="ml-auto hidden text-slate-400 sm:inline">
+              <span className="ml-auto hidden text-slate-600 sm:inline">
                 {canEdit ? "Tahrirlash uchun katak ustiga bosing" : "Faqat ko'rish"}
               </span>
             </div>
@@ -554,14 +562,18 @@ export function AttendanceJournal({
         )}
       </Card>
 
-      {editor ? (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setEditor(null)} />
-          <div
-            className="animate-fade-up fixed z-50 w-48 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur"
-            style={{ top: editor.top, left: editor.left }}
-          >
-            <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-400">
+      {editor && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setEditor(null)} />
+              <div
+                className={cn(
+                  "animate-fade-up fixed z-50 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl ring-1 ring-slate-900/10",
+                  editor.mobile ? "inset-x-3 bottom-3" : "w-52",
+                )}
+                style={editor.mobile ? undefined : { top: editor.top, left: editor.left }}
+              >
+            <p className="truncate px-2 pb-1.5 text-[11px] font-medium text-slate-600">
               {editingStudent?.name ?? ""} · {journalDateParts(editor.date).label}
             </p>
             <div className="flex justify-between gap-1">
@@ -598,8 +610,10 @@ export function AttendanceJournal({
               </button>
             ) : null}
           </div>
-        </>
-      ) : null}
+            </>,
+            document.body,
+          )
+        : null}
 
       {error || message ? (
         <div

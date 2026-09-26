@@ -332,7 +332,7 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
             <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
               {questions.length} ta
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-300/25 px-3 py-1 text-xs font-semibold text-gold-600">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-300/25 px-3 py-1 text-xs font-semibold text-gold-800">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.35 6.2 20.4l1.1-6.45-4.7-4.6 6.5-.95L12 2.5z" />
               </svg>
@@ -460,7 +460,7 @@ export function QuizEditor({ courses, quiz }: { courses: CourseOption[]; quiz?: 
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-slate-400! hover:bg-rose-50! hover:text-rose-600!"
+                      className="text-slate-600! hover:bg-rose-50! hover:text-rose-600!"
                       onClick={() => void deleteQuestion(question)}
                       disabled={editingId !== null}
                     >

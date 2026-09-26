@@ -14,7 +14,7 @@ export function SearchForm({ defaultValue }: { defaultValue: string }) {
         <span className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-900 via-brand-500 to-gold-400" />
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="relative flex-1">
-            <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400 transition-colors duration-200 group-focus-within:text-brand-600">
+            <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-600 transition-colors duration-200 group-focus-within:text-brand-600">
               {SEARCH_ICON}
             </span>
             <Input
@@ -32,8 +32,8 @@ export function SearchForm({ defaultValue }: { defaultValue: string }) {
         </div>
       </div>
       <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-xs text-slate-400">Kamida 2 ta belgi kiriting.</p>
-        <p className="hidden items-center gap-1.5 text-xs text-slate-400 sm:flex">
+        <p className="text-xs text-slate-600">Kamida 2 ta belgi kiriting.</p>
+        <p className="hidden items-center gap-1.5 text-xs text-slate-600 sm:flex">
           <kbd className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[11px] font-medium text-slate-500">
             Enter
           </kbd>

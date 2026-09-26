@@ -6,6 +6,7 @@ import { BarChart, DonutChart, LineChart } from "@/components/charts";
 import { cn, dayName, fmtDate, initials } from "@/lib/utils";
 import { getAdminAnalytics, getStudentAnalytics, getTeacherAnalytics } from "./analytics";
 import type { AdminAnalytics, StudentAnalytics, TeacherAnalytics } from "./analytics";
+import { CheckInForm } from "@/components/attendance/check-in-form";
 import {
   SLOT_TIMES,
   dateFromIso,
@@ -27,7 +28,7 @@ const PAIR_TIMES: Record<number, string> = {
 
 const STAT_TONES = {
   brand: "bg-brand-50 text-brand-700 ring-brand-100",
-  gold: "bg-gold-300/20 text-gold-600 ring-gold-300/40",
+  gold: "bg-gold-300/20 text-gold-800 ring-gold-300/40",
   emerald: "bg-emerald-50 text-emerald-600 ring-emerald-100",
   amber: "bg-amber-50 text-amber-600 ring-amber-100",
 } as const;
@@ -237,7 +238,7 @@ function StatTile({
         <div className="min-w-0">
           <p className="text-sm font-medium text-slate-500">{label}</p>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-brand-950">{value}</p>
-          {hint ? <p className="mt-1 truncate text-xs text-slate-400">{hint}</p> : null}
+          {hint ? <p className="mt-1 truncate text-xs text-slate-600">{hint}</p> : null}
         </div>
         <span
           className={cn(
@@ -315,7 +316,7 @@ function AnalyticsCard({
           ) : (
             <>
               {children}
-              <p className="mt-4 border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-400">
+              <p className="mt-4 border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-600">
                 {note}
               </p>
             </>
@@ -673,7 +674,7 @@ export default async function DashboardPage() {
                             {lesson.room ? (
                               <>
                                 <span className="truncate">{lesson.room}</span>
-                                <span className="text-slate-300">·</span>
+                                <span className="text-slate-500">·</span>
                               </>
                             ) : null}
                             <span className="truncate">{lesson.groupName}</span>
@@ -747,6 +748,12 @@ export default async function DashboardPage() {
   return (
     <>
       <Hero name={user.name} firstName={firstName} roleLabel={roleLabel} now={now} actions={actions} />
+
+      <SectionHeading
+        title="QR davomat"
+        subtitle="Darsdagi QR kodni skanerlab davomatni belgilang"
+      />
+      <CheckInForm />
 
       <SectionHeading
         title="Bugungi holat"
@@ -836,13 +843,13 @@ export default async function DashboardPage() {
                           {s.subject}
                         </span>
                         <span className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-                          <Icon className="size-3 shrink-0 text-slate-400">
+                          <Icon className="size-3 shrink-0 text-slate-600">
                             <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
                             <circle cx="12" cy="10" r="2.5" />
                           </Icon>
                           <span className="truncate">{s.room}</span>
-                          <span className="text-slate-300">·</span>
-                          <span className="text-slate-400">{s.slot}-para</span>
+                          <span className="text-slate-500">·</span>
+                          <span className="text-slate-600">{s.slot}-para</span>
                         </span>
                       </span>
                     </li>

@@ -1,0 +1,64 @@
+### SESSION ses_f276b8c01ffe2tLHne9N8uv4RZ — Protected route inventory (@general subagent)
+
+[09-25 17:40 user]
+Проведи ограниченную read-only инвентаризацию маршрутов /dashboard, /admin, /profile, /settings, /api/admin и связанных ссылок на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443. Только GET/HEAD, без cookies и без brute force. Проверь, что закрытые страницы не содержат пользовательские/секретные данные и не возвращают 200 с данными. Верни evidence, status, severity, confidence, repro.
+
+[09-25 17:40 assistant]
+Проверю только указанные маршруты и их same-origin ссылки, используя свежие GET/HEAD без cookie-jar, авторизации и переходов по редиректам. Сначала сохраню ответы во временный каталог для сравнения статусов, тел, размеров и хешей.
+
+[09-25 17:41 assistant]
+Для исключений распарсю только локально сохранённые HTML: извлеку видимый текст, ссылки и счётчики потенциальных PII/токенов без вывода значений. Затем проверю только найденные навигационные same-origin URL.
+
+[09-25 17:42 assistant]
+Дополнительно проверю один RSC/GET-вариант каждой закрытой страницы (Next.js), поскольку-framework-specific ответ может отличаться от HTML; это не обход и не перебор.
+
+[09-25 17:43 assistant]
+Из `/help` обнаружены ещё три same-origin маршрута: `/courses`, `/quizzes`, `/attendance/check-in`; проверю их тем же ограничением и без переходов.
+
+[09-25 17:44 assistant]
+`/courses` дал редкий `502` при пустом GET, но `HEAD` — корректный `307`; сделаю один повтор GET, чтобы отличить транзиентную ошибку от воспроизводимого поведения.
+
+[09-25 17:45 assistant]
+## Результат
+
+Проверено 25.09.2026, 12:41–12:44 UTC. Только GET/HEAD, без cookies/auth, форм и brute force. `Set-Cookie` не возвращался. **Пользовательских или секретных данных в закрытых ответах не обнаружено.**
+
+| Маршрут | GET | HEAD | Evidence |
+|---|---:|---:|---|
+| `/dashboard` | 200 | 200 | Только `TTPU LMS / Yuklanmoqda...`, meta-refresh на `/login` |
+| `/admin` | 200 | 200 | То же |
+| `/profile` | 200 | 200 | То же |
+| `/settings` | 200 | 200 | То же |
+| `/api/admin` | 404 | 404 | Статическая HTML-страница «Sahifa topilmadi» |
+| `/login`, `/register`, `/forgot-password` | 200 | 200 | Публичные формы |
+| `/help` | 200 | 200 | Shell + meta-refresh; RSC содержит только публичную справку |
+| `/courses` | 307 | 307 | `Location: /login`; один транзиентный пустой 502 |
+| `/quizzes` | 307 | 307 | `Location: /login` |
+| `/attendance/check-in` | 307 | 307 | `Location: /login` |
+
+RSC GET `?_rsc` для `/dashboard`, `/admin`, `/profile`, `/settings` возвращает 200, но только loading-skeleton и `NEXT_REDIRECT;replace;/login;307;`. Проверки email/UUID/JWT/Bearer/API-key/PII-полей: **0 совпадений**. HTML protected-страниц имеют `private, no-cache, no-store`.
+
+## Findings
+
+- **F-01 — Protected routes отвечают 200 shell-страницей:** status **confirmed**, severity **Informational**, confidence **High**. Данные не раскрыты; рекомендуется server-side redirect перед streaming HTML/RSC.
+- **F-02 — Несанкционированная выдача данных:** status **not found**, severity **None**, confidence **High**.
+- **F-03 — `/api/admin`:** status **404**, severity **Informational**, confidence **High**; дочерние API-пути не перебирались.
+- **F-04 — Транзиентный `/courses` 502:** status **observed once**, severity **Informational**, confidence **Medium**; повторный GET стабильно дал 307.
+
+## Repro
+
+```bash
+B='https://ozodbeks-macbook-pro.tail91a187.ts.net:8443'
+
+curl --disable --cookie '' --netrc-file /dev/null --noproxy '*' \
+  -sS -D - -o /tmp/dashboard.html "$B/dashboard"
+
+rg '__next-page-redirect|Yuklanmoqda' /tmp/dashboard.html
+
+curl --disable --cookie '' --netrc-file /dev/null --noproxy '*' \
+  -sS -H 'RSC: 1' -H 'Accept: text/x-component' \
+  "$B/dashboard?_rsc" | rg 'NEXT_REDIRECT|animate-pulse'
+
+curl --disable --cookie '' --netrc-file /dev/null --noproxy '*' \
+  -sS -o /dev/null -w '%{http_code}\n' "$B/api/admin"
+```

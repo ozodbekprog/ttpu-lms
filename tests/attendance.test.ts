@@ -14,6 +14,7 @@ describe("attendanceCounts", () => {
       absent: 0,
       late: 0,
       excused: 0,
+      suspicious: 0,
       total: 0,
       percent: 0,
       eligible: false,
@@ -34,6 +35,13 @@ describe("attendanceCounts", () => {
   it("foiz formulasi (PRESENT + LATE + EXCUSED) / total", () => {
     const counts = attendanceCounts(["PRESENT", "LATE", "EXCUSED", "ABSENT"]);
     expect(counts.percent).toBe(75);
+    expect(counts.eligible).toBe(false);
+  });
+
+  it("SUSPICIOUS ham qatnashgan hisoblanadi va alohida ko'rsatiladi", () => {
+    const counts = attendanceCounts(["PRESENT", "SUSPICIOUS", "ABSENT"]);
+    expect(counts.suspicious).toBe(1);
+    expect(counts.percent).toBe(67);
     expect(counts.eligible).toBe(false);
   });
 

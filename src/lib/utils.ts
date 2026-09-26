@@ -36,7 +36,7 @@ export function initials(name: string) {
 }
 
 export function gradeColor(score: number | null | undefined, max = 100) {
-  if (score == null) return "text-slate-400";
+  if (score == null) return "text-slate-600";
   const pct = (score / max) * 100;
   if (pct >= 80) return "text-emerald-600";
   if (pct >= 60) return "text-amber-600";

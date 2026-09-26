@@ -1,0 +1,13 @@
+### SESSION ses_f278691a0ffeIl8UOoaz4asMPd — Public metadata audit (@general subagent)
+
+[09-25 17:10 user]
+Проверь публичные metadata endpoints сайта https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: /robots.txt, /sitemap.xml, /.well-known/security.txt и связанные безопасные discovery-файлы. Не сканируй словари и не запрашивай секретные файлы. До 5 запросов. Выяви broken links, утечку внутренних URL, неверные директивы или отсутствие security.txt только если это подтверждено и релевантно. Верни evidence/repro/severity/confidence.
+
+[09-25 17:10 assistant]
+Сделаю ровно 5 независимых запросов без переходов и без перебора: указанные файлы плюс безопасные `host-meta` и `openid-configuration`. Проверю только публичные ответы, заголовки и ссылки в полученном контенте.
+
+[09-25 17:11 assistant]
+- **Evidence:** все 5 запросов (`/robots.txt`, `/sitemap.xml`, `/.well-known/security.txt`, `/.well-known/host-meta`, `/.well-known/openid-configuration`) получили `HTTP 502 Bad Gateway`, `Content-Length: 0`; тело отсутствует.
+- **Repro:** `curl -k -sS -D - 'https://ozodbeks-macbook-pro.tail91a187.ts.net:8443/<path>'` — по одному запросу на путь.
+- **Severity:** информационно/неопределённо; broken links, утечка URL, неверные директивы и отсутствие `security.txt` не подтверждены (`502`, не `404`).
+- **Confidence:** высокая для недоступности endpoint’ов; низкая для анализа содержимого.

@@ -88,7 +88,7 @@ export function ProfileDetails({
               {row.icon}
             </span>
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                 {row.label}
               </p>
               <p className="mt-1 truncate text-sm font-medium text-slate-800">{row.value}</p>

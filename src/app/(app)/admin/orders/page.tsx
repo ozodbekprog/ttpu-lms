@@ -83,7 +83,7 @@ function StatusCard({
         <span className={cn("inline-flex size-10 items-center justify-center rounded-xl ring-1", STAT_TONES[tone])}>
           {STAT_ICONS[icon]}
         </span>
-        <span className="text-xs font-semibold text-slate-400">{pct}%</span>
+        <span className="text-xs font-semibold text-slate-600">{pct}%</span>
       </div>
       <p className="mt-3 text-3xl font-semibold tracking-tight text-brand-950">{value}</p>
       <p className="mt-0.5 text-sm font-medium text-slate-500">{label}</p>
@@ -206,7 +206,7 @@ export default async function AdminOrdersPage({
 
       <Card className="mb-4 mt-6 p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="ml-1 mr-1 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <span className="ml-1 mr-1 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
             {STAT_ICONS.filter}
             Filtr
           </span>
@@ -224,7 +224,7 @@ export default async function AdminOrdersPage({
               {ORDER_STATUS_LABEL[value]}
             </FilterLink>
           ))}
-          <span className="ml-auto hidden items-center gap-2 pr-2 text-xs text-slate-400 sm:inline-flex">
+          <span className="ml-auto hidden items-center gap-2 pr-2 text-xs text-slate-600 sm:inline-flex">
             <Badge tone="slate">{orders.length} ta natija</Badge>
           </span>
         </div>

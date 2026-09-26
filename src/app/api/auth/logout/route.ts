@@ -20,8 +20,10 @@ export async function POST(request: Request) {
     });
   }
   await destroySession();
+  // Nisbiy Location ishlatiladi: `-H 0.0.0.0` bilan ishga tushganda
+  // request.url bog'lanish manzilini (0.0.0.0) beradi va brauzer uni ocholmaydi.
   return new Response(null, {
     status: 303,
-    headers: { Location: new URL("/login", request.url).toString() },
+    headers: { Location: "/login" },
   });
 }

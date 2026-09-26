@@ -1,0 +1,19 @@
+### SESSION ses_f2780e9ddffePU1KmdrG0nNIxe — Public form audit (@general subagent)
+
+[09-25 17:16 user]
+Проведи read-only аудит всех публичных форм на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: method/action, client/server validation clues, required fields, autocomplete, CSRF tokens, error states, password handling. Не отправляй формы и не меняй данные; максимум 5 GET/HEAD запросов. Верни только подтверждённые функциональные/security баги с evidence, severity, confidence и repro; не считай отсутствие серверной валидации доказанным без отправки.
+
+[09-25 17:21 assistant]
+Friday — выполнено 5 целевых GET (`/`, `/login`, `/register`, `/help`, `/forgot-password`); формы не отправлялись, данные не менялись. Публичные формы: login, register, forgot-password; `/help` перенаправляет на `/login`.
+
+**F-01 — Публичное раскрытие demo-учётных данных**  
+**Severity:** Medium (потенциальная компрометация; активность аккаунта не проверялась) · **Confidence:** High для факта раскрытия.  
+**Evidence:** HTML главной страницы содержит `Demo: ozodbek@ttpu.uz / ttpu1234`; `/login` показывает demo-email/password и кнопки автозаполнения.  
+**Repro:** read-only GET `/`, открыть footer; GET `/login`, осмотреть блок demo-аккаунтов.
+
+**F-02 — Противоречие требований к паролю при регистрации**  
+**Severity:** Low · **Confidence:** High.  
+**Evidence:** `/register`: `placeholder="Kamida 6 belgi"`, но `minLength="12"` и подпись `Kamida 12 belgi`. В клиентском словаре также указаны 8 символов для reset-flow; серверная проверка не доказывалась.  
+**Repro:** GET `/register`, сравнить placeholder, `minLength` и подпись; ничего не отправлять.
+
+Отсутствие `action`/`method`, CSRF-токен, серверная валидация и реальные error-state не классифицировались как баги без отправки/проверки клиентского обработчика.

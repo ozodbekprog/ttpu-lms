@@ -1,0 +1,15 @@
+### SESSION ses_f2771dfd9ffeJfpRWiMdOFU9Kl — SEO metadata audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи read-only SEO/metadata audit главной, /login и /register на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: title/meta description, canonical, robots directives, Open Graph/Twitter, lang, viewport, structured data, social preview URLs. Не меняй сайт, максимум 3 страницы. Верни только конкретные ошибки/недостатки с фактическим evidence и различай functional/security impact.
+
+[09-25 17:33 assistant]
+Проверяю HTTP-заголовки тех же трёх URL, чтобы зафиксировать фактические robots-директивы и redirects.
+
+[09-25 17:34 assistant]
+- **Canonical отсутствует на `/`, `/login`, `/register`** — **Functional/SEO; security impact: none.** Evidence: в HTML всех трёх `HTTP 200` нет `<link rel="canonical">`. URL-варианты могут конкурировать и делить поисковые сигналы.
+- **Нет `noindex` для `/login` и `/register`** — **Functional/SEO; security impact: none.** Evidence: отсутствуют `<meta name="robots">` и `X-Robots-Tag`; страницы отдают `200`. На уровне страниц сохраняется default `index, follow`, если нет внешнего запрета.
+- **Одинаковый generic description у трёх страниц** — **Functional/SEO; security impact: none.** Evidence: `/`, `/login`, `/register` содержат один description: `Turin Politexnika Universiteti uchun zamonaviy o'quv platformasi`; сниппеты `/login` и `/register` не отражают их назначение.
+- **Open Graph/Twitter и social-preview URL отсутствуют на всех трёх страницах** — **Functional/social; security impact: none.** Evidence: нет `og:title`, `og:description`, `og:url`, `og:image`, `og:type`, `twitter:card`, `twitter:image`; управляемого URL превью нет.
+- **Structured data отсутствует на всех трёх страницах** — **Functional/SEO; security impact: none.** Evidence: нет `application/ld+json`, microdata или `itemscope`; главная не передаёт `Organization`/`WebSite`, auth-страницы — page context.
+- **Неполные locale-сигналы на `/login` и `/register`** — **Functional/SEO; security impact: none.** Evidence: UI предлагает `UZ/RU/EN`, но HTML содержит только `lang="uz"` и не содержит `hreflang`/alternate URL для RU и EN.

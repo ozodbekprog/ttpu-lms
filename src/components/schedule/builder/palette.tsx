@@ -74,7 +74,7 @@ export function BuilderPalette({
         <CardHeader title="Fanlar" subtitle={`${subjects.length} ta fan — sudrab tashlang`} />
         <CardBody className="max-h-80 space-y-2 overflow-y-auto pr-2">
           {subjects.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400">
+            <p className="rounded-xl border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-600">
               {"Fan topilmadi. Kurslar bo'limida kurs yarating."}
             </p>
           ) : (

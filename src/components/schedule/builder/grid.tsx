@@ -138,7 +138,7 @@ export function BuilderGrid({
       <CardHeader
         title="Haftalik konstruktor"
         subtitle="6 kun × 8 par — bo'sh kataklarga tashlang yoki bosing"
-        action={pending ? <span className="text-xs font-medium text-slate-400">Saqlanmoqda…</span> : undefined}
+        action={pending ? <span className="text-xs font-medium text-slate-600">Saqlanmoqda…</span> : undefined}
       />
       <CardBody className="overflow-x-auto">
         <div className="min-w-[980px]">
@@ -155,7 +155,7 @@ export function BuilderGrid({
               <Fragment key={slot}>
                 <div className="flex flex-col items-end justify-center rounded-xl bg-slate-50 px-2 py-2 text-right">
                   <p className="text-xs font-semibold text-slate-700">{slot}-par</p>
-                  <p className="text-[10px] text-slate-400">{SLOT_TIMES[slot]}</p>
+                  <p className="text-[10px] text-slate-600">{SLOT_TIMES[slot]}</p>
                 </div>
                 {DAYS.map((day) => {
                   const cell = { day, slot };
@@ -198,7 +198,7 @@ export function BuilderGrid({
                               "flex min-h-20 items-center justify-center rounded-xl border border-dashed text-[11px] font-medium transition-all duration-150",
                               hasSelection
                                 ? "border-brand-300 bg-brand-50/50 text-brand-500"
-                                : "border-slate-200/80 text-slate-300 opacity-0 group-hover:opacity-100 group-hover:border-brand-300 group-hover:bg-brand-50/50 group-hover:text-brand-400",
+                                : "border-slate-200/80 text-slate-500 opacity-0 group-hover:opacity-100 group-hover:border-brand-300 group-hover:bg-brand-50/50 group-hover:text-brand-400",
                             )}
                           >
                             {hasSelection ? "Qo'yish" : "+"}

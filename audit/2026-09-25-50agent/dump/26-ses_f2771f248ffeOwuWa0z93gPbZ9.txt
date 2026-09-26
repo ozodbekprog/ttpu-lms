@@ -1,0 +1,47 @@
+### SESSION ses_f2771f248ffeOwuWa0z93gPbZ9 — CSRF surface audit (@general subagent)
+
+[09-25 17:33 user]
+Проведи статический read-only аудит CSRF на https://ozodbeks-macbook-pro.tail91a187.ts.net:8443: HTML/JS формы, login/register/forgot flows, /api/csrf, token propagation, cookie attributes, state-changing methods only via source inspection. Не отправляй формы и не меняй состояние, максимум 8 GET/HEAD. Не утверждай уязвимость без доказательства. Верни evidence/repro/severity/confidence.
+
+[09-25 17:33 assistant]
+Friday. Проведу только read-only проверку: максимум 8 запросов GET/HEAD, без отправки форм и изменения состояния. Сначала получу HTML и публичные статические ресурсы, затем сверю CSRF-механику и атрибуты cookie без доказательств уязвимости.
+
+[09-25 17:33 assistant]
+Корень — Next.js-приложение; в HTML есть `/login` и `/register`, но CSRF-поля/действующего токена в серверном HTML не видно. Читаю эти два flow и затем один целевой GET `/api/csrf`; остальные запросы оставлю для статических JS-чанков.
+
+[09-25 17:33 assistant]
+`/api/csrf` вернул `{"ok":true,"token":...}`, но webfetch не показывает заголовки. Использую один явный GET с `-i`, чтобы зафиксировать `Set-Cookie`, не переходя по редиректам и не отправляя данные; это будет запрос №5 из 8.
+
+[09-25 17:34 assistant]
+В `forgot-password` также нет server-side hidden CSRF input или `action`; это клиентский React form. Осталось 2 GET: сначала JS входа, затем выберу второй чанк по фактическому共用 CSRF/API-коду, чтобы не делать лишние запросы.
+
+[09-25 17:34 assistant]
+В login-чанке подтверждено: `apiFetch` для POST/PUT/PATCH/DELETE получает токен через `/api/csrf` и ставит `x-csrf-token`; endpoint — `POST /api/auth/login`. Последний GET отдаю register-чанку, чтобы проверить второй state-changing flow; forgot ограничу HTML-доказательством и не буду додумывать endpoint.
+
+[09-25 17:36 assistant]
+## Вердикт
+
+**CSRF-уязвимость не доказана.**  
+**Severity:** Informational / confirmed finding отсутствует. **Confidence:** High для клиентских доказательств, Medium для серверной защиты — POST/PUT/PATCH/DELETE не выполнялись.
+
+## Evidence
+
+- `GET /api/csrf` → `200`, JSON содержит `token`; ответ устанавливает:
+  `csrf_token=<JWT>; Path=/; Max-Age=3600; Secure; HttpOnly; SameSite=Lax`.
+  `Domain` отсутствует (host-only), `Cache-Control: no-store, private`.
+- `/login` HTML: нет `action`, `method` и hidden CSRF input. JS `/_next/static/chunks/2izzx1ognwu95.js`, модуль `apiFetch`, вызывает:
+  `POST /api/auth/login`.
+- `/register` HTML: также нет hidden/action. JS `/_next/static/chunks/1py2zjofjc50q.js` вызывает:
+  `POST /api/auth/register`, затем `POST /api/auth/login`.
+- Общий helper добавляет `x-csrf-token` для `POST/PUT/PATCH/DELETE`; если cookie не читается, получает токен через `GET /api/csrf`.
+- `HttpOnly` означает, что `document.cookie` не прочитает CSRF cookie; fallback на `/api/csrf` в данном клиенте присутствует.
+- `/forgot-password` проверен только по HTML: нет native CSRF field/action. Его page-specific JS `0jl0g6gt5tbg3.js` не запрашивался из-за лимита 8 GET, поэтому endpoint и token propagation для forgot не подтверждены.
+
+## Наблюдаемый риск
+
+`apiFetch` **не прерывает запрос**, если `/api/csrf` не вернул токен: header просто не добавляется, после чего `fetch()` всё равно выполняется.  
+**Severity:** Low/conditional. **Confidence:** High для поведения кода, Low для эксплуатируемости — сервер может корректно отклонять запрос без токена.
+
+## Repro
+
+Read-only последовательность: `GET /login` → `GET` login chunk → `GET /register` → `GET` register chunk → `GET /api/csrf` с проверкой `Set-Cookie`. Фактический CSRF-exploit repro не выполнялся; любые POST/PUT/PATCH/DELETE запрещены условиями. Атрибуты session/auth cookie не наблюдались, поскольку login не выполнялся.

@@ -130,7 +130,7 @@ export default async function NotificationsPage() {
                           </Link>
                         ) : null}
                       </div>
-                      <span className="shrink-0 text-xs text-slate-400">{fmtDateTime(n.createdAt)}</span>
+                      <span className="shrink-0 text-xs text-slate-600">{fmtDateTime(n.createdAt)}</span>
                     </div>
                   </div>
                 </li>
