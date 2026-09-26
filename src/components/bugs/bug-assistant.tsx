@@ -9,8 +9,14 @@ import { apiFetch } from "@/lib/api";
 import { friendlyBugLine } from "./bug-utils";
 import { BUG_ASSISTANT_EVENT } from "./report";
 
-type ChatMessage = { role: "ai" | "user"; text: string };
+type ChatMessage = { role: "ai" | "user"; text: string; time: string };
 type Captured = { message: string; stack?: string; url: string };
+
+function fmtClock(value: Date) {
+  const hours = String(value.getHours()).padStart(2, "0");
+  const minutes = String(value.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
 
 const GREETING =
   "Salom! 😊 Men AI yordamchiman. TTPU LMS saytida qanday yordam bera olaman? Muammo yoki savolingizni yozing — birgalikda hal qilamiz.";
@@ -47,7 +53,7 @@ export function BugAssistant() {
   }, [open]);
 
   const aiSay = useCallback((text: string) => {
-    setMessages((prev) => [...prev, { role: "ai", text }]);
+    setMessages((prev) => [...prev, { role: "ai", text, time: fmtClock(new Date()) }]);
   }, []);
 
   const askAiReply = useCallback(
@@ -143,6 +149,7 @@ export function BugAssistant() {
           text: label
             ? `Sahifada muammo aniqlandi: ${label}. Birgalikda hal qilamiz 🙂`
             : `Sahifada kutilmagan holat yuz berdi (${friendlyBugLine(message, stack)}). Birgalikda hal qilamiz 🙂`,
+          time: fmtClock(new Date()),
         },
       ]);
       setOpen(true);
@@ -154,6 +161,7 @@ export function BugAssistant() {
             text:
               `Sahifada quyidagi muammo yuz berdi: ${label ?? friendlyBugLine(message, stack)}. ` +
               "Menga qisqa tushuntir (2-3 gap) va qanday hal qilishni ayt.",
+            time: fmtClock(new Date()),
           },
         ]);
         setBusy(false);
@@ -196,14 +204,14 @@ export function BugAssistant() {
   function openManually() {
     captured.current = null;
     setSent(false);
-    setMessages([{ role: "ai", text: GREETING }]);
+    setMessages([{ role: "ai", text: GREETING, time: fmtClock(new Date()) }]);
     setOpen(true);
   }
 
   async function handleSend() {
     const value = input.trim();
     if (!value || busy) return;
-    const pending: ChatMessage[] = [...messages, { role: "user", text: value }];
+    const pending: ChatMessage[] = [...messages, { role: "user", text: value, time: fmtClock(new Date()) }];
     setMessages(pending);
     setInput("");
     setBusy(true);
@@ -263,6 +271,14 @@ export function BugAssistant() {
                 )}
               >
                 {message.text}
+                <span
+                  className={cn(
+                    "mt-0.5 block text-right text-[10px]",
+                    message.role === "ai" ? "text-slate-400" : "text-brand-200",
+                  )}
+                >
+                  {message.time}
+                </span>
               </div>
             ))}
             {busy ? (
